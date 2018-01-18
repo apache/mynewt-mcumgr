@@ -1,0 +1,3 @@
+add_subdirectory_ifdef(CONFIG_MCUMGR_CMD_FS_MGMT   fs_mgmt)
+add_subdirectory_ifdef(CONFIG_MCUMGR_CMD_IMG_MGMT  img_mgmt)
+add_subdirectory_ifdef(CONFIG_MCUMGR_CMD_OS_MGMT   os_mgmt)
