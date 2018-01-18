@@ -1,0 +1,13 @@
+/*
+ * Basic Device Tree overlay file.
+ */
+
+/ {
+	chosen {
+		/* Required by mcuboot. */
+		zephyr,code-partition = &slot0_partition;
+
+		/* Use uart0 for the mcumgr UART transport. */
+		zephyr,uart-mcumgr = &uart0;
+	};
+};
