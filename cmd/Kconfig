@@ -19,6 +19,7 @@ menu "Command handlers"
 
 source "ext/mcumgr/cmd/fs_mgmt/Kconfig"
 source "ext/mcumgr/cmd/img_mgmt/Kconfig"
+source "ext/mcumgr/cmd/log_mgmt/Kconfig"
 source "ext/mcumgr/cmd/os_mgmt/Kconfig"
 
 endmenu

@@ -21,6 +21,7 @@
 #include <misc/reboot.h>
 #include <debug/object_tracing.h>
 #include <kernel_structs.h>
+#include "logging/reboot_log.h"
 #include "mgmt/mgmt.h"
 #include "os_mgmt/os_mgmt.h"
 #include "os_mgmt/os_mgmt_impl.h"
@@ -77,6 +78,7 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
 static void
 zephyr_os_mgmt_reset_work_handler(struct k_work *work)
 {
+    reboot_log_write("mcumgr");
     sys_reboot(SYS_REBOOT_WARM);
 }
 
