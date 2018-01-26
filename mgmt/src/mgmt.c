@@ -112,16 +112,16 @@ mgmt_find_handler(uint16_t group_id, uint16_t command_id)
 }
 
 int
-mgmt_write_rsp_status(struct mgmt_ctxt *cbuf, int errcode)
+mgmt_write_rsp_status(struct mgmt_ctxt *ctxt, int errcode)
 {
     int rc;
 
-    rc = cbor_encode_text_stringz(&cbuf->encoder, "rc");
+    rc = cbor_encode_text_stringz(&ctxt->encoder, "rc");
     if (rc != 0) {
         return rc;
     }
 
-    rc = cbor_encode_int(&cbuf->encoder, errcode);
+    rc = cbor_encode_int(&ctxt->encoder, errcode);
     if (rc != 0) {
         return rc;
     }
@@ -140,17 +140,17 @@ mgmt_err_from_cbor(int cbor_status)
 }
 
 int
-mgmt_ctxt_init(struct mgmt_ctxt *cbuf, struct mgmt_streamer *streamer)
+mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct mgmt_streamer *streamer)
 {
     int rc;
 
-    rc = cbor_parser_cust_reader_init(streamer->reader, 0, &cbuf->parser,
-                                      &cbuf->it);
+    rc = cbor_parser_cust_reader_init(streamer->reader, 0, &ctxt->parser,
+                                      &ctxt->it);
     if (rc != CborNoError) {
         return mgmt_err_from_cbor(rc);
     }
 
-    cbor_encoder_cust_writer_init(&cbuf->encoder, streamer->writer, 0);
+    cbor_encoder_cust_writer_init(&ctxt->encoder, streamer->writer, 0);
 
     return 0;
 }
