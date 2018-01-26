@@ -8,6 +8,7 @@ transports:
 `smp_svr` enables support for the following command groups:
     * fs_mgmt
     * img_mgmt
+    * log_mgmt
     * os_mgmt
 
 ## Mynewt
@@ -51,6 +52,35 @@ setting in `prj.conf` accordingly.
 
 In addition, the MCUBoot boot loader (https://github.com/runtimeco/mcuboot) is
 required for img_mgmt to function properly.
+
+The smp_svr app logs reboots to a flash circular buffer (FCB) backed log.  The
+flash map for the nRF52 only allocates flash for either the NFFS file system or
+the FCB, but not both.  By default, this application uses the FCB log, not the
+file system.  You can enable the NFFS file system and disable the FCB as follows-
+
+1. In `zephyr/prj.conf`, uncomment the `FILE_SYSTEM` settings and comment out
+the `FLASH` and `FCB` settings:
+
+```
+    # Enable the NFFS file system.
+    CONFIG_FILE_SYSTEM=y
+    CONFIG_FILE_SYSTEM_NFFS=y
+
+     # Enable the flash circular buffer (FCB) for the reboot log.
+    #CONFIG_FLASH_PAGE_LAYOUT=y
+    #CONFIG_FLASH_MAP=y
+    #CONFIG_FCB=y
+```
+
+2. Link in the NFFS library by uncommenting the `NFFS` line in
+`zephyr/CMakeLists.txt`:
+
+```
+    zephyr_link_libraries(
+        MCUMGR
+        NFFS
+    )
+```
 
 ### Building
 

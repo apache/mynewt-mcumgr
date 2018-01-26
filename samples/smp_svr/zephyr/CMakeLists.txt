@@ -39,4 +39,9 @@ target_sources(app PRIVATE
     src/main.c
 )
 
-zephyr_link_libraries(MCUMGR NFFS)
+zephyr_link_libraries(
+    MCUMGR
+
+    ### Uncomment this line to use the NFFS file system.
+    # NFFS
+)
