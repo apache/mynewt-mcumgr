@@ -41,7 +41,7 @@ extern "C" {
 #define MGMT_GROUP_ID_IMAGE     1
 #define MGMT_GROUP_ID_STATS     2
 #define MGMT_GROUP_ID_CONFIG    3
-#define MGMT_GROUP_ID_LOGS      4
+#define MGMT_GROUP_ID_LOG       4
 #define MGMT_GROUP_ID_CRASH     5
 #define MGMT_GROUP_ID_SPLIT     6
 #define MGMT_GROUP_ID_RUN       7
@@ -203,12 +203,12 @@ struct mgmt_ctxt {
  *
  * A separate handler is required for each supported op-ID pair.
  *
- * @param cbuf                  The mcumgr context to use.
+ * @param ctxt                  The mcumgr context to use.
  *
  * @return                      0 if a response was successfully encoded,
- *                                 MGMT_ERR_[...] code on failure.
+ *                                  MGMT_ERR_[...] code on failure.
  */
-typedef int mgmt_handler_fn(struct mgmt_ctxt *cbuf);
+typedef int mgmt_handler_fn(struct mgmt_ctxt *ctxt);
 
 /**
  * @brief Read handler and write handler for a single command ID.
@@ -340,23 +340,23 @@ const struct mgmt_handler *mgmt_find_handler(uint16_t group_id,
 /**
  * @brief Encodes a response status into the specified management context.
  *
- * @param cbuf                  The management context to encode into.
+ * @param ctxt                  The management context to encode into.
  * @param status                The response status to write.
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-int mgmt_write_rsp_status(struct mgmt_ctxt *cbuf, int status);
+int mgmt_write_rsp_status(struct mgmt_ctxt *ctxt, int status);
 
 /**
  * @brief Initializes a management context object with the specified streamer.
  *
- * @param cbuf                  The context object to initialize.
+ * @param ctxt                  The context object to initialize.
  * @param streamer              The streamer that will be used with the
  *                                  context.
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-int mgmt_ctxt_init(struct mgmt_ctxt *cbuf, struct mgmt_streamer *streamer);
+int mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct mgmt_streamer *streamer);
 
 /**
  * @brief Converts a CBOR status code to a MGMT_ERR_[...] code.
