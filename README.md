@@ -11,6 +11,20 @@ mcumgr is operating system and hardware independent.  It relies on hardware
 porting layers from the operating system it runs on.  Currently, mcumgr runs on
 both the Apache Mynewt and Zephyr operating systems.
 
+## Getting started
+
+For tips on using mcumgr with your particular OS, see the appropriate file from
+the list below:
+
+* README-mynewt.md
+* README-zephyr.md
+
+## Dependencies
+
+To use mcumgr's image management support, your device must be running the
+MCUBoot boot loader (https://github.com/runtimeco/mcuboot).  The other mcumgr
+features do not require MCUboot.
+
 ## Command line tool
 
 The `mcumgr` command line tool is available at:
@@ -52,6 +66,7 @@ As an example, the sample application `smp_svr` uses the following components:
 * Command handlers:
     * Image management (`img_mgmt`)
     * File system management (`fs_mgmt`)
+    * Log management (`log_mgmt`)
     * OS management (`os_mgmt`)
 * Transfer/Transports protocols:
     * SMP/Bluetooth
@@ -60,9 +75,9 @@ As an example, the sample application `smp_svr` uses the following components:
 yielding the following stack diagram:
 
 ```
-+--------------+--------------+-------------+
-|   img_mgmt   |   fs_mgmt    |   os_mgmt   |
-+--------------+--------------+-------------+
++----------+----------+----------+----------+
+| img_mgmt |  fs_mgmt | log_mgmt |  os_mgmt |
++----------+----------+----------+----------+
 |                   mgmt                    |
 +---------------------+---------------------+
 |         SMP         |         SMP         |
@@ -87,7 +102,9 @@ The contents of the CBOR key-value map are specified per command type.
 
 ## Supported transfer encodings
 
-Mcumgr comes with one built-in transfer encoding: Simple Management Protocol (SMP).  SMP requests and responses have a very basic structure.  For details, see the comments at the top of `smp/include/smp/smp.h`.
+Mcumgr comes with one built-in transfer encoding: Simple Management Protocol
+(SMP).  SMP requests and responses have a very basic structure.  For details,
+see the comments at the top of `smp/include/smp/smp.h`.
 
 ## Supported transports
 
@@ -113,10 +130,6 @@ For more information in the source, here are some pointers:
 - [mgmt](https://github.com/apache/mcumgr/tree/master/mgmt): Code implementing the `mgmt` layer of mcumgr.
 - [samples](https://github.com/apache/mcumgr/tree/master/samples): Sample applications utilizing mcumgr.
 - [smp](https://github.com/apache/mcumgr/tree/master/smp): The built-in transfer encoding: Simple management protocol.
-
-## Known issues
-
-- (Zephyr) If the Bluetooth stack runs out of ACL transmit buffers while a large mcumgr response is being sent, the buffers never get freed.  This appears to trigger a net_buf leak in the stack.
 
 ## Joining
 
