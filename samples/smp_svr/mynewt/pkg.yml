@@ -39,5 +39,4 @@ pkg.deps:
     - '@mynewt-mcumgr/cmd/fs_mgmt'
     - '@mynewt-mcumgr/cmd/img_mgmt'
     - '@mynewt-mcumgr/cmd/os_mgmt'
-    - '@mynewt-mcumgr/mgmt'
     - '@mynewt-mcumgr/smp'
