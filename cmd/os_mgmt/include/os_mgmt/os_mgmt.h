@@ -24,8 +24,6 @@
 extern "C" {
 #endif
 
-struct mgmt_ctxt;
-
 /**
  * Command IDs for OS management group.
  */
