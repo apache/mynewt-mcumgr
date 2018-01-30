@@ -17,11 +17,6 @@
 #include "mgmt/smp_bt.h"
 #include "mgmt/buf.h"
 
-#if defined CONFIG_FCB && defined CONFIG_FILE_SYSTEM_NFFS
-#error Both CONFIG_FCB and CONFIG_FILE_SYSTEM_NFFS are defined; smp_svr \
-       application only supports one at a time.
-#endif
-
 #ifdef CONFIG_MCUMGR_CMD_FS_MGMT
 #include "fs_mgmt/fs_mgmt.h"
 #endif
