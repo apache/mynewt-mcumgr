@@ -153,7 +153,10 @@ void main(void)
 
     rc = init_fcb();
     assert(rc == 0);
+
+#ifdef CONFIG_REBOOT_LOG
     reboot_log_configure(&smp_svr_log);
+#endif
 
     /* Register the built-in mcumgr command handlers. */
 #ifdef CONFIG_MCUMGR_CMD_FS_MGMT
@@ -180,8 +183,10 @@ void main(void)
     /* Initialize the Bluetooth mcumgr transport. */
     smp_bt_register();
 
+#ifdef CONFIG_MDLOG
     mdlog_register("smp_svr", &smp_svr_log, &mdlog_fcb_handler, &smp_svr_fcb,
                    MDLOG_LEVEL_DEBUG);
+#endif
 
     /* The system work queue handles all incoming mcumgr requests.  Let the
      * main thread idle while the mcumgr server runs.
