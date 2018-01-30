@@ -92,7 +92,7 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
 }
 
 static int
-log_mgmt_walk_cb_encode(const struct log_mgmt_entry *entry, void *arg)
+log_mgmt_cb_encode(const struct log_mgmt_entry *entry, void *arg)
 {
     struct CborCntWriter cnt_writer;
     struct log_walk_ctxt *ctxt;
@@ -151,7 +151,7 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
     };
 
     rc = log_mgmt_impl_foreach_entry(log->name, &filter,
-                                     log_mgmt_walk_cb_encode, &ctxt);
+                                     log_mgmt_cb_encode, &ctxt);
     if (rc != 0 && rc != MGMT_ERR_EMSGSIZE) {
         return rc;
     }

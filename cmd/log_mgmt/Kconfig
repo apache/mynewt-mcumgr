@@ -18,6 +18,7 @@
 menuconfig MCUMGR_CMD_LOG_MGMT
     bool
     prompt "Enable mcumgr handlers for log management"
+    depends on MDLOG
     default n
     help
       Enables mcumgr handlers for log management
