@@ -41,7 +41,5 @@ target_sources(app PRIVATE
 
 zephyr_link_libraries(
     MCUMGR
-
-    ### Uncomment this line to use the NFFS file system.
-    # NFFS
+    NFFS
 )
