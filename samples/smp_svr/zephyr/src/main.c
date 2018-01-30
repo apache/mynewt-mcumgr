@@ -14,6 +14,7 @@
 #include "logging/mdlog.h"
 #include "logging/reboot_log.h"
 #include "fcb.h"
+#include "stats.h"
 #include "mgmt/smp_bt.h"
 #include "mgmt/buf.h"
 
@@ -29,12 +30,12 @@
 #ifdef CONFIG_MCUMGR_CMD_LOG_MGMT
 #include "log_mgmt/log_mgmt.h"
 #endif
+#ifdef CONFIG_MCUMGR_CMD_STAT_MGMT
+#include "stat_mgmt/stat_mgmt.h"
+#endif
 
 #define DEVICE_NAME         CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN     (sizeof(DEVICE_NAME) - 1)
-
-struct fcb smp_svr_fcb;
-struct mdlog smp_svr_log;
 
 /* smp_svr uses the first "peruser" log module. */
 #define SMP_SVR_MDLOG_MODULE  (MDLOG_MODULE_PERUSER + 0)
@@ -43,6 +44,21 @@ struct mdlog smp_svr_log;
 #define SMP_SVR_MDLOG(lvl, ...) \
     MDLOG_ ## lvl(&smp_svr_log, SMP_SVR_MDLOG_MODULE, __VA_ARGS__)
 
+/* Define an example stats group; tracks seconds of uptime. */
+STATS_SECT_START(smp_svr_stats)
+    STATS_SECT_ENTRY(ticks)
+STATS_SECT_END
+
+/* Assign a name to the `ticks` stat. */
+STATS_NAME_START(smp_svr_stats)
+    STATS_NAME(smp_svr_stats, ticks)
+STATS_NAME_END(smp_svr_stats)
+
+/* Define an instance of the stats group. */
+STATS_SECT_DECL(smp_svr_stats) smp_svr_stats;
+
+struct fcb smp_svr_fcb;
+struct mdlog smp_svr_log;
 
 static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -158,6 +174,9 @@ void main(void)
     reboot_log_configure(&smp_svr_log);
 #endif
 
+    rc = STATS_INIT_AND_REG(smp_svr_stats, STATS_SIZE_32, "smp_svr_stats");
+    assert(rc == 0);
+
     /* Register the built-in mcumgr command handlers. */
 #ifdef CONFIG_MCUMGR_CMD_FS_MGMT
     fs_mgmt_register_group();
@@ -170,6 +189,9 @@ void main(void)
 #endif
 #ifdef CONFIG_MCUMGR_CMD_LOG_MGMT
     log_mgmt_register_group();
+#endif
+#ifdef CONFIG_MCUMGR_CMD_STAT_MGMT
+    stat_mgmt_register_group();
 #endif
 
     /* Enable Bluetooth. */
@@ -192,6 +214,7 @@ void main(void)
      * main thread idle while the mcumgr server runs.
      */
     while (1) {
-        k_sleep(INT32_MAX);
+        k_sleep(1000);
+        STATS_INC(smp_svr_stats, ticks);
     }
 }
