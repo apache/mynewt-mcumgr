@@ -22,7 +22,7 @@ the list below:
 ## Dependencies
 
 To use mcumgr's image management support, your device must be running the
-MCUBoot boot loader (https://github.com/runtimeco/mcuboot).  The other mcumgr
+MCUboot boot loader (https://github.com/runtimeco/mcuboot).  The other mcumgr
 features do not require MCUboot.
 
 ## Command line tool
