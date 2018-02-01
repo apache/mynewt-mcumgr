@@ -50,7 +50,7 @@ the file system management commands will not work.  To enable file system
 management for a different platform, adjust the `CONFIG_FS_NFFS_FLASH_DEV_NAME`
 setting in `prj.conf` accordingly.
 
-In addition, the MCUBoot boot loader (https://github.com/runtimeco/mcuboot) is
+In addition, the MCUboot boot loader (https://github.com/runtimeco/mcuboot) is
 required for img_mgmt to function properly.
 
 The smp_svr app logs reboots to a flash circular buffer (FCB) backed log.  The
