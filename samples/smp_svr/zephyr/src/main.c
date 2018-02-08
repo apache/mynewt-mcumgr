@@ -151,11 +151,10 @@ static int init_fcb(void)
         .f_version = MDLOG_VERSION,
         .f_sector_cnt = sector_cnt - 1,
         .f_scratch_cnt = 1,
-        .f_area_id = 4,
         .f_sectors = sectors,
     };
 
-    rc = fcb_init(&smp_svr_fcb);
+    rc = fcb_init(4, &smp_svr_fcb);
     if (rc != 0) {
         return rc;
     }
@@ -168,7 +167,9 @@ void main(void)
     int rc;
 
     rc = init_fcb();
-    assert(rc == 0);
+    if (rc != 0) {
+        printk("Failed to initialize FCB; rc=%d\n", rc);
+    }
 
 #ifdef CONFIG_REBOOT_LOG
     reboot_log_configure(&smp_svr_log);
@@ -205,7 +206,7 @@ void main(void)
     /* Initialize the Bluetooth mcumgr transport. */
     smp_bt_register();
 
-#ifdef CONFIG_MDLOG
+#if defined(CONFIG_MDLOG) && defined(CONFIG_FCB)
     mdlog_register("smp_svr", &smp_svr_log, &mdlog_fcb_handler, &smp_svr_fcb,
                    MDLOG_LEVEL_DEBUG);
 #endif
