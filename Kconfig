@@ -24,6 +24,6 @@ config MCUMGR
       This option enables the mcumgr management library.
 
 if MCUMGR
-source "ext/mcumgr/mgmt/port/zephyr/Kconfig"
-source "ext/mcumgr/cmd/Kconfig"
+source "ext/lib/mgmt/mcumgr/mgmt/port/zephyr/Kconfig"
+source "ext/lib/mgmt/mcumgr/cmd/Kconfig"
 endif
