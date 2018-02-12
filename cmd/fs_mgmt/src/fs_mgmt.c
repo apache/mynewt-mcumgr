@@ -47,7 +47,7 @@ static const struct mgmt_handler fs_mgmt_handlers[] = {
 };
 
 #define FS_MGMT_HANDLER_CNT \
-    sizeof fs_mgmt_handlers / sizeof fs_mgmt_handlers[0]
+    (sizeof fs_mgmt_handlers / sizeof fs_mgmt_handlers[0])
 
 static struct mgmt_group fs_mgmt_group = {
     .mg_handlers = fs_mgmt_handlers,
