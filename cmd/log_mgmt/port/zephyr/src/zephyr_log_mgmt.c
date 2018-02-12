@@ -18,10 +18,10 @@
  */
 
 #include <misc/util.h>
-#include "logging/mdlog.h"
-#include "mgmt/mgmt.h"
-#include "log_mgmt/log_mgmt.h"
-#include "log_mgmt/log_mgmt_impl.h"
+#include <logging/mdlog.h>
+#include <mgmt/mgmt.h>
+#include <log_mgmt/log_mgmt.h>
+#include <log_mgmt/log_mgmt_impl.h>
 #include "../../../src/log_mgmt_config.h"
 
 struct zephyr_log_mgmt_walk_arg {

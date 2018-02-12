@@ -21,10 +21,10 @@
 #include <misc/reboot.h>
 #include <debug/object_tracing.h>
 #include <kernel_structs.h>
-#include "logging/reboot_log.h"
-#include "mgmt/mgmt.h"
-#include "os_mgmt/os_mgmt.h"
-#include "os_mgmt/os_mgmt_impl.h"
+#include <logging/reboot_log.h>
+#include <mgmt/mgmt.h>
+#include <os_mgmt/os_mgmt.h>
+#include <os_mgmt/os_mgmt_impl.h>
 
 static void zephyr_os_mgmt_reset_cb(struct k_timer *timer);
 static void zephyr_os_mgmt_reset_work_handler(struct k_work *work);

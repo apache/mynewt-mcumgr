@@ -17,9 +17,9 @@
  * under the License.
  */
 
-#include "mgmt/mgmt.h"
-#include "fs_mgmt/fs_mgmt_impl.h"
-#include "fs.h"
+#include <fs.h>
+#include <mgmt/mgmt.h>
+#include <fs_mgmt/fs_mgmt_impl.h>
 
 int
 fs_mgmt_impl_filelen(const char *path, size_t *out_len)

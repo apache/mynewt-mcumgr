@@ -18,10 +18,10 @@
  */
 
 #include <misc/util.h>
-#include "stats.h"
-#include "mgmt/mgmt.h"
-#include "stat_mgmt/stat_mgmt.h"
-#include "stat_mgmt/stat_mgmt_impl.h"
+#include <stats.h>
+#include <mgmt/mgmt.h>
+#include <stat_mgmt/stat_mgmt.h>
+#include <stat_mgmt/stat_mgmt_impl.h>
 
 struct zephyr_stat_mgmt_walk_arg {
     stat_mgmt_foreach_entry_fn *cb;
