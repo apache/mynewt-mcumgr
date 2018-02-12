@@ -29,8 +29,8 @@ config STAT_MGMT_MAX_NAME_LEN
     prompt "Maximum stat group name length"
     default 32
     help
-      Limits the maximum stat group name length in mcumgr requests.  A buffer
-      of this size gets allocated on the stack during handling of all stat read
-      commands.  If a stat group's name exceeds this limit, it will be
-      impossible to retrieve its values with a stat show command.
+      Limits the maximum stat group name length in mcumgr requests, in bytes.
+      A buffer of this size gets allocated on the stack during handling of all
+      stat read commands.  If a stat group's name exceeds this limit, it will
+      be impossible to retrieve its values with a stat show command.
 endif

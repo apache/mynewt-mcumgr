@@ -33,6 +33,7 @@ config IMG_MGMT_UL_CHUNK_SIZE
     prompt "Maximum chunk size for image uploads"
     default 512
     help
-      Limits the maximum chunk size in image uploads.  A buffer of this size
-      gets allocated on the stack during handling of a image upload command.
+      Limits the maximum chunk size for image uploads, in bytes.  A buffer of
+      this size gets allocated on the stack during handling of a image upload
+      command.
 endif

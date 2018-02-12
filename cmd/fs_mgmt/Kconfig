@@ -29,23 +29,24 @@ config FS_MGMT_UL_CHUNK_SIZE
     prompt "Maximum chunk size for file uploads"
     default 512
     help
-      Limits the maximum chunk size in file uploads.  A buffer of this size
-      gets allocated on the stack during handling of a file upload command.
+      Limits the maximum chunk size for file uploads, in bytes.  A buffer of
+      this size gets allocated on the stack during handling of a file upload command.
 
 config FS_MGMT_DL_CHUNK_SIZE
     int
     prompt "Maximum chunk size for file downloads"
     default 512
     help
-      Limits the maximum chunk size in file downloads.  A buffer of this size
-      gets allocated on the stack during handling of a file download command.
+      Limits the maximum chunk size for file downloads, in bytes.  A buffer of
+      this size gets allocated on the stack during handling of a file download
+      command.
 
 config FS_MGMT_PATH_SIZE
     int
     prompt "Maximum file path length"
     default 64
     help
-      Limits the maximum path length in file operations.  A buffer of this size
-      gets allocated on the stack during handling of file upload and download
-      commands.
+      Limits the maximum path length for file operations, in bytes.  A buffer
+      of this size gets allocated on the stack during handling of file upload
+      and download commands.
 endif
