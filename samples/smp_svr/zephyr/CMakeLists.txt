@@ -19,11 +19,6 @@ project(NONE)
 
 assert_exists(DTC_OVERLAY_FILE)
 
-# This string ends up getting printed in the device console
-if (NOT DEFINED FROM_WHO)
-  set(FROM_WHO Zephyr)
-endif()
-
 target_sources(app PRIVATE
     src/main.c
 )
