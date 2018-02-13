@@ -11,9 +11,6 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
-#include <logging/mdlog.h>
-#include <logging/reboot_log.h>
-#include <fcb.h>
 #include <stats.h>
 #include <mgmt/smp_bt.h>
 #include <mgmt/buf.h>
@@ -27,22 +24,12 @@
 #ifdef CONFIG_MCUMGR_CMD_IMG_MGMT
 #include "img_mgmt/img_mgmt.h"
 #endif
-#ifdef CONFIG_MCUMGR_CMD_LOG_MGMT
-#include "log_mgmt/log_mgmt.h"
-#endif
 #ifdef CONFIG_MCUMGR_CMD_STAT_MGMT
 #include "stat_mgmt/stat_mgmt.h"
 #endif
 
 #define DEVICE_NAME         CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN     (sizeof(DEVICE_NAME) - 1)
-
-/* smp_svr uses the first "peruser" log module. */
-#define SMP_SVR_MDLOG_MODULE  (MDLOG_MODULE_PERUSER + 0)
-
-/* Convenience macro for logging to the smp_svr module. */
-#define SMP_SVR_MDLOG(lvl, ...) \
-    MDLOG_ ## lvl(&smp_svr_log, SMP_SVR_MDLOG_MODULE, __VA_ARGS__)
 
 /* Define an example stats group; tracks seconds of uptime. */
 STATS_SECT_START(smp_svr_stats)
@@ -56,9 +43,6 @@ STATS_NAME_END(smp_svr_stats)
 
 /* Define an instance of the stats group. */
 STATS_SECT_DECL(smp_svr_stats) smp_svr_stats;
-
-struct fcb smp_svr_fcb;
-struct mdlog smp_svr_log;
 
 static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -119,61 +103,9 @@ static void bt_ready(int err)
     advertise();
 }
 
-static int init_fcb(void)
-{
-    /* If the user has enabled FCB support, assume there is an FCB in the NFFS
-     * area.
-     */
-#ifndef CONFIG_FCB
-    return 0;
-#endif
-
-    static struct flash_sector sectors[128];
-
-    uint32_t sector_cnt;
-    int rc;
-
-    sector_cnt = sizeof sectors / sizeof sectors[0];
-    rc = flash_area_get_sectors(4, &sector_cnt, sectors);
-    if (rc != 0) {
-        return rc;
-    }
-
-    if (sector_cnt <= 1) {
-        return -EINVAL;
-    }
-
-    /* Initialize the FCB in the NFFS flash area (area 4) with one scratch
-     * sector.
-     */
-    smp_svr_fcb = (struct fcb) {
-        .f_magic = 0x12345678,
-        .f_version = MDLOG_VERSION,
-        .f_sector_cnt = sector_cnt - 1,
-        .f_scratch_cnt = 1,
-        .f_sectors = sectors,
-    };
-
-    rc = fcb_init(4, &smp_svr_fcb);
-    if (rc != 0) {
-        return rc;
-    }
-
-    return 0;
-}
-
 void main(void)
 {
     int rc;
-
-    rc = init_fcb();
-    if (rc != 0) {
-        printk("Failed to initialize FCB; rc=%d\n", rc);
-    }
-
-#ifdef CONFIG_REBOOT_LOG
-    reboot_log_configure(&smp_svr_log);
-#endif
 
     rc = STATS_INIT_AND_REG(smp_svr_stats, STATS_SIZE_32, "smp_svr_stats");
     assert(rc == 0);
@@ -187,9 +119,6 @@ void main(void)
 #endif
 #ifdef CONFIG_MCUMGR_CMD_IMG_MGMT
     img_mgmt_register_group();
-#endif
-#ifdef CONFIG_MCUMGR_CMD_LOG_MGMT
-    log_mgmt_register_group();
 #endif
 #ifdef CONFIG_MCUMGR_CMD_STAT_MGMT
     stat_mgmt_register_group();
@@ -205,11 +134,6 @@ void main(void)
 
     /* Initialize the Bluetooth mcumgr transport. */
     smp_bt_register();
-
-#if defined(CONFIG_MDLOG) && defined(CONFIG_FCB)
-    mdlog_register("smp_svr", &smp_svr_log, &mdlog_fcb_handler, &smp_svr_fcb,
-                   MDLOG_LEVEL_DEBUG);
-#endif
 
     /* The system work queue handles all incoming mcumgr requests.  Let the
      * main thread idle while the mcumgr server runs.
