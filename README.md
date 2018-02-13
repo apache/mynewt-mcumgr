@@ -21,15 +21,18 @@ the list below:
 
 ## Dependencies
 
-To use mcumgr's image management support, your device must be running the
-MCUboot boot loader (https://github.com/runtimeco/mcuboot).  The other mcumgr
-features do not require MCUboot.
+To use mcumgr's image management support, your device must be running version
+1.1.0 or later of the [MCUboot boot
+loader](https://github.com/runtimeco/mcuboot).  The other mcumgr features do
+not require MCUboot.
 
 ## Command line tool
 
 The `mcumgr` command line tool is available at:
-https://github.com/apache/mynewt-mcumgr-cli.  The tool is written in Go, and it
-is installed with the `go get` command:
+https://github.com/apache/mynewt-mcumgr-cli.  The command line tool requires [Go
+1.7 or later](https://golang.org/dl/).  Once Go is installed and set up on your
+system, you can install the mcumgr CLI tool by issuing the following `go get`
+command:
 
 ```
 $ go get github.com/apache/mynewt-mcumgr-cli/mcumgr

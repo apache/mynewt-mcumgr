@@ -8,8 +8,9 @@ transports:
 `smp_svr` enables support for the following command groups:
     * fs_mgmt
     * img_mgmt
-    * log_mgmt
+    * log_mgmt (Mynewt only)
     * os_mgmt
+    * stat_mgmt
 
 ## Mynewt
 
@@ -53,41 +54,82 @@ setting in `prj.conf` accordingly.
 In addition, the MCUboot boot loader (https://github.com/runtimeco/mcuboot) is
 required for img_mgmt to function properly.
 
-The smp_svr app logs reboots to a flash circular buffer (FCB) backed log.  The
-flash map for the nRF52 only allocates flash for either the NFFS file system or
-the FCB, but not both.  By default, this application uses the FCB log, not the
-file system.  You can enable the NFFS file system and disable the FCB as follows-
-
-1. In `zephyr/prj.conf`, uncomment the `FILE_SYSTEM` settings and comment out
-the `FLASH` and `FCB` settings:
-
-```
-    # Enable the NFFS file system.
-    CONFIG_FILE_SYSTEM=y
-    CONFIG_FILE_SYSTEM_NFFS=y
-
-     # Enable the flash circular buffer (FCB) for the reboot log.
-    #CONFIG_FLASH_PAGE_LAYOUT=y
-    #CONFIG_FLASH_MAP=y
-    #CONFIG_FCB=y
-```
-
-2. Link in the NFFS library by uncommenting the `NFFS` line in
-`zephyr/CMakeLists.txt`:
-
-```
-    zephyr_link_libraries(
-        NFFS
-    )
-```
-
 ### Building
+
+The below steps describe how to build and run the `smp_svr` sample app in
+Zephyr.  Where examples are given, they assume the following setup:
+
+* BSP: Nordic nRF52dk
+* MCU: PCA10040
+
+#### Step 1: Configure environment
+
+Define the `BOARD`, `ZEPHYR_GCC_VARIANT`, and any other environment variables
+required by your setup.  For our example, we use the following:
+
+```
+export ZEPHYR_GCC_VARIANT=gccarmemb
+export BOARD=nrf52_pca10040
+export GCCARMEMB_TOOLCHAIN_PATH=/usr/local/Caskroom/gcc-arm-embedded/6-2017-q2-update/gcc-arm-none-eabi-6-2017-q2-update
+```
+
+#### Step 2: Build MCUboot
+
+Build MCUboot by following the instructions in its `docs/readme-zephyr.md`
+file.
+
+#### Step 3: Upload MCUboot
+
+Upload the resulting `zephyr.bin` file to address 0 of your board.  This can be
+done in gdb as follows:
+
+```
+restore <path-to-mcuboot-zephyr.bin> binary 0
+```
+
+#### Step 4: Build smp_svr
 
 The Zephyr port of `smp_svr` can be built using the usual procedure:
 
 ```
 $ cd samples/smp_svr/zephyr
 $ mkdir build && cd build
-$ cmake -DBOARD=<board> ..
+$ cmake ..
 $ make
+```
+
+#### Step 5: Create an MCUboot-compatible image
+
+Using MCUboot's `imgtool.py` script, convert the `zephyr.bin` file from step 4
+into an image file.  In the below example, the MCUboot repo is located at `~/repos/mcuboot`.
+
+```
+~/repos/mcuboot/scripts/imgtool.py sign \
+    --header-size 0x200 \
+    --align 8 \
+    --version 1.0 \
+    --included-header \
+    --key ~/repos/mcuboot/root-rsa-2048.pem \
+    <path-to-smp_svr-zephyr.bin> signed-mcumgr.bin
+```
+
+The above command creates an image file called `signed-mcumgr.bin` in the
+current directory.
+
+#### Step 6: Upload the smp_svr image
+
+Upload the `signed-mcumgr.bin` file from step 5 to image slot 0 of your board.  The location of image slot 0 varies by BSP.  For the nRF52dk, slot 0 is located at address 0xc000.
+
+The following gdb command uploads the image to 0xc000:
+```
+restore <path-to-signed-mcumgr.bin> binary 0xc000
+```
+
+#### Step 7: Run it!
+
+The `smp_svr` app is ready to run.  Just reset your board and test the app with the mcumgr CLI tool:
+
+```
+$ mcumgr --conntype ble --connstring peer_name=Zephyr echo hello
+hello
 ```
