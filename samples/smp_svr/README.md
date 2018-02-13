@@ -77,7 +77,6 @@ the `FLASH` and `FCB` settings:
 
 ```
     zephyr_link_libraries(
-        MCUMGR
         NFFS
     )
 ```

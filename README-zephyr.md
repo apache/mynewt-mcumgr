@@ -1,4 +1,4 @@
-## Building and using mcumgr with Zephyr
+## Using mcumgr with Zephyr
 
 ### Configuration
 
@@ -13,17 +13,6 @@ are described below:
 | `CONFIG_MCUMGR_CMD_IMG_MGMT` | Enable mcumgr handlers for image management | n |
 | `CONFIG_MCUMGR_CMD_LOG_MGMT` | Enable mcumgr handlers for log management | n |
 | `CONFIG_MCUMGR_CMD_OS_MGMT` | Enable mcumgr handlers for OS management | n |
-
-### Building
-
-Your application must specify mcumgr as a link-time dependency.  This is done
-by adding the following to your application's `CMakeLists.txt` file:
-
-```
-zephyr_link_libraries(
-    MCUMGR
-)
-```
 
 ### Known issues
 

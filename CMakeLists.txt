@@ -1,4 +1,4 @@
-add_library(MCUMGR INTERFACE)
+zephyr_interface_library_named(MCUMGR)
 
 zephyr_library()
 add_subdirectory(cborattr)
