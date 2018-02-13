@@ -13,7 +13,3 @@ are described below:
 | `CONFIG_MCUMGR_CMD_IMG_MGMT` | Enable mcumgr handlers for image management | n |
 | `CONFIG_MCUMGR_CMD_LOG_MGMT` | Enable mcumgr handlers for log management | n |
 | `CONFIG_MCUMGR_CMD_OS_MGMT` | Enable mcumgr handlers for OS management | n |
-
-### Known issues
-
-If the Bluetooth stack runs out of ACL transmit buffers while a large mcumgr response is being sent, the buffers never get freed.  This appears to trigger a net_buf leak in the stack.
