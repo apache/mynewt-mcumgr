@@ -111,18 +111,18 @@ void main(void)
     assert(rc == 0);
 
     /* Register the built-in mcumgr command handlers. */
-    if (IS_ENABLED(CONFIG_MCUMGR_CMD_FS_MGMT)) {
-        fs_mgmt_register_group();
-    }
-    if (IS_ENABLED(CONFIG_MCUMGR_CMD_OS_MGMT)) {
-        os_mgmt_register_group();
-    }
-    if (IS_ENABLED(CONFIG_MCUMGR_CMD_IMG_MGMT)) {
-        img_mgmt_register_group();
-    }
-    if (IS_ENABLED(CONFIG_MCUMGR_CMD_STAT_MGMT)) {
-        stat_mgmt_register_group();
-    }
+#ifdef CONFIG_MCUMGR_CMD_FS_MGMT
+    fs_mgmt_register_group();
+#endif
+#ifdef CONFIG_MCUMGR_CMD_OS_MGMT
+    os_mgmt_register_group();
+#endif
+#ifdef CONFIG_MCUMGR_CMD_IMG_MGMT
+    img_mgmt_register_group();
+#endif
+#ifdef CONFIG_MCUMGR_CMD_STAT_MGMT
+    stat_mgmt_register_group();
+#endif
 
     /* Enable Bluetooth. */
     rc = bt_enable(bt_ready);
