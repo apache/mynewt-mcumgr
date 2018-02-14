@@ -62,13 +62,17 @@ Zephyr.  Where examples are given, they assume the following setup:
 * BSP: Nordic nRF52dk
 * MCU: PCA10040
 
+If you would like to use a more constrained platform, such as the nRF51, you
+should use the `prj.conf.tiny` configuration file rather than the default
+`prj.conf`.
+
 #### Step 1: Configure environment
 
-Define the `BOARD`, `ZEPHYR_GCC_VARIANT`, and any other environment variables
-required by your setup.  For our example, we use the following:
+Define the `BOARD`, `ZEPHYR_TOOLCHAIN_VARIANT`, and any other environment
+variables required by your setup.  For our example, we use the following:
 
 ```
-export ZEPHYR_GCC_VARIANT=gccarmemb
+export ZEPHYR_TOOLCHAIN_VARIANT=gccarmemb
 export BOARD=nrf52_pca10040
 export GCCARMEMB_TOOLCHAIN_PATH=/usr/local/Caskroom/gcc-arm-embedded/6-2017-q2-update/gcc-arm-none-eabi-6-2017-q2-update
 ```
@@ -110,19 +114,19 @@ into an image file.  In the below example, the MCUboot repo is located at `~/rep
     --version 1.0 \
     --included-header \
     --key ~/repos/mcuboot/root-rsa-2048.pem \
-    <path-to-smp_svr-zephyr.bin> signed-mcumgr.bin
+    <path-to-smp_svr-zephyr.bin> signed.img
 ```
 
-The above command creates an image file called `signed-mcumgr.bin` in the
-current directory.
+The above command creates an image file called `signed.img` in the current
+directory.
 
 #### Step 6: Upload the smp_svr image
 
-Upload the `signed-mcumgr.bin` file from step 5 to image slot 0 of your board.  The location of image slot 0 varies by BSP.  For the nRF52dk, slot 0 is located at address 0xc000.
+Upload the `signed.img` file from step 5 to image slot 0 of your board.  The location of image slot 0 varies by BSP.  For the nRF52dk, slot 0 is located at address 0xc000.
 
 The following gdb command uploads the image to 0xc000:
 ```
-restore <path-to-signed-mcumgr.bin> binary 0xc000
+restore <path-to-signed.img> binary 0xc000
 ```
 
 #### Step 7: Run it!
