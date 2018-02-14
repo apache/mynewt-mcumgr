@@ -31,7 +31,7 @@
 #define DEVICE_NAME         CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN     (sizeof(DEVICE_NAME) - 1)
 
-/* Define an example stats group; tracks seconds of uptime. */
+/* Define an example stats group; approximates seconds since boot. */
 STATS_SECT_START(smp_svr_stats)
     STATS_SECT_ENTRY(ticks)
 STATS_SECT_END
