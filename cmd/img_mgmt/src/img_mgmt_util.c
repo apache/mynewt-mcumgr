@@ -22,18 +22,29 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "util/mcumgr_util.h"
 #include "img_mgmt/image.h"
 #include "img_mgmt/img_mgmt.h"
 
 int
 img_mgmt_ver_str(const struct image_version *ver, char *dst)
 {
+    int off;
+
+    off = 0;
+
+    off += ull_to_s(ver->iv_major, INT_MAX, dst + off);
+
+    dst[off++] = '.';
+    off += ull_to_s(ver->iv_minor, INT_MAX, dst + off);
+
+    dst[off++] = '.';
+    off += ull_to_s(ver->iv_revision, INT_MAX, dst + off);
+    
     if (ver->iv_build_num != 0) {
-        return sprintf(dst, "%u.%u.%u.%lu",
-          ver->iv_major, ver->iv_minor, ver->iv_revision,
-          (unsigned long)ver->iv_build_num);
-    } else {
-        return sprintf(dst, "%u.%u.%u",
-          ver->iv_major, ver->iv_minor, ver->iv_revision);
+        dst[off++] = '.';
+        off += ull_to_s(ver->iv_revision, INT_MAX, dst + off);
     }
+
+    return 0;
 }

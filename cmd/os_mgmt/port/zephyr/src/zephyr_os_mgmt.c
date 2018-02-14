@@ -22,6 +22,7 @@
 #include <debug/object_tracing.h>
 #include <kernel_structs.h>
 #include <mgmt/mgmt.h>
+#include <util/mcumgr_util.h>
 #include <os_mgmt/os_mgmt.h>
 #include <os_mgmt/os_mgmt_impl.h>
 
@@ -62,13 +63,13 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
     }
 
     *out_info = (struct os_mgmt_task_info){ 0 };
-
-    snprintf(out_info->oti_name, sizeof out_info->oti_name, "%d",
-             thread->base.prio);
+    ll_to_s(thread->base.prio, sizeof out_info->oti_name, out_info->oti_name);
     out_info->oti_prio = thread->base.prio;
     out_info->oti_taskid = idx;
     out_info->oti_state = thread->base.thread_state;
+#ifdef THREAD_STACK_INFO
     out_info->oti_stksize = thread->stack_info.size / 4;
+#endif
 
     return 0;
 }

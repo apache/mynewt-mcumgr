@@ -5,6 +5,7 @@ add_subdirectory(cborattr)
 add_subdirectory(cmd)
 add_subdirectory(mgmt)
 add_subdirectory(smp)
+add_subdirectory(util)
 
 zephyr_library_link_libraries(MCUMGR)
 
