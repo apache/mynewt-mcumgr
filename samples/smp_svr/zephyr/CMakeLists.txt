@@ -23,7 +23,5 @@ target_sources(app PRIVATE
     src/main.c
 )
 
-zephyr_link_libraries(
-    NFFS
-    mbedTLS
-)
+zephyr_link_libraries_ifdef(CONFIG_FILE_SYSTEM_NFFS NFFS)
+zephyr_link_libraries_ifdef(CONFIG_MBEDTLS mbedTLS)
