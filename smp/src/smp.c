@@ -280,7 +280,6 @@ smp_on_err(struct smp_streamer *streamer, const struct mgmt_hdr *req_hdr,
      */
     if (rsp == NULL) {
         rsp = req;
-        req = NULL;
     }
 
     /* Clear the partial response from the buffer, if any. */
@@ -291,12 +290,7 @@ smp_on_err(struct smp_streamer *streamer, const struct mgmt_hdr *req_hdr,
     rc = smp_build_err_rsp(streamer, req_hdr, status);
     if (rc == 0) {
         streamer->tx_rsp_cb(streamer, rsp, streamer->mgmt_stmr.cb_arg);
-        rsp = NULL;
     }
-
-    /* Free any extra buffers. */
-    mgmt_streamer_free_buf(&streamer->mgmt_stmr, req);
-    mgmt_streamer_free_buf(&streamer->mgmt_stmr, rsp);
 }
 
 /**
@@ -322,19 +316,20 @@ smp_process_request_packet(struct smp_streamer *streamer, void *req)
 
     rsp = NULL;
     valid_hdr = true;
+    rc = 0;
 
-    while (1) {
+    while (rc == 0) {
         rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, req);
         if (rc != 0) {
             valid_hdr = false;
-            break;
+            goto error;
         }
 
         /* Read the management header and strip it from the request. */
         rc = smp_read_hdr(streamer, &req_hdr);
         if (rc != 0) {
             valid_hdr = false;
-            break;
+            goto error;
         }
         mgmt_ntoh_hdr(&req_hdr);
         mgmt_streamer_trim_front(&streamer->mgmt_stmr, req, MGMT_HDR_SIZE);
@@ -342,38 +337,39 @@ smp_process_request_packet(struct smp_streamer *streamer, void *req)
         rsp = mgmt_streamer_alloc_rsp(&streamer->mgmt_stmr, req);
         if (rsp == NULL) {
             rc = MGMT_ERR_ENOMEM;
-            break;
+            goto error;
         }
 
         rc = mgmt_streamer_init_writer(&streamer->mgmt_stmr, rsp);
         if (rc != 0) {
-            break;
+            goto error;
         }
 
         /* Process the request payload and build the response. */
         rc = smp_handle_single_req(streamer, &req_hdr);
         if (rc != 0) {
-            break;
+            goto error;
         }
 
         /* Send the response. */
         rc = streamer->tx_rsp_cb(streamer, rsp, streamer->mgmt_stmr.cb_arg);
-        rsp = NULL;
         if (rc != 0) {
-            break;
+            goto error;
         }
 
         /* Trim processed request to free up space for subsequent responses. */
         mgmt_streamer_trim_front(&streamer->mgmt_stmr, req,
                                  smp_align4(req_hdr.nh_len));
-    }
 
-    if (rc != 0 && valid_hdr) {
-        smp_on_err(streamer, &req_hdr, req, rsp, rc);
-        return rc;
+error:
+        if (rc != 0 && valid_hdr) {
+            smp_on_err(streamer, &req_hdr, req, rsp, rc);
+        }
+
+        mgmt_streamer_free_buf(&streamer->mgmt_stmr, rsp);
     }
 
     mgmt_streamer_free_buf(&streamer->mgmt_stmr, req);
-    mgmt_streamer_free_buf(&streamer->mgmt_stmr, rsp);
-    return 0;
+
+    return valid_hdr ? rc : 0;
 }
