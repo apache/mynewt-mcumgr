@@ -2,7 +2,7 @@
 
 ### Configuration
 
-The `samples/smp_svr/zephyr/prj.conf` file provides a good starting point for
+The `samples/subsys/mgmt/mcumgr/smp_svr/prj.conf` file provides a good starting point for
 configuring an application to use *mcumgr*.  The major configuration settings
 are described below:
 
