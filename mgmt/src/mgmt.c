@@ -22,6 +22,7 @@
 #include "mgmt/endian.h"
 #include "mgmt/mgmt.h"
 
+static mgmt_on_evt_cb *evt_cb;
 static struct mgmt_group *mgmt_group_list;
 static struct mgmt_group *mgmt_group_list_end;
 
@@ -167,4 +168,18 @@ mgmt_hton_hdr(struct mgmt_hdr *hdr)
 {
     hdr->nh_len = htons(hdr->nh_len);
     hdr->nh_group = htons(hdr->nh_group);
+}
+
+void
+mgmt_register_evt_cb(mgmt_on_evt_cb *cb)
+{
+    evt_cb = cb;
+}
+
+void
+mgmt_evt(uint8_t opcode, uint16_t group, uint8_t id, void *arg)
+{
+    if (evt_cb) {
+        evt_cb(opcode, group, id, arg);
+    }
 }

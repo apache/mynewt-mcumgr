@@ -64,6 +64,13 @@ extern "C" {
 
 #define MGMT_HDR_SIZE           8
 
+/*
+ * MGMT event opcodes.
+ */
+#define MGMT_EVT_OP_CMD_RECV            0x01
+#define MGMT_EVT_OP_CMD_STATUS          0x02
+#define MGMT_EVT_OP_CMD_DONE            0x03
+
 struct mgmt_hdr {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     uint8_t  nh_op:3;           /* MGMT_OP_[...] */
@@ -79,6 +86,33 @@ struct mgmt_hdr {
     uint8_t  nh_seq;            /* Sequence number */
     uint8_t  nh_id;             /* Message ID within group */
 };
+
+/*
+ * MGMT_EVT_OP_CMD_STATUS argument
+ */
+struct mgmt_evt_op_cmd_status_arg {
+    int status;
+};
+
+/*
+ * MGMT_EVT_OP_CMD_DONE argument
+ */
+struct mgmt_evt_op_cmd_done_arg {
+    int err;                    /* MGMT_ERR_[...] */
+};
+
+/** @typedef mgmt_on_evt_cb
+ * @brief Function to be called on MGMT event.
+ *
+ * This callback function is used to notify application about mgmt event.
+ *
+ * @param opcode                MGMT_EVT_OP_[...].
+ * @param group                 MGMT_GROUP_ID_[...].
+ * @param id                    Message ID within group.
+ * @param arg                   Optional event argument.
+ */
+typedef void mgmt_on_evt_cb(uint8_t opcode, uint16_t group, uint8_t id,
+                            void *arg);
 
 /** @typedef mgmt_alloc_rsp_fn
  * @brief Allocates a buffer suitable for holding a response.
@@ -380,6 +414,23 @@ void mgmt_ntoh_hdr(struct mgmt_hdr *hdr);
  * @param hdr                   The mcumgr header to byte-swap.
  */
 void mgmt_hton_hdr(struct mgmt_hdr *hdr);
+
+/**
+ * @brief Register event callback function.
+ *
+ * @param cb                    Callback function.
+ */
+void mgmt_register_evt_cb(mgmt_on_evt_cb *cb);
+
+/**
+ * @brief This function is called to notify about mgmt event.
+ *
+ * @param opcode                MGMT_EVT_OP_[...].
+ * @param group                 MGMT_GROUP_ID_[...].
+ * @param id                    Message ID within group.
+ * @param arg                   Optional event argument.
+ */
+void mgmt_evt(uint8_t opcode, uint16_t group, uint8_t id, void *arg);
 
 #ifdef __cplusplus
 }

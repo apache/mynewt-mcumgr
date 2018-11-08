@@ -37,6 +37,13 @@ extern "C" {
 #define IMG_MGMT_ID_CORELOAD        4
 #define IMG_MGMT_ID_ERASE           5
 
+/*
+ * IMG_MGMT_ID_UPLOAD statuses.
+ */
+#define IMG_MGMT_ID_UPLOAD_STATUS_START         0
+#define IMG_MGMT_ID_UPLOAD_STATUS_ONGOING       1
+#define IMG_MGMT_ID_UPLOAD_STATUS_COMPLETE      2
+
 /**
  * @brief Registers the image management command handler group.
  */ 

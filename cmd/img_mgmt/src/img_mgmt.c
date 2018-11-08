@@ -341,6 +341,7 @@ img_mgmt_upload_first_chunk(struct mgmt_ctxt *ctxt, const uint8_t *req_data,
 static int
 img_mgmt_upload(struct mgmt_ctxt *ctxt)
 {
+    struct mgmt_evt_op_cmd_status_arg cmd_status_arg;
     uint8_t img_mgmt_data[IMG_MGMT_UL_CHUNK_SIZE];
     uint8_t data_sha[IMG_MGMT_DATA_SHA_LEN];
     size_t data_sha_len = 0;
@@ -424,10 +425,14 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
             return rc;
         }
         img_mgmt_ctxt.len = len;
+
+        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_START;
     } else {
         if (!img_mgmt_ctxt.uploading) {
             return MGMT_ERR_EINVAL;
         }
+
+        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_ONGOING;
 
         if (off != img_mgmt_ctxt.off) {
             /* Invalid offset.  Drop the data and send the expected offset. */
@@ -454,7 +459,12 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
     if (last) {
         /* Upload complete. */
         img_mgmt_ctxt.uploading = false;
+
+        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_COMPLETE;
     }
+
+    mgmt_evt(MGMT_EVT_OP_CMD_STATUS, MGMT_GROUP_ID_IMAGE, IMG_MGMT_ID_UPLOAD,
+             &cmd_status_arg);
 
     return img_mgmt_encode_upload_rsp(ctxt, 0);
 }
