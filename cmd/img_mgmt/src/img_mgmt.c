@@ -406,6 +406,8 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
             return MGMT_ERR_EINVAL;
         }
 
+        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_START;
+
         /*
          * If request includes proper data hash we can check whether there is
          * upload in progress (interrupted due to e.g. link disconnection) with
@@ -415,7 +417,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
          if ((data_sha_len > 0) && img_mgmt_ctxt.uploading) {
             if ((img_mgmt_ctxt.data_sha_len == data_sha_len) &&
                     !memcmp(img_mgmt_ctxt.data_sha, data_sha, data_sha_len)) {
-                return img_mgmt_encode_upload_rsp(ctxt, 0);
+                goto done;
             }
         }
 
@@ -425,8 +427,6 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
             return rc;
         }
         img_mgmt_ctxt.len = len;
-
-        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_START;
     } else {
         if (!img_mgmt_ctxt.uploading) {
             return MGMT_ERR_EINVAL;
@@ -436,7 +436,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
 
         if (off != img_mgmt_ctxt.off) {
             /* Invalid offset.  Drop the data and send the expected offset. */
-            return img_mgmt_encode_upload_rsp(ctxt, 0);
+            goto done;
         }
     }
 
@@ -463,6 +463,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
         cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_COMPLETE;
     }
 
+done:
     mgmt_evt(MGMT_EVT_OP_CMD_STATUS, MGMT_GROUP_ID_IMAGE, IMG_MGMT_ID_UPLOAD,
              &cmd_status_arg);
 
