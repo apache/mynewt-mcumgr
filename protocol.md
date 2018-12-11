@@ -10,53 +10,73 @@ executing commands.
 
 ## Source Code
 
-The golang source for newtmgr is [available here](https://github.com/apache/mynewt-newtmgr),
+The golang source for **newtmgr** is [available here](https://github.com/apache/mynewt-newtmgr),
 and can be used to provide some insight into how data is exchanged between the
 utility and the device under test.
 
-## Newtmgr Frame Format
+A compatible C version called **mcumgr** is also [available here](https://github.com/apache/mynewt-mcumgr).
+
+## Newtmgr/mcumgr Frame Format
 
 ToDo
 
 ### Endianness
 
-Frames are serialized as **Big Endian** when dealing with values > 8 bits.
+Frames are normally serialized as **Big Endian** when dealing with values > 8 bits.
 
 ### Frame format
 
-Frames in newtmgr have the following format:
+Frames in newtmgr have the following format (C code taken from the mcumgr repo):
 
 ```
-type NmgrReq struct {
-	Op    uint8
+struct mgmt_hdr {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    uint8_t  nh_op:3;           /* MGMT_OP_[...] */
+    uint8_t  _res1:5;
+#endif
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    uint8_t  _res1:5;
+    uint8_t  nh_op:3;           /* MGMT_OP_[...] */
+#endif
+    uint8_t  nh_flags;          /* Reserved for future flags */
+    uint16_t nh_len;            /* Length of the payload */
+    uint16_t nh_group;          /* MGMT_GROUP_ID_[...] */
+    uint8_t  nh_seq;            /* Sequence number */
+    uint8_t  nh_id;             /* Message ID within group */
+};
+```
+
+The newtmgr [go source](https://github.com/apache/mynewt-newtmgr/blob/master/nmxact/nmp/nmp.go) is as follows:
+
+```
+type NmpHdr struct {
+	Op    uint8 /* 3 bits of opcode */
 	Flags uint8
 	Len   uint16
 	Group uint16
 	Seq   uint8
 	Id    uint8
-	Data  []byte
 }
 ```
 
-`Op` can be one of the following values:
+`nh_op` (or `Op` in newtmgr) can be one of the following values:
 
 ```
-const (
-	NMGR_OP_READ      = 0
-	NMGR_OP_READ_RSP  = 1
-	NMGR_OP_WRITE     = 2
-	NMGR_OP_WRITE_RSP = 3
-)
+/** Opcodes; encoded in first byte of header. */
+#define MGMT_OP_READ            0
+#define MGMT_OP_READ_RSP        1
+#define MGMT_OP_WRITE           2
+#define MGMT_OP_WRITE_RSP       3
 ```
 
 - **`op`**: The operation code
 - **`Flags`**: TBD
 - **`Len`**:  The payload len when `Data` is present
 - **`Group`**: Commands are organized into groups. Groups are defined
-  [here](https://github.com/apache/incubator-mynewt-newt/blob/master/newtmgr/protocol/defs.go).
+  [here](https://github.com/apache/mynewt-mcumgr/blob/master/mgmt/include/mgmt/mgmt.h).
 - **`Seq`**: TBD
 - **`Id`**: The command ID to send. Commands in the default `Group` are defined
-  [here](https://github.com/apache/incubator-mynewt-newt/blob/master/newtmgr/protocol/defs.go).
+  [here](https://github.com/apache/mynewt-mcumgr/blob/master/mgmt/include/mgmt/mgmt.h).
 - **`Data`**: The payload associated with the command `Id` above
 
 ### Example Packets
@@ -143,9 +163,9 @@ Return Code = 0
 #### Group Read Request: `image list`
 
 The following command lists images on the device and uses commands from `Group`
-0x01 (`NMGR_GROUP_ID_IMAGE`), and was generated with `$ newtmgr -l DEBUG -c serial image list`:
+0x01 (`MGMT_GROUP_ID_IMAGE`), and was generated with `$ newtmgr -l DEBUG -c serial image list`:
 
-> See [imagelist.go](https://github.com/apache/incubator-mynewt-newt/blob/master/newtmgr/protocol/imagelist.go)
+> See [img_mgmt](https://github.com/apache/mynewt-mcumgr/tree/master/cmd/img_mgmt)
 for a full list of commands in the IMAGE `Group`.
 
 ```
