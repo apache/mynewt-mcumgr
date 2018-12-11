@@ -1,8 +1,8 @@
-# Mcumgr/Newtmgr protocol
+# SMP (Simple Management Protocol) Protocol
 
-The `newtmgr` tool uses a custom protocol to send commands and responses
-between the manager and the end node using a variety of transports (currently
-TTY serial or BLE).
+The `mcumgr` SMP server and `mcumgr-cli` SMP client tool ([source](https://github.com/apache/mynewt-mcumgr-cli))
+use a custom protocol to send commands and responses between the server and client using a
+variety of transports (currently TTY serial or BLE).
 
 The protocol isn't documented but the following information has been inferred
 from the source code available on Github and using the `-l DEBUG` flag When
@@ -10,23 +10,29 @@ executing commands.
 
 ## Source Code
 
-The golang source for **newtmgr** is [available here](https://github.com/apache/mynewt-newtmgr),
+**SMP** is based on the earlier **NMP**, which is part of [Apache Mynewt](https://mynewt.apache.org/).
+
+The golang source for the original **newtmgr** is [available here](https://github.com/apache/mynewt-newtmgr),
 and can be used to provide some insight into how data is exchanged between the
 utility and the device under test.
 
-A compatible C version called **mcumgr** is also [available here](https://github.com/apache/mynewt-mcumgr).
+This repository (`mynewt-mcumgr`) implements an SMP server in **C**,
+and a new command-line SMP client called **mcumgr** was created at 
+[apache/mynewt-mcumgr](https://github.com/apache/mynewt-mcumgr).
 
-## Newtmgr/mcumgr Frame Format
+## SMP Frame Format
 
-ToDo
+TODO: High level introduction.
 
 ### Endianness
 
-Frames are normally serialized as **Big Endian** when dealing with values > 8 bits.
+Frames are normally serialized as **Big Endian** when dealing with values > 8 bits. This is
+mandatory in NMP, but the SMP implementation does add support for **Little Endian** as an
+option at the struct level, as shown below.
 
 ### Frame format
 
-Frames in newtmgr have the following format (C code taken from the mcumgr repo):
+Frames in SMP have the following format:
 
 ```
 struct mgmt_hdr {
@@ -46,7 +52,8 @@ struct mgmt_hdr {
 };
 ```
 
-The newtmgr [go source](https://github.com/apache/mynewt-newtmgr/blob/master/nmxact/nmp/nmp.go) is as follows:
+The NMP/newtmgr [go source](https://github.com/apache/mynewt-newtmgr/blob/master/nmxact/nmp/nmp.go) is as follows,
+without the option to select endianness:
 
 ```
 type NmpHdr struct {
@@ -85,7 +92,7 @@ The following example commands show how the different fields work:
 
 #### Simple Read Request: `taskstats`
 
-The following example corresponds to the `taskstats` command in newtmgr, and
+The following example corresponds to the `taskstats` command ([source](https://github.com/apache/mynewt-mcumgr/blob/master/cmd/os_mgmt/include/os_mgmt/os_mgmt.h)), and
 can be seen by running `newtmgr -l DEBUG -c serial taskstats`:
 
 ```
@@ -94,7 +101,7 @@ Flags: 0
 Len:   0  # No payload present
 Group: 0  # 0x00 = NMGR_GROUP_ID_DEFAULT
 Seq:   0
-Id:    2  # 0x02 in group 0x00 = NMGR_ID_TASKSTATS
+Id:    2  # 0x02 in group 0x00 = OS_MGMT_ID_TASKSTAT
 Data:  [] # No payload (len = 0 above)
 ```
 
