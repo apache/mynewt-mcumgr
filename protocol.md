@@ -1,10 +1,10 @@
-# SMP (Simple Management Protocol) Protocol
+# SMP (Simple Management Protocol) Protocol Notes
 
 The `mcumgr` SMP server and `mcumgr-cli` SMP client tool ([source](https://github.com/apache/mynewt-mcumgr-cli))
 use a custom protocol to send commands and responses between the server and client using a
 variety of transports (currently TTY serial or BLE).
 
-The protocol isn't documented but the following information has been inferred
+The protocol isn't fully documented but the following information has been inferred
 from the source code available on Github and using the `-l DEBUG` flag When
 executing commands.
 
@@ -221,23 +221,26 @@ When serialised this will be sent as `0x00 0x00 0x00 0x00 0x00 0x01 0x00 0x00`.
 
 ## Transports
 
-### Newtmgr Over Serial
+### Mcumgr/Newtmgr SMP Client Over Serial
 
-`newtmgr` can be used over TTY serial with the following parameters:
+`mcumgr` or `newtmgr` can be used over TTY serial with the following parameters
+to connect to a SMP server running on the target device:
 
 - Baud Rate: 115200
 - HW Flow Control: None
 
-### Newtmgr Over BLE
+### Mcumgr/Newtmgr SMP Client Over BLE
 
-`newtmgr` can be used over BLE with the following GATT service and
-characteristic UUIDs.
+`mcumgr` or `newtmgr` can be used over BLE with the following GATT service and
+characteristic UUIDs to connect to a SMP server running on the target device:
 
 - **Service UUID**: `8D53DC1D-1DB7-4CD3-868B-8A527460AA84`
 - **Characteristic UUID**: `DA2E7828-FBCE-4E01-AE9E-261174997C48`
 
-The  "newtmgr" service consists of one write no-rsp characteristic
-for newtmgr requests: a single-byte characteristic that can only
-accepts write-without-response commands.  The contents of each write
-command contains an NMP request.  NMP responses are sent back in the
-form of unsolicited notifications from the same characteristic.
+The  "SMP" (or "newtmgr") service consists of one **write no-rsp
+characteristic** for SMP requests: a single-byte characteristic that
+can only accepts write-without-response commands. The contents of
+each write command contains an SMP request.
+
+SMP responses are sent back in the form of unsolicited notifications
+from the same characteristic.
