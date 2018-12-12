@@ -84,7 +84,10 @@ type NmpHdr struct {
 - **`Seq`**: TBD
 - **`Id`**: The command ID to send. Commands in the default `Group` are defined
   [here](https://github.com/apache/mynewt-mcumgr/blob/master/mgmt/include/mgmt/mgmt.h).
-- **`Data`**: The payload associated with the command `Id` above
+
+
+If `Len` is non-zero, the payload (referred to as **`Data`** in this document) associated
+with command `Id` immediately follows the frame header.
 
 ### Example Packets
 
