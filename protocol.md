@@ -5,7 +5,7 @@ use a custom protocol to send commands and responses between the server and clie
 variety of transports (currently TTY serial or BLE).
 
 The protocol isn't fully documented but the following information has been inferred
-from the source code available on Github and using the `-l DEBUG` flag When
+from the source code available on Github and using the `-l DEBUG` flag when
 executing commands.
 
 ## Source Code
@@ -18,11 +18,9 @@ utility and the device under test.
 
 This repository (`mynewt-mcumgr`) implements an SMP server in **C**,
 and a new command-line SMP client called **mcumgr** was created at 
-[apache/mynewt-mcumgr](https://github.com/apache/mynewt-mcumgr).
+[apache/mynewt-mcumgr-cli](https://github.com/apache/mynewt-mcumgr-cli).
 
 ## SMP Frame Format
-
-TODO: High level introduction.
 
 ### Endianness
 
@@ -30,9 +28,9 @@ Frames are normally serialized as **Big Endian** when dealing with values > 8 bi
 mandatory in NMP, but the SMP implementation does add support for **Little Endian** as an
 option at the struct level, as shown below.
 
-### Frame format
+### Frame Header
 
-Frames in SMP have the following format:
+Frames in SMP have the following header format:
 
 ```
 struct mgmt_hdr {
@@ -87,8 +85,7 @@ type NmpHdr struct {
 
 #### `Data` Payload
 
-If `Len` is non-zero, the payload (referred to as **`Data`** in this document) associated
-with command `Id` immediately follows the frame header.
+If `nh_len` (`Len` in nmp) is non-zero, the `nh_len` byte payload (referred to as **`Data`** in this document) immediately follows the frame header.
 
 ### Example Packets
 
@@ -97,7 +94,7 @@ The following example commands show how the different fields work:
 #### Simple Read Request: `taskstats`
 
 The following example corresponds to the `taskstats` command ([source](https://github.com/apache/mynewt-mcumgr/blob/master/cmd/os_mgmt/include/os_mgmt/os_mgmt.h)), and
-can be seen by running `newtmgr -l DEBUG -c serial taskstats`:
+can be seen by running `mcumgr -l DEBUG -c serial taskstats`:
 
 ```
 Op:    0  # NMGR_OP_READ
@@ -114,7 +111,7 @@ When serialized this will be sent as `0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x02`.
 If this was sent using the serial port, you would get the following request and response:
 
 ```
-$ newtmgr -l DEBUG -c serial taskstats
+$ mcumgr -l DEBUG -c serial taskstats
 2016/11/11 12:45:44 [DEBUG] Writing newtmgr request &{Op:0 Flags:0 Len:0 Group:0 Seq:0 Id:2 Data:[]}
 2016/11/11 12:45:44 [DEBUG] Serializing request &{Op:0 Flags:0 Len:0 Group:0 Seq:0 Id:2 Data:[]} into buffer [0 0 0 0 0 0 0 2]
 2016/11/11 12:45:44 [DEBUG] Tx packet dump:
@@ -174,13 +171,13 @@ Return Code = 0
 #### Group Read Request: `image list`
 
 The following command lists images on the device and uses commands from `Group`
-0x01 (`MGMT_GROUP_ID_IMAGE`), and was generated with `$ newtmgr -l DEBUG -c serial image list`:
+0x01 (`MGMT_GROUP_ID_IMAGE`), and was generated with `$ mcumgr -l DEBUG -c serial image list`:
 
 > See [img_mgmt](https://github.com/apache/mynewt-mcumgr/tree/master/cmd/img_mgmt)
 for a full list of commands in the IMAGE `Group`.
 
 ```
-$ newtmgr -l DEBUG -c serial image list
+$ mcumgr -l DEBUG -c serial image list
 2016/11/11 12:25:51 [DEBUG] Writing newtmgr request &{Op:0 Flags:0 Len:0 Group:1 Seq:0 Id:0 Data:[]}
 2016/11/11 12:25:51 [DEBUG] Serializing request &{Op:0 Flags:0 Len:0 Group:1 Seq:0 Id:0 Data:[]} into buffer [0 0 0 0 0 1 0 0]
 2016/11/11 12:25:51 [DEBUG] Tx packet dump:
@@ -238,8 +235,8 @@ characteristic UUIDs to connect to a SMP server running on the target device:
 - **Service UUID**: `8D53DC1D-1DB7-4CD3-868B-8A527460AA84`
 - **Characteristic UUID**: `DA2E7828-FBCE-4E01-AE9E-261174997C48`
 
-The  "SMP" (or "newtmgr") service consists of one **write no-rsp
-characteristic** for SMP requests: a single-byte characteristic that
+The  "SMP" GATT service consists of one **write no-rsp characteristic**
+for SMP requests: a single-byte characteristic that
 can only accepts write-without-response commands. The contents of
 each write command contains an SMP request.
 
