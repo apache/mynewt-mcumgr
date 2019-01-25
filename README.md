@@ -123,12 +123,12 @@ Information and documentation for mcumgr is stored within the source.
 
 For more information in the source, here are some pointers:
 
-- [cborattr](https://github.com/apache/mynewt-mcumgr/tree/master/cborattr): Used for parsing incoming mcumgr requests.  Destructures mcumgr packets and populates corresponding field variables.
-- [cmd](https://github.com/apache/mynewt-mcumgr/tree/master/cmd): Built-in command handlers for the core mcumgr commands.
-- [ext](https://github.com/apache/mynewt-mcumgr/tree/master/ext): Third-party libraries that mcumgr depends on.
-- [mgmt](https://github.com/apache/mynewt-mcumgr/tree/master/mgmt): Code implementing the `mgmt` layer of mcumgr.
-- [samples](https://github.com/apache/mynewt-mcumgr/tree/master/samples): Sample applications utilizing mcumgr.
-- [smp](https://github.com/apache/mynewt-mcumgr/tree/master/smp): The built-in transfer encoding: Simple management protocol.
+- [cborattr](cborattr): Used for parsing incoming mcumgr requests.  Destructures mcumgr packets and populates corresponding field variables.
+- [cmd](cmd): Built-in command handlers for the core mcumgr commands.
+- [ext](ext): Third-party libraries that mcumgr depends on.
+- [mgmt](mgmt): Code implementing the `mgmt` layer of mcumgr.
+- [samples](samples): Sample applications utilizing mcumgr.
+- [smp](smp): The built-in transfer encoding: Simple management protocol.
 
 ## Joining
 
