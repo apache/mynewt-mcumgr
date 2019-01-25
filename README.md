@@ -112,14 +112,10 @@ see the comments at the top of `smp/include/smp/smp.h`.
 ## Supported transports
 
 The mcumgr project defines two transports:
-* SMP/Console
-* SMP/Bluetooth
+* [SMP/Console](transport/smp-console.md)
+* [SMP/Bluetooth](transport/smp-bluetooth.md)
 
-Particulars of these transports are specified in the following documents:
-* SMP/Console: `transports/smp-console.md`
-* SMP/Bluetooth: `transports/smp-bluetooth.md`
-
-Implementations, being hardware- and OS-specified, are not included.
+Implementations, being hardware- and OS-specific, are not included.
 
 ## Browsing
 
