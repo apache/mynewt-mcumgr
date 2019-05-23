@@ -22,7 +22,8 @@ config MCUMGR
       This option enables the mcumgr management library.
 
 if MCUMGR
-source "ext/lib/mgmt/mcumgr/cmd/Kconfig"
+
+rsource "cmd/Kconfig"
 
 config APP_LINK_WITH_MCUMGR
 	bool "Link 'app' with MCUMGR"

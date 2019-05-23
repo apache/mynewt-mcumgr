@@ -17,10 +17,10 @@
 
 menu "Command handlers"
 
-source "ext/lib/mgmt/mcumgr/cmd/fs_mgmt/Kconfig"
-source "ext/lib/mgmt/mcumgr/cmd/img_mgmt/Kconfig"
-source "ext/lib/mgmt/mcumgr/cmd/log_mgmt/Kconfig"
-source "ext/lib/mgmt/mcumgr/cmd/os_mgmt/Kconfig"
-source "ext/lib/mgmt/mcumgr/cmd/stat_mgmt/Kconfig"
+rsource "fs_mgmt/Kconfig"
+rsource "img_mgmt/Kconfig"
+rsource "log_mgmt/Kconfig"
+rsource "os_mgmt/Kconfig"
+rsource "stat_mgmt/Kconfig"
 
 endmenu
