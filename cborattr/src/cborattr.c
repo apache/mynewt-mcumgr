@@ -19,8 +19,10 @@
 
 //#include <syscfg/syscfg.h>
 #include "cborattr/cborattr.h"
-#include "cbor.h"
-#include "cbor_buf_reader.h"
+#include "tinycbor/cbor.h"
+#include "tinycbor/cbor_buf_reader.h"
+#include "tinycbor/cbor_mbuf_reader.h"
+#include "os/os_mbuf.h"
 
 #define CBORATTR_MAX_SIZE 512
 
@@ -386,14 +388,17 @@ cbor_read_flat_attrs(const uint8_t *data, int len,
     CborError err;
 
     cbor_buf_reader_init(&reader, data, len);
+#ifdef __ZEPHYR__
     err = cbor_parser_cust_reader_init(&reader.r, 0, &parser, &value);
+#else
+    err = cbor_parser_init(&reader.r, 0, &parser, &value);
+#endif
     if (err != CborNoError) {
         return -1;
     }
     return cbor_read_object(&value, attrs);
 }
 
-#if 0
 /*
  * Read in cbor key/values from os_mbuf pointed by m, and fill them
  * into attrs.
@@ -421,4 +426,3 @@ cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
     }
     return cbor_read_object(&value, attrs);
 }
-#endif

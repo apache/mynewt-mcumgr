@@ -21,7 +21,7 @@
 #define H_MGMT_MGMT_
 
 #include <inttypes.h>
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 
 #ifdef __cplusplus
 extern "C" {

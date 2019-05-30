@@ -26,7 +26,8 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include "cbor.h"
+#include "tinycbor/cbor.h"
+#include <os/os_mbuf.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -143,6 +144,8 @@ int cbor_read_object(struct CborValue *, const struct cbor_attr_t *);
 int cbor_read_array(struct CborValue *, const struct cbor_array_t *);
 
 int cbor_read_flat_attrs(const uint8_t *data, int len,
+                         const struct cbor_attr_t *attrs);
+int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
                          const struct cbor_attr_t *attrs);
 
 #ifdef __cplusplus

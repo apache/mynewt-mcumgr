@@ -18,7 +18,7 @@
  */
 
 #include <string.h>
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 #include "mgmt/endian.h"
 #include "mgmt/mgmt.h"
 
