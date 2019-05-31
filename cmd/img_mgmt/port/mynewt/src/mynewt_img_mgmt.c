@@ -21,7 +21,10 @@
 #include "mgmt/mgmt.h"
 #include "img_mgmt/img_mgmt_impl.h"
 #include "img_mgmt/img_mgmt.h"
-#include "img_mgmt_priv.h"
+#include "split/split.h"
+#include "flash_map/flash_map.h"
+#include "sysflash/sysflash.h"
+#include "img_mgmt/image.h"
 
 int
 img_mgmt_impl_erase_slot(void)
@@ -58,19 +61,19 @@ img_mgmt_impl_write_pending(int slot, bool permanent)
     int split_app_active;
     int rc;
 
-    state_flags = imgmgr_state_flags(slot);
+    state_flags = img_mgmt_state_flags(slot);
     split_app_active = split_app_active_get();
 
     /* Unconfirmed slots are always runable.  A confirmed slot can only be
      * run if it is a loader in a split image setup.
      */
-    if (state_flags & IMGMGR_STATE_F_CONFIRMED &&
+    if (state_flags & IMG_MGMT_STATE_F_CONFIRMED &&
         (slot != 0 || !split_app_active)) {
 
         return MGMT_ERR_EBADSTATE;
     }
 
-    rc = imgr_read_info(slot, NULL, NULL, &image_flags);
+    rc = img_mgmt_read_info(slot, NULL, NULL, &image_flags);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
@@ -112,6 +115,8 @@ img_mgmt_impl_write_pending(int slot, bool permanent)
 int
 img_mgmt_impl_write_confirmed(void)
 {
+    int rc;
+
     /* Confirm the unified image or loader in slot 0. */
     rc = boot_set_confirmed();
     if (rc != 0) {
@@ -142,7 +147,7 @@ img_mgmt_impl_read(int slot, unsigned int offset, void *dst,
     int area_id;
     int rc;
 
-    area_id = flash_area_id_from_image_slot(image_slot);
+    area_id = flash_area_id_from_image_slot(slot);
     rc = flash_area_open(area_id, &fa);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
@@ -199,15 +204,14 @@ img_mgmt_impl_swap_type(void)
 void
 img_mgmt_module_init(void)
 {
-    int rc;
-
     /* Ensure this function only gets called by sysinit. */
     SYSINIT_ASSERT_ACTIVE();
 
-    rc = img_mgmt_register_group();
-    SYSINIT_PANIC_ASSERT(rc == 0);
+    img_mgmt_register_group();
 
 #if MYNEWT_VAL(IMGMGR_CLI)
+    int rc;
+
     rc = imgr_cli_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif

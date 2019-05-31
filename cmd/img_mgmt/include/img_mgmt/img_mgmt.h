@@ -27,6 +27,24 @@ struct image_version;
 extern "C" {
 #endif
 
+/*
+ * Image state flags
+ */
+#define IMG_MGMT_STATE_F_PENDING    0x01
+#define IMG_MGMT_STATE_F_CONFIRMED  0x02
+#define IMG_MGMT_STATE_F_ACTIVE     0x04
+#define IMG_MGMT_STATE_F_PERMANENT  0x08
+
+#define IMG_MGMT_VER_MAX_STR_LEN    25  /* 255.255.65535.4294967295\0 */
+
+/*
+ * Swap Types for image management state machine
+ */
+#define IMG_MGMT_SWAP_TYPE_NONE     0
+#define IMG_MGMT_SWAP_TYPE_TEST     1
+#define IMG_MGMT_SWAP_TYPE_PERM     2
+#define IMG_MGMT_SWAP_TYPE_REVERT   3
+
 /**
  * Command IDs for image management group.
  */
@@ -48,6 +66,16 @@ extern "C" {
  * @brief Registers the image management command handler group.
  */ 
 void img_mgmt_register_group(void);
+/**
+ * @brief Read info of an image give the slot number
+ */
+int img_mgmt_read_info(int image_slot, struct image_version *ver,
+                       uint8_t *hash, uint32_t *flags);
+/**
+ * @brief Get the current running image version
+ */
+int
+img_mgmt_my_version(struct image_version *ver);
 
 #ifdef __cplusplus
 }

@@ -22,8 +22,8 @@
  * implementation.
  */
 
-#include "mgmt/mgmt.h"
 #include "img_mgmt/img_mgmt_impl.h"
+#include "mgmt/mgmt.h"
 
 int __attribute__((weak))
 img_mgmt_impl_erase_slot(void)

@@ -30,6 +30,8 @@
 #include "img_mgmt_priv.h"
 #include "img_mgmt_config.h"
 
+extern int boot_current_slot;
+
 #define IMG_MGMT_DATA_SHA_LEN 32
 
 static mgmt_handler_fn img_mgmt_upload;
@@ -529,6 +531,12 @@ done:
              &cmd_status_arg);
 
     return img_mgmt_encode_upload_rsp(ctxt, 0);
+}
+
+int
+img_mgmt_my_version(struct image_version *ver)
+{
+    return img_mgmt_read_info(boot_current_slot, ver, NULL, NULL);
 }
 
 void

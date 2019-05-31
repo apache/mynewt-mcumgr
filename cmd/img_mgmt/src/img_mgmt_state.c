@@ -18,7 +18,7 @@
  */
 
 #include <assert.h>
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "img_mgmt/img_mgmt.h"
@@ -26,17 +26,10 @@
 #include "img_mgmt_priv.h"
 #include "img_mgmt/img_mgmt_impl.h"
 
-#define IMG_MGMT_STATE_F_PENDING    0x01
-#define IMG_MGMT_STATE_F_CONFIRMED  0x02
-#define IMG_MGMT_STATE_F_ACTIVE     0x04
-#define IMG_MGMT_STATE_F_PERMANENT  0x08
-
-#define IMG_MGMT_VER_MAX_STR_LEN    25  /* 255.255.65535.4294967295\0 */
-
 /**
  * Collects information about the specified image slot.
  */
-static uint8_t
+uint8_t
 img_mgmt_state_flags(int query_slot)
 {
     uint8_t flags;

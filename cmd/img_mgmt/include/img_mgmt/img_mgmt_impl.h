@@ -27,6 +27,9 @@
 #ifndef H_IMG_MGMT_IMPL_
 #define H_IMG_MGMT_IMPL_
 
+#include <stdbool.h>
+#include <inttypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -99,6 +102,13 @@ int img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
  * @return                      An IMG_MGMT_SWAP_TYPE_[...] code.
  */
 int img_mgmt_impl_swap_type(void);
+
+/**
+ * Collects information about the specified image slot.
+ *
+ * @return                      Flags of the specified image slot
+ */
+uint8_t img_mgmt_state_flags(int query_slot);
 
 #ifdef __cplusplus
 }
