@@ -27,8 +27,8 @@ pkg.deps:
     - '@apache-mynewt-mcumgr/cborattr'
     - '@apache-mynewt-core/kernel/os'
     - '@apache-mynewt-core/util/mem'
-    - '@mynewt-mcumgr/mgmt'
-    - '@mynewt-mcumgr/smp'
+    - '@apache-mynewt-mcumgr/mgmt'
+    - '@apache-mynewt-mcumgr/smp'
 
 pkg.deps.NEWTMGR_BLE_HOST:
     - '@apache-mynewt-core/mgmt/newtmgr/transport/ble'

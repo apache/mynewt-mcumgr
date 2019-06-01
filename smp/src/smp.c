@@ -25,7 +25,7 @@
 #include "mgmt/endian.h"
 #include "mgmt/mgmt.h"
 #include "smp/smp.h"
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 
 static int
 smp_align4(int x)
