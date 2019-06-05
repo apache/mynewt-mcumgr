@@ -19,7 +19,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "os_mgmt/os_mgmt.h"

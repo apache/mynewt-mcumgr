@@ -28,13 +28,6 @@ pkg.deps:
     - '@apache-mynewt-core/kernel/os'
     - '@apache-mynewt-core/util/mem'
     - '@apache-mynewt-mcumgr/mgmt'
-    - '@apache-mynewt-mcumgr/smp'
-
-pkg.deps.NEWTMGR_BLE_HOST:
-    - '@apache-mynewt-core/mgmt/newtmgr/transport/ble'
 
 pkg.apis:
-    - newtmgr
-
-pkg.init:
-    smp_pkg_init: 500
+    - smp
