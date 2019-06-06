@@ -27,3 +27,6 @@ pkg.keywords:
 pkg.deps:
     - '@apache-mynewt-mcumgr/cmd/img_mgmt'
     #- '@apache-mynewt-core/mgmt/imgmgr'
+
+pkg.init:
+    img_mgmt_module_init: 501
