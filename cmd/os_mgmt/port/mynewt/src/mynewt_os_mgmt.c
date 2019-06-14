@@ -24,6 +24,8 @@
 #include "reboot/log_reboot.h"
 #endif
 #include "os_mgmt/os_mgmt_impl.h"
+#include "os_mgmt/os_mgmt.h"
+#include "mgmt/mgmt.h"
 
 static struct os_callout mynewt_os_mgmt_reset_callout;
 
@@ -102,15 +104,13 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
 int
 os_mgmt_impl_reset(unsigned int delay_ms)
 {
-    int rc;
-
-    os_callout_init(&mynewt_os_mgmt_reset_callout, mgmt_evq_get(),
-                    nmgr_reset_tmo, NULL);
+    os_callout_init(&mynewt_os_mgmt_reset_callout, os_eventq_dflt_get(),
+                    mynewt_os_mgmt_reset_tmo, NULL);
 
 #if MYNEWT_VAL(LOG_SOFT_RESET)
     log_reboot(HAL_RESET_REQUESTED);
 #endif
-    os_callout_reset(&nmgr_reset_callout, delay_ms * OS_TICKS_PER_SEC / 1000);
+    os_callout_reset(&mynewt_os_mgmt_reset_callout, delay_ms * OS_TICKS_PER_SEC / 1000);
 
     return 0;
 }

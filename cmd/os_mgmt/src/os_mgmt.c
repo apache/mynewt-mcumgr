@@ -202,3 +202,9 @@ os_mgmt_register_group(void)
 {
     mgmt_register_group(&os_mgmt_group);
 }
+
+void
+os_mgmt_module_init(void)
+{
+    os_mgmt_register_group();
+}

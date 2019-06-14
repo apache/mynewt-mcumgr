@@ -17,16 +17,12 @@
 # under the License.
 #
 
-pkg.name: cmd/os_mgmt
+pkg.name: cmd/os_mgmt/port/mynewt
 pkg.description: 'OS management command handlers for mcumgr.'
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - '@apache-mynewt-core/kernel/os'
-    - '@apache-mynewt-mcumgr/cmd/os_mgmt/port/mynewt'
+    - '@apache-mynewt-mcumgr/cmd/os_mgmt'
     - '@apache-mynewt-mcumgr/mgmt'
-
-pkg.init:
-    os_mgmt_module_init: 501
