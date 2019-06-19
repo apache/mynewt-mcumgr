@@ -63,6 +63,7 @@ extern "C" {
 #define MGMT_ERR_EBADSTATE      6       /* Current state disallows command. */
 #define MGMT_ERR_EMSGSIZE       7       /* Response too large. */
 #define MGMT_ERR_ENOTSUP        8       /* Command not supported. */
+#define MGMT_ERR_ECORRUPT       9       /* Corrupt */
 #define MGMT_ERR_EPERUSER       256
 
 #define MGMT_HDR_SIZE           8

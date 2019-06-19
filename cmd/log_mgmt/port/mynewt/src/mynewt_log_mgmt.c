@@ -62,7 +62,7 @@ log_mgmt_impl_get_log(int idx, struct log_mgmt_log *out_log)
     }
 
     out_log->name = log->l_name;
-    out_log->type = log->l_handler->type;
+    out_log->type = log->l_log->log_type;
     return 0;
 }
 
@@ -103,21 +103,16 @@ log_mgmt_impl_get_next_idx(uint32_t *out_idx)
 
 static int
 mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
-                        const void *desciptor, uint16_t len)
+                        const struct log_entry_hdr *leh,
+                        const void *dptr, uint16_t len)
 {
     struct mynewt_log_mgmt_walk_arg *mynewt_log_mgmt_walk_arg;
     struct log_mgmt_entry entry;
-    struct log_entry_hdr ueh;
     int read_len;
     int rc;
 
     mynewt_log_mgmt_walk_arg = log_offset->lo_arg;
-
-    rc = log_read(log, desciptor, &ueh, 0, sizeof ueh);
-    if (rc != sizeof ueh) {
-        return MGMT_ERR_EUNKNOWN;
-    }
-
+    
     /* If specified timestamp is nonzero, it is the primary criterion, and the
      * specified index is the secondary criterion.  If specified timetsamp is
      * zero, specified index is the only criterion.
@@ -129,27 +124,28 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
      */
 
     if (log_offset->lo_ts == 0) {
-        if (log_offset->lo_index > ueh.ue_index) {
+        if (log_offset->lo_index > leh->ue_index) {
             return 0;
         }
-    } else if (ueh.ue_ts < log_offset->lo_ts   ||
-               (ueh.ue_ts == log_offset->lo_ts &&
-                ueh.ue_index < log_offset->lo_index)) {
+    } else if (leh->ue_ts < log_offset->lo_ts   ||
+               (leh->ue_ts == log_offset->lo_ts &&
+                leh->ue_index < log_offset->lo_index)) {
         return 0;
     }
 
-    read_len = min(len - sizeof ueh, LOG_MGMT_BODY_LEN - sizeof ueh);
-    rc = log_read(log, desciptor, mynewt_log_mgmt_walk_arg->body, sizeof ueh,
+    read_len = min(len - sizeof leh, LOG_MGMT_BODY_LEN - sizeof leh);
+    rc = log_read(log, dptr, mynewt_log_mgmt_walk_arg->body, sizeof leh,
                   read_len);
     if (rc < 0) {
         return MGMT_ERR_EUNKNOWN;
     }
 
-    entry.ts = ueh.ue_ts;
-    entry.index = ueh.ue_index;
-    entry.module = ueh.ue_module;
-    entry.level = ueh.ue_level;
+    entry.ts = leh->ue_ts;
+    entry.index = leh->ue_index;
+    entry.module = leh->ue_module;
+    entry.level = leh->ue_level;
     entry.len = rc;
+    entry.type = leh->ue_etype;
     entry.data = mynewt_log_mgmt_walk_arg->body;
 
     return mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
@@ -180,7 +176,7 @@ log_mgmt_impl_foreach_entry(const char *log_name,
         offset.lo_index = filter->min_index;
         offset.lo_data_len = 0;
 
-        return log_walk(log, mynewt_log_mgmt_walk_cb, &offset);
+        return log_walk_body(log, mynewt_log_mgmt_walk_cb, &offset);
     }
 
     return MGMT_ERR_ENOENT;
@@ -203,4 +199,13 @@ log_mgmt_impl_clear(const char *log_name)
     }
 
     return 0;
+}
+
+void
+log_mgmt_module_init(void)
+{
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+    log_mgmt_register_group();
 }

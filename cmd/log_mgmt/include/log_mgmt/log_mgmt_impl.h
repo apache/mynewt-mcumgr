@@ -35,7 +35,7 @@ struct log_mgmt_filter;
 struct log_mgmt_entry;
 struct log_mgmt_log;
 
-typedef int log_mgmt_foreach_entry_fn(const struct log_mgmt_entry *entry,
+typedef int log_mgmt_foreach_entry_fn(struct log_mgmt_entry *entry,
                                       void *arg);
 
 /**

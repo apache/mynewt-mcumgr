@@ -125,7 +125,9 @@ stat_mgmt_list(struct mgmt_ctxt *ctxt)
     int rc;
     int i;
 
-    err = 0;
+    err = CborNoError;
+    err |= cbor_encode_text_stringz(&cb->encoder, "rc");
+    err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "stat_list");
     err |= cbor_encoder_create_array(&ctxt->encoder, &arr_enc,
                                      CborIndefiniteLength);

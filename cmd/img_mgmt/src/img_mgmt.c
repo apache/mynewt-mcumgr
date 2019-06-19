@@ -30,8 +30,6 @@
 #include "img_mgmt_priv.h"
 #include "img_mgmt_config.h"
 
-extern int boot_current_slot;
-
 #define IMG_MGMT_DATA_SHA_LEN 32
 
 static mgmt_handler_fn img_mgmt_upload;

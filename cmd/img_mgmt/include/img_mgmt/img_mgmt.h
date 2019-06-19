@@ -62,6 +62,8 @@ extern "C" {
 #define IMG_MGMT_ID_UPLOAD_STATUS_ONGOING       1
 #define IMG_MGMT_ID_UPLOAD_STATUS_COMPLETE      2
 
+extern int boot_current_slot;
+
 /**
  * @brief Registers the image management command handler group.
  */ 

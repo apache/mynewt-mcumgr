@@ -57,6 +57,8 @@ struct log_mgmt_entry {
     size_t len;
     uint8_t module;
     uint8_t level;
+    uint8_t type;
+    void *ctxt;
 };
 
 /** @brief Indicates which log entries to operate on. */

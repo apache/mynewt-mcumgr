@@ -17,15 +17,13 @@
 # under the License.
 #
 
-pkg.name: cmd/img_mgmt/port/mynewt
-pkg.description: 'Image management command handlers for
-                  Apache Mynewt for mcumgr.'
+pkg.name: cmd/log_mgmt
+pkg.description: 'OS management command handlers for mcumgr.'
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - '@apache-mynewt-mcumgr/cmd/img_mgmt'
-
-pkg.init:
-    img_mgmt_module_init: 501
+    - '@apache-mynewt-core/kernel/os'
+    - '@apache-mynewt-mcumgr/cmd/log_mgmt/port/mynewt'
+    - '@apache-mynewt-mcumgr/mgmt'

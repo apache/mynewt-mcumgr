@@ -22,18 +22,20 @@
 
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
-#include "cbor_cnt_writer.h"
+#include "tinycbor/cbor_cnt_writer.h"
 #include "log_mgmt/log_mgmt.h"
 #include "log_mgmt/log_mgmt_impl.h"
 #include "log_mgmt_config.h"
+#include "log_common/log_common.h"
 
 /** Context used during walks. */
 struct log_walk_ctxt {
     /* The number of bytes encoded to the response so far. */
     size_t rsp_len;
-
     /* The encoder to use to write the current log entry. */
     struct CborEncoder *enc;
+    /* Counter per encoder to understand if we are encoding the first chunk */
+    uint32_t counter;
 };
 
 static mgmt_handler_fn log_mgmt_show;
@@ -63,36 +65,69 @@ static int
 log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
                       size_t *out_len)
 {
+    CborError err = CborNoError;
+    CborEncoder rsp;
     CborEncoder entry_enc;
-    CborError err;
+    CborEncoder str_encoder;
+    int rc;
+    int off;
 
-    err = 0;
-    err |= cbor_encoder_create_map(enc, &entry_enc, 5);
-    err |= cbor_encode_text_stringz(&entry_enc, "msg");
-    err |= cbor_encode_byte_string(&entry_enc, entry->data, entry->len);
-    err |= cbor_encode_text_stringz(&entry_enc, "ts");
-    err |= cbor_encode_int(&entry_enc, entry->ts);
-    err |= cbor_encode_text_stringz(&entry_enc, "level");
-    err |= cbor_encode_uint(&entry_enc, entry->level);
-    err |= cbor_encode_text_stringz(&entry_enc, "index");
-    err |= cbor_encode_uint(&entry_enc, entry->index);
-    err |= cbor_encode_text_stringz(&entry_enc, "module");
-    err |= cbor_encode_uint(&entry_enc, entry->module);
-    err |= cbor_encoder_close_container(enc, &entry_enc);
+    rc = MGMT_ERR_EOK;
 
-    if (err != 0) {
-        return MGMT_ERR_ENOMEM;
+    err |= cbor_encoder_create_map(&entry_enc, &rsp, CborIndefiniteLength);
+
+    switch (entry->type) {
+    case LOG_ETYPE_CBOR:
+        err |= cbor_encode_text_stringz(&rsp, "type");
+        err |= cbor_encode_text_stringz(&rsp, "cbor");
+        break;
+    case LOG_ETYPE_BINARY:
+        err |= cbor_encode_text_stringz(&rsp, "type");
+        err |= cbor_encode_text_stringz(&rsp, "bin");
+        break;
+    case LOG_ETYPE_STRING:
+        err |= cbor_encode_text_stringz(&rsp, "type");
+        err |= cbor_encode_text_stringz(&rsp, "str");
+        break;
+    default:
+        return MGMT_ERR_ECORRUPT;
     }
 
+    err |= cbor_encode_text_stringz(&rsp, "msg");
+
+    /*
+     * Write entry data as byte string. Since this may not fit into single
+     * chunk of data we will write as indefinite-length byte string which is
+     * basically a indefinite-length container with definite-length strings
+     * inside.
+     */
+    err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
+    for (off = 0; off < entry->len && !err; ) {
+        err |= cbor_encode_byte_string(&str_encoder, entry->data, rc);
+        off += rc;
+    }
+
+    err |= cbor_encoder_close_container(&rsp, &str_encoder);
+    
+    err |= cbor_encode_text_stringz(&rsp, "ts");
+    err |= cbor_encode_int(&rsp, entry->ts);
+    err |= cbor_encode_text_stringz(&rsp, "level");
+    err |= cbor_encode_uint(&rsp, entry->level);
+    err |= cbor_encode_text_stringz(&rsp, "index");
+    err |= cbor_encode_uint(&rsp, entry->index);
+    err |= cbor_encode_text_stringz(&rsp, "module");
+    err |= cbor_encode_uint(&rsp, entry->module);
+    err |= cbor_encoder_close_container(&entry_enc, &rsp);
+
     if (out_len != NULL) {
-        *out_len = cbor_encode_bytes_written(enc);
+        *out_len = cbor_encode_bytes_written(&entry_enc);
     }
 
     return 0;
 }
 
 static int
-log_mgmt_cb_encode(const struct log_mgmt_entry *entry, void *arg)
+log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
 {
     struct CborCntWriter cnt_writer;
     struct log_walk_ctxt *ctxt;
@@ -105,14 +140,36 @@ log_mgmt_cb_encode(const struct log_mgmt_entry *entry, void *arg)
     /*** First, determine if this entry would fit. */
 
     cbor_cnt_writer_init(&cnt_writer);
+#ifdef __ZEPHYR__
     cbor_encoder_cust_writer_init(&cnt_encoder, &cnt_writer.enc, 0);
+#else
+    cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
+#endif
     rc = log_mgmt_encode_entry(&cnt_encoder, entry, &entry_len);
     if (rc != 0) {
         return rc;
     }
 
+    /*
+     * Check if the response is too long. If more than one entry is in the
+     * response we will not add the current one and will return ENOMEM. If this
+     * is just a single entry we add the generic too long message text.
+     */
     /* `+ 1` to account for the CBOR array terminator. */
     if (ctxt->rsp_len + entry_len + 1 > LOG_MGMT_CHUNK_SIZE) {
+        /*
+         * Is this just a single entry? If so, encode the generic error
+         * message in the "msg" field of the response
+         */
+        if (ctxt->counter == 0) {
+            entry->type = LOG_ETYPE_STRING;
+            snprintf((char *)entry->data, LOG_MGMT_BODY_LEN,
+                     "error: entry too large (%d bytes)", entry_len);
+        } else {
+            rc = OS_ENOMEM;
+            goto err;
+        }
+
         return MGMT_ERR_EMSGSIZE;
     }
     ctxt->rsp_len += entry_len;
@@ -124,7 +181,11 @@ log_mgmt_cb_encode(const struct log_mgmt_entry *entry, void *arg)
         return rc;
     }
 
+    ctxt->counter++;
+
     return 0;
+err:
+    return rc;
 }
 
 static int
