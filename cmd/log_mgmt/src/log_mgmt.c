@@ -67,14 +67,13 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
 {
     CborError err = CborNoError;
     CborEncoder rsp;
-    CborEncoder entry_enc;
     CborEncoder str_encoder;
     int rc;
     int off;
 
     rc = MGMT_ERR_EOK;
 
-    err |= cbor_encoder_create_map(&entry_enc, &rsp, CborIndefiniteLength);
+    err |= cbor_encoder_create_map(enc, &rsp, CborIndefiniteLength);
 
     switch (entry->type) {
     case LOG_ETYPE_CBOR:
@@ -117,10 +116,10 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     err |= cbor_encode_uint(&rsp, entry->index);
     err |= cbor_encode_text_stringz(&rsp, "module");
     err |= cbor_encode_uint(&rsp, entry->module);
-    err |= cbor_encoder_close_container(&entry_enc, &rsp);
+    err |= cbor_encoder_close_container(enc, &rsp);
 
     if (out_len != NULL) {
-        *out_len = cbor_encode_bytes_written(&entry_enc);
+        *out_len = cbor_encode_bytes_written(enc);
     }
 
     return 0;
