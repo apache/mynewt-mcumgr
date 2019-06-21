@@ -27,6 +27,7 @@
 #include "log_mgmt/log_mgmt_impl.h"
 #include "log_mgmt_config.h"
 #include "log_common/log_common.h"
+#include "log/log.h"
 
 /** Context used during walks. */
 struct log_walk_ctxt {
@@ -68,10 +69,10 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     CborError err = CborNoError;
     CborEncoder rsp;
     CborEncoder str_encoder;
-    int rc;
+    uint16_t len;
     int off;
 
-    rc = MGMT_ERR_EOK;
+    len = cbor_encode_bytes_written(enc);
 
     err |= cbor_encoder_create_map(enc, &rsp, CborIndefiniteLength);
 
@@ -102,8 +103,8 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
      */
     err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
     for (off = 0; off < entry->len && !err; ) {
-        err |= cbor_encode_byte_string(&str_encoder, entry->data, rc);
-        off += rc;
+        err |= cbor_encode_byte_string(&str_encoder, entry->data, entry->len);
+        off += entry->len;
     }
 
     err |= cbor_encoder_close_container(&rsp, &str_encoder);
@@ -119,10 +120,10 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     err |= cbor_encoder_close_container(enc, &rsp);
 
     if (out_len != NULL) {
-        *out_len = cbor_encode_bytes_written(enc);
+        *out_len = cbor_encode_bytes_written(enc) - len;
     }
 
-    return 0;
+    return MGMT_ERR_EOK;
 }
 
 static int
@@ -164,9 +165,6 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
             entry->type = LOG_ETYPE_STRING;
             snprintf((char *)entry->data, LOG_MGMT_BODY_LEN,
                      "error: entry too large (%d bytes)", entry_len);
-        } else {
-            rc = OS_ENOMEM;
-            goto err;
         }
 
         return MGMT_ERR_EMSGSIZE;
@@ -183,8 +181,6 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
     ctxt->counter++;
 
     return 0;
-err:
-    return rc;
 }
 
 static int
