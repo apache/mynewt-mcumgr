@@ -68,7 +68,7 @@ stat_mgmt_cb_encode(struct stat_mgmt_entry *entry, void *arg)
 static int
 stat_mgmt_show(struct mgmt_ctxt *ctxt)
 {
-    char stat_name[CONFIG_STAT_MGMT_MAX_NAME_LEN];
+    char stat_name[STAT_MGMT_MAX_NAME_LEN];
     CborEncoder map_enc;
     CborError err;
     int rc;
@@ -126,8 +126,8 @@ stat_mgmt_list(struct mgmt_ctxt *ctxt)
     int i;
 
     err = CborNoError;
-    err |= cbor_encode_text_stringz(&cb->encoder, "rc");
-    err |= cbor_encode_int(&cb->encoder, MGMT_ERR_EOK);
+    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
+    err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "stat_list");
     err |= cbor_encoder_create_array(&ctxt->encoder, &arr_enc,
                                      CborIndefiniteLength);
