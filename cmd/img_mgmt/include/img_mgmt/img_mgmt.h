@@ -79,6 +79,12 @@ int img_mgmt_read_info(int image_slot, struct image_version *ver,
 int
 img_mgmt_my_version(struct image_version *ver);
 
+/**
+ * @brief Check if the image slot is in use
+ */
+int
+img_mgmt_slot_in_use(int slot);
+
 #ifdef __cplusplus
 }
 #endif
