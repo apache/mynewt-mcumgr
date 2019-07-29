@@ -349,10 +349,13 @@ img_mgmt_upload_first_chunk(struct mgmt_ctxt *ctxt, const uint8_t *req_data,
         return MGMT_ERR_ENOMEM;
     }
 
+    /* Don't pre-erase if the underlying implementation does lazy erase. */
+#ifndef UPLOAD_LAZY_ERASE
     rc = img_mgmt_impl_erase_slot();
     if (rc != 0) {
         return rc;
     }
+#endif
 
     img_mgmt_ctxt.uploading = true;
     img_mgmt_ctxt.off = 0;

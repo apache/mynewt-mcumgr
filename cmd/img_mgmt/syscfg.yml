@@ -25,6 +25,12 @@ syscfg.defs:
             command.
         value: 512
 
+    IMG_MGMT_LAZY_ERASE:
+        description: >
+            During a firmware upgrade, erase flash a sector at a time
+            prior to writing to it, rather than all at once at start
+        value: 0
+      
     OS_MGMT_TASKSTAT:
         description: >
             Enable support for taskstat command.

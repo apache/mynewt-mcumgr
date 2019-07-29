@@ -26,6 +26,11 @@
 #include "sysflash/sysflash.h"
 #include "img_mgmt/image.h"
 
+static struct {
+    int sector_id;
+    uint32_t sector_end;
+} upload_state;
+
 int
 img_mgmt_impl_erase_slot(void)
 {
@@ -162,6 +167,54 @@ img_mgmt_impl_read(int slot, unsigned int offset, void *dst,
     return 0;
 }
 
+#if MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
+int
+img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
+                               unsigned int num_bytes, bool last)
+{
+    const struct flash_area *fa;
+    struct flash_area sector;
+    int rc;
+
+    rc = flash_area_open(FLASH_AREA_IMAGE_1, &fa);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    /* Check if there any unerased target sectors, if not clean them. */
+    while ((fa->fa_off + offset + num_bytes) > upload_state.sector_end) {
+        rc = flash_area_getnext_sector(fa->fa_id, &upload_state.sector_id,
+                                       &sector);
+        if (rc) {
+            goto err;
+        }
+        rc = flash_area_erase(&sector, 0, sector.fa_size);
+        if (rc) {
+            goto err;
+        }
+        upload_state.sector_end = sector.fa_off + sector.fa_size;
+    }
+
+    if (last) {
+        upload_state.sector_id = -1;
+        upload_state.sector_end = 0;
+    }
+
+    rc = flash_area_write(fa, offset, data, num_bytes);
+    flash_area_close(fa);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    return 0;
+
+err:
+    upload_state.sector_id = -1;
+    upload_state.sector_end = 0;
+    return MGMT_ERR_EUNKNOWN;
+}
+
+#else
 int
 img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
                                unsigned int num_bytes, bool last)
@@ -182,6 +235,7 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 
     return 0;
 }
+#endif
 
 int
 img_mgmt_impl_swap_type(void)
@@ -215,4 +269,8 @@ img_mgmt_module_init(void)
     rc = imgr_cli_register();
     SYSINIT_PANIC_ASSERT(rc == 0);
 #endif
+
+    /* setup for lazy sector by sector erase */
+    upload_state.sector_id = -1;
+    upload_state.sector_end = 0;
 }
