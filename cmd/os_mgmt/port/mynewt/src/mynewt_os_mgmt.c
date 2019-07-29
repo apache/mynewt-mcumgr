@@ -104,13 +104,22 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
 int
 os_mgmt_impl_reset(unsigned int delay_ms)
 {
+#if MYNEWT_VAL(LOG_SOFT_RESET)
+    struct log_reboot_info info = {
+        .reason = HAL_RESET_REQUESTED,
+        .file = NULL,
+        .line = 0,
+        .pc = 0,
+    };
+#endif
     os_callout_init(&mynewt_os_mgmt_reset_callout, os_eventq_dflt_get(),
                     mynewt_os_mgmt_reset_tmo, NULL);
 
 #if MYNEWT_VAL(LOG_SOFT_RESET)
-    log_reboot(HAL_RESET_REQUESTED);
+    log_reboot(&info);
 #endif
-    os_callout_reset(&mynewt_os_mgmt_reset_callout, delay_ms * OS_TICKS_PER_SEC / 1000);
+    os_callout_reset(&mynewt_os_mgmt_reset_callout,
+                     delay_ms * OS_TICKS_PER_SEC / 1000);
 
     return 0;
 }
