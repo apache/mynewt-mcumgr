@@ -34,6 +34,12 @@
 
 static mgmt_handler_fn img_mgmt_upload;
 static mgmt_handler_fn img_mgmt_erase;
+static img_mgmt_upload_fn *img_mgmt_upload_cb;
+static void *img_mgmt_upload_arg;
+
+const img_mgmt_dfu_callbacks_t *img_mgmt_dfu_callbacks_fn;
+
+struct img_mgmt_state g_img_mgmt_state;
 
 static const struct mgmt_handler img_mgmt_handlers[] = {
     [IMG_MGMT_ID_STATE] = {
@@ -59,20 +65,16 @@ static struct mgmt_group img_mgmt_group = {
     .mg_group_id = MGMT_GROUP_ID_IMAGE,
 };
 
-static struct {
-    /* Whether an upload is currently in progress. */
-    bool uploading;
-
-    /** Expected offset of next upload request. */
-    size_t off;
-
-    /** Total length of image currently being uploaded. */
-    size_t len;
-
-    /** Hash of image data; used for resume of a partial upload. */
-    uint8_t data_sha_len;
-    uint8_t data_sha[IMG_MGMT_DATA_SHA_LEN];
-} img_mgmt_ctxt;
+#if IMG_MGMT_VERBOSE_ERR
+const char *img_mgmt_err_str_app_reject = "app reject";
+const char *img_mgmt_err_str_hdr_malformed = "header malformed";
+const char *img_mgmt_err_str_magic_mismatch = "magic mismatch";
+const char *img_mgmt_err_str_no_slot = "no slot";
+const char *img_mgmt_err_str_flash_open_failed = "fa open fail";
+const char *img_mgmt_err_str_flash_erase_failed = "fa erase fail";
+const char *img_mgmt_err_str_flash_write_failed = "fa write fail";
+const char *img_mgmt_err_str_downgrade = "downgrade";
+#endif
 
 /**
  * Finds the TLVs in the specified image slot, if any.
@@ -229,6 +231,22 @@ img_mgmt_find_by_hash(uint8_t *find, struct image_version *ver)
     return -1;
 }
 
+#ifdef IMG_MGMT_VERBOSE_ERR
+int
+img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn)
+{
+    /*
+     * This is an error response so returning a different error when failed to
+     * encode other error probably does not make much sense - just ignore errors
+     * here.
+     */
+    cbor_encode_text_stringz(&ctxt->encoder, "rsn");
+    cbor_encode_text_stringz(&ctxt->encoder, rsn);
+
+    return rc;
+}
+#endif
+
 /**
  * Command handler: image erase
  */
@@ -253,124 +271,62 @@ img_mgmt_erase(struct mgmt_ctxt *ctxt)
         return MGMT_ERR_ENOMEM;
     }
 
-    /* reset uploading information on erase */
-    img_mgmt_ctxt.uploading = false;
-
     return 0;
 }
 
-/**
- * Encodes an image upload response.
- */
 static int
-img_mgmt_encode_upload_rsp(struct mgmt_ctxt *ctxt, int status)
+img_mgmt_upload_good_rsp(struct mgmt_ctxt *ctxt)
 {
-    CborError err;
+    CborError err = CborNoError;
 
-    err = 0;
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, status);
+    err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "off");
-    err |= cbor_encode_int(&ctxt->encoder, img_mgmt_ctxt.off);
+    err |= cbor_encode_int(&ctxt->encoder, g_img_mgmt_state.off);
 
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
     }
-    return 0;
-}
-
-/* check if header for first packet is valid */
-static int
-img_mgmt_check_header(const uint8_t *req_data, size_t len)
-{
-    struct image_header hdr;
-
-    if (len < sizeof(hdr)) {
-        return MGMT_ERR_EINVAL;
-    }
-
-    memcpy(&hdr, req_data, sizeof(hdr));
-    if (hdr.ih_magic != IMAGE_MAGIC) {
-        return MGMT_ERR_EINVAL;
-    }
 
     return 0;
 }
 
 /**
- * Compares two image version numbers in a semver-compatible way.
+ * Logs an upload request if necessary.
  *
- * @param a                     The first version to compare.
- * @param b                     The second version to compare.
+ * @param is_first              Whether the request includes the first chunk of
+ *                                  the image.
+ * @param is_last               Whether the request includes the last chunk of
+ *                                  the image.
+ * @param status                The result of processing the upload request
+ *                                  (MGMT_ERR code).
  *
- * @return                      -1 if a < b
- * @return                       0 if a = b
- * @return                       1 if a > b
+ * @return                      0 on success; nonzero on failure.
  */
 static int
-imgr_vercmp(const struct image_version *a, const struct image_version *b)
+img_mgmt_upload_log(bool is_first, bool is_last, int status)
 {
-    if (a->iv_major < b->iv_major) {
-        return -1;
-    } else if (a->iv_major > b->iv_major) {
-        return 1;
-    }
-
-    if (a->iv_minor < b->iv_minor) {
-        return -1;
-    } else if (a->iv_minor > b->iv_minor) {
-        return 1;
-    }
-
-    if (a->iv_revision < b->iv_revision) {
-        return -1;
-    } else if (a->iv_revision > b->iv_revision) {
-        return 1;
-    }
-
-    /* Note: For semver compativility, don't compare the 32-bit build num. */
-
-    return 0;
-}
-
-/**
- * Processes an upload request specifying an offset of 0 (i.e., the first image
- * chunk).  The caller is responsible for encoding the response.
- */
-static int
-img_mgmt_upload_first_chunk(struct mgmt_ctxt *ctxt, const uint8_t *req_data,
-                            size_t len, const uint8_t *data_sha,
-                            size_t data_sha_len)
-{
+    uint8_t hash[IMAGE_HASH_LEN];
+    const uint8_t *hashp;
     int rc;
 
-    if (img_mgmt_slot_in_use(1)) {
-        /* No free slot. */
-        return MGMT_ERR_ENOMEM;
+    if (is_first) {
+        return img_mgmt_impl_log_upload_start(status);
     }
 
-    /* Don't pre-erase if the underlying implementation does lazy erase. */
-#ifndef UPLOAD_LAZY_ERASE
-    rc = img_mgmt_impl_erase_slot();
-    if (rc != 0) {
-        return rc;
+    if (is_last || status != 0) {
+        /* Log the image hash if we know it. */
+        rc = img_mgmt_read_info(1, NULL, hash, NULL);
+        if (rc != 0) {
+            hashp = NULL;
+        } else {
+            hashp = hash;
+        }
+
+        return img_mgmt_impl_log_upload_done(status, hashp);
     }
-#endif
 
-    img_mgmt_ctxt.uploading = true;
-    img_mgmt_ctxt.off = 0;
-    img_mgmt_ctxt.len = 0;
-
-    /*
-     * We accept SHA trimmed to any length by client since it's up to client
-     * to make sure provided data are good enough to avoid collisions when
-     * resuming upload.
-     */
-    img_mgmt_ctxt.data_sha_len = data_sha_len;
-    memcpy(img_mgmt_ctxt.data_sha, data_sha, data_sha_len);
-    memset(&img_mgmt_ctxt.data_sha[data_sha_len], 0,
-           IMG_MGMT_DATA_SHA_LEN - data_sha_len);
-
+    /* Nothing to log. */
     return 0;
 }
 
@@ -380,159 +336,204 @@ img_mgmt_upload_first_chunk(struct mgmt_ctxt *ctxt, const uint8_t *req_data,
 static int
 img_mgmt_upload(struct mgmt_ctxt *ctxt)
 {
-    struct mgmt_evt_op_cmd_status_arg cmd_status_arg;
-    uint8_t img_mgmt_data[IMG_MGMT_UL_CHUNK_SIZE];
-    uint8_t data_sha[IMG_MGMT_DATA_SHA_LEN];
-    size_t data_sha_len = 0;
-    struct image_version cur_ver;
-    struct image_header new_hdr;
-    unsigned long long len;
-    unsigned long long off;
-    size_t data_len;
-    size_t new_off;
-    bool upgrade;
-    bool last;
-    int rc;
+    struct img_mgmt_upload_req req = {
+        .off = -1,
+        .size = -1,
+        .data_len = 0,
+        .data_sha_len = 0,
+        .upgrade = false,
+    };
 
-    const struct cbor_attr_t upload_attr[] = {
+    const struct cbor_attr_t off_attr[] = {
         [0] = {
             .attribute = "data",
             .type = CborAttrByteStringType,
-            .addr.bytestring.data = img_mgmt_data,
-            .addr.bytestring.len = &data_len,
-            .len = sizeof(img_mgmt_data)
+            .addr.bytestring.data = req.img_data,
+            .addr.bytestring.len = &req.data_len,
+            .len = sizeof(req.img_data)
         },
         [1] = {
             .attribute = "len",
             .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &len,
+            .addr.uinteger = &req.size,
             .nodefault = true
         },
         [2] = {
             .attribute = "off",
             .type = CborAttrUnsignedIntegerType,
-            .addr.uinteger = &off,
+            .addr.uinteger = &req.off,
             .nodefault = true
         },
         [3] = {
             .attribute = "sha",
             .type = CborAttrByteStringType,
-            .addr.bytestring.data = data_sha,
-            .addr.bytestring.len = &data_sha_len,
-            .len = sizeof(data_sha)
+            .addr.bytestring.data = req.data_sha,
+            .addr.bytestring.len = &req.data_sha_len,
+            .len = sizeof(req.data_sha)
         },
         [4] = {
             .attribute = "upgrade",
             .type = CborAttrBooleanType,
-            .addr.boolean = &upgrade,
+            .addr.boolean = &req.upgrade,
             .dflt.boolean = false,
         },
         [5] = { 0 },
     };
+    int rc;
+    const char *errstr = NULL;
+    struct img_mgmt_upload_action action;
 
-    len = ULLONG_MAX;
-    off = ULLONG_MAX;
-    data_len = 0;
-    rc = cbor_read_object(&ctxt->it, upload_attr);
-    if (rc || off == ULLONG_MAX) {
+    rc = cbor_read_object(&ctxt->it, off_attr);
+    if (rc != 0) {
         return MGMT_ERR_EINVAL;
     }
 
-    if (off == 0) {
-        /* Total image length is a required field in the first request. */
-        if (len == ULLONG_MAX) {
-            return MGMT_ERR_EINVAL;
-        }
+    /* Determine what actions to take as a result of this request. */
+    rc = img_mgmt_impl_upload_inspect(&req, &action, &errstr);
+    if (rc != 0) {
+        img_mgmt_dfu_stopped();
+        return rc;
+    }
 
-        rc = img_mgmt_check_header(img_mgmt_data, data_len);
-        if (rc) {
-            return rc;
-        }
+    if (!action.proceed) {
+        /* Request specifies incorrect offset.  Respond with a success code and
+         * the correct offset.
+         */
+        return img_mgmt_upload_good_rsp(ctxt);
+    }
 
-        /* Reject if SHA len is to big */
-        if (data_sha_len > IMG_MGMT_DATA_SHA_LEN) {
-            return MGMT_ERR_EINVAL;
+    /* Request is valid.  Give the application a chance to reject this upload
+     * request.
+     */
+    if (img_mgmt_upload_cb != NULL) {
+        rc = img_mgmt_upload_cb(req.off, action.size, img_mgmt_upload_arg);
+        if (rc != 0) {
+            errstr = img_mgmt_err_str_app_reject;
+            goto end;
         }
+    }
 
-        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_START;
+    /* Remember flash area ID and image size for subsequent upload requests. */
+    g_img_mgmt_state.area_id = action.area_id;
+    g_img_mgmt_state.size = action.size;
+
+    if (req.off == 0) {
+        /*
+         * New upload.
+         */
+        g_img_mgmt_state.off = 0;
+
+        img_mgmt_dfu_started();
 
         /*
-         * If request includes proper data hash we can check whether there is
-         * upload in progress (interrupted due to e.g. link disconnection) with
-         * the same data hash so we can just resume it by simply including
-         * current upload offset in response.
+         * We accept SHA trimmed to any length by client since it's up to client
+         * to make sure provided data are good enough to avoid collisions when
+         * resuming upload.
          */
-         if ((data_sha_len > 0) && img_mgmt_ctxt.uploading) {
-            if ((img_mgmt_ctxt.data_sha_len == data_sha_len) &&
-                    !memcmp(img_mgmt_ctxt.data_sha, data_sha, data_sha_len)) {
-                goto done;
-            }
-        }
+        g_img_mgmt_state.data_sha_len = req.data_sha_len;
+        memcpy(g_img_mgmt_state.data_sha, req.data_sha, req.data_sha_len);
+        memset(&g_img_mgmt_state.data_sha[req.data_sha_len], 0,
+               IMG_MGMT_DATA_SHA_LEN - req.data_sha_len);
 
-        if (upgrade) {
-            /* User specified upgrade-only.  Make sure new image version is
-             * greater than that of the currently running image.
-             */
-            rc = img_mgmt_read_info(0, &cur_ver, NULL, NULL);
+#ifdef IMG_MGMT_LAZY_ERASE
+        /* setup for lazy sector by sector erase */
+        g_img_mgmt_state.sector_id = -1;
+        g_img_mgmt_state.sector_end = 0;
+#else
+        /* erase the entire req.size all at once */
+        if (action.erase) {
+            rc = img_mgmt_impl_erase_image_data(0, req.size);
             if (rc != 0) {
-                return MGMT_ERR_EUNKNOWN;
-            }
-
-            memcpy(&new_hdr, img_mgmt_data, sizeof new_hdr);
-
-            if (imgr_vercmp(&cur_ver, &new_hdr.ih_ver) >= 0) {
-                return MGMT_ERR_EBADSTATE;
+                rc = MGMT_ERR_EUNKNOWN;
+                errstr = img_mgmt_err_str_flash_erase_failed;
+                goto end;
             }
         }
+#endif
+    }
 
-        rc = img_mgmt_upload_first_chunk(ctxt, img_mgmt_data, data_len,
-                                         data_sha, data_sha_len);
+    /* Write the image data to flash. */
+    if (req.data_len != 0) {
+#ifdef IMG_MGMT_LAZY_ERASE
+        /* erase as we cross sector boundaries */
+        if (img_mgmt_impl_erase_if_needed(req.off, action.write_bytes) != 0) {
+            rc = MGMT_ERR_EUNKNOWN;
+            errstr = img_mgmt_err_str_flash_erase_failed;
+            goto end;
+        }
+#endif
+        rc = img_mgmt_impl_write_image_data(req.off, req.img_data, action.write_bytes, 0);
         if (rc != 0) {
-            return rc;
-        }
-        img_mgmt_ctxt.len = len;
-    } else {
-        if (!img_mgmt_ctxt.uploading) {
-            return MGMT_ERR_EINVAL;
-        }
-
-        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_ONGOING;
-
-        if (off != img_mgmt_ctxt.off) {
-            /* Invalid offset.  Drop the data and send the expected offset. */
-            goto done;
+            rc = MGMT_ERR_EUNKNOWN;
+            errstr = img_mgmt_err_str_flash_write_failed;
+            goto end;
+        } else {
+            g_img_mgmt_state.off += action.write_bytes;
+            if (g_img_mgmt_state.off == g_img_mgmt_state.size) {
+                /* Done */
+                img_mgmt_dfu_pending();
+                g_img_mgmt_state.area_id = -1;
+            }
         }
     }
 
-    new_off = img_mgmt_ctxt.off + data_len;
-    if (new_off > img_mgmt_ctxt.len) {
-        /* Data exceeds image length. */
-        return MGMT_ERR_EINVAL;
-    }
-    last = new_off == img_mgmt_ctxt.len;
+end:
 
-    if (data_len > 0) {
-        rc = img_mgmt_impl_write_image_data(off, img_mgmt_data, data_len,
-                                            last);
-        if (rc != 0) {
-            return rc;
-        }
+    img_mgmt_upload_log(req.off == 0, g_img_mgmt_state.off == g_img_mgmt_state.size, rc);
+
+    if (rc != 0) {
+        img_mgmt_dfu_stopped();
+        return img_mgmt_error_rsp(ctxt, rc, errstr);
     }
 
-    img_mgmt_ctxt.off = new_off;
-    if (last) {
-        /* Upload complete. */
-        img_mgmt_ctxt.uploading = false;
-
-        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_COMPLETE;
-    }
-
-done:
-    mgmt_evt(MGMT_EVT_OP_CMD_STATUS, MGMT_GROUP_ID_IMAGE, IMG_MGMT_ID_UPLOAD,
-             &cmd_status_arg);
-
-    return img_mgmt_encode_upload_rsp(ctxt, 0);
+    return img_mgmt_upload_good_rsp(ctxt);
 }
+
+void
+img_mgmt_dfu_stopped(void)
+{
+    if (img_mgmt_dfu_callbacks_fn && img_mgmt_dfu_callbacks_fn->dfu_stopped_cb) {
+        img_mgmt_dfu_callbacks_fn->dfu_stopped_cb();
+    }
+}
+
+void
+img_mgmt_dfu_started(void)
+{
+    if (img_mgmt_dfu_callbacks_fn && img_mgmt_dfu_callbacks_fn->dfu_started_cb) {
+        img_mgmt_dfu_callbacks_fn->dfu_started_cb();
+    }
+}
+
+void
+img_mgmt_dfu_pending(void)
+{
+    if (img_mgmt_dfu_callbacks_fn && img_mgmt_dfu_callbacks_fn->dfu_pending_cb) {
+        img_mgmt_dfu_callbacks_fn->dfu_pending_cb();
+    }
+}
+
+void
+img_mgmt_dfu_confirmed(void)
+{
+    if (img_mgmt_dfu_callbacks_fn && img_mgmt_dfu_callbacks_fn->dfu_confirmed_cb) {
+        img_mgmt_dfu_callbacks_fn->dfu_confirmed_cb();
+    }
+}
+
+void
+img_mgmt_set_upload_cb(img_mgmt_upload_fn *cb, void *arg)
+{
+    img_mgmt_upload_cb = cb;
+    img_mgmt_upload_arg = arg;
+}
+
+void
+img_mgmt_register_callbacks(const img_mgmt_dfu_callbacks_t *cb_struct)
+{
+    img_mgmt_dfu_callbacks_fn = cb_struct;
+}
+
 
 int
 img_mgmt_my_version(struct image_version *ver)
