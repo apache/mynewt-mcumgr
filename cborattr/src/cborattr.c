@@ -51,6 +51,7 @@ valid_attr_type(CborType ct, CborAttrType at)
         if (ct == CborBooleanType) {
             return 1;
         }
+	break;
 #if FLOAT_SUPPORT
     case CborAttrFloatType:
         if (ct == CborFloatType) {
