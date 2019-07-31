@@ -231,7 +231,7 @@ img_mgmt_find_by_hash(uint8_t *find, struct image_version *ver)
     return -1;
 }
 
-#ifdef IMG_MGMT_VERBOSE_ERR
+#if IMG_MGMT_VERBOSE_ERR
 int
 img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn)
 {
@@ -242,7 +242,6 @@ img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn)
      */
     cbor_encode_text_stringz(&ctxt->encoder, "rsn");
     cbor_encode_text_stringz(&ctxt->encoder, rsn);
-
     return rc;
 }
 #endif
@@ -336,6 +335,7 @@ img_mgmt_upload_log(bool is_first, bool is_last, int status)
 static int
 img_mgmt_upload(struct mgmt_ctxt *ctxt)
 {
+    struct mgmt_evt_op_cmd_status_arg cmd_status_arg;
     struct img_mgmt_upload_req req = {
         .off = -1,
         .size = -1,
@@ -382,6 +382,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
     int rc;
     const char *errstr = NULL;
     struct img_mgmt_upload_action action;
+    bool last = false;
 
     rc = cbor_read_object(&ctxt->it, off_attr);
     if (rc != 0) {
@@ -424,6 +425,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
         g_img_mgmt_state.off = 0;
 
         img_mgmt_dfu_started();
+        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_START;
 
         /*
          * We accept SHA trimmed to any length by client since it's up to client
@@ -435,7 +437,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
         memset(&g_img_mgmt_state.data_sha[req.data_sha_len], 0,
                IMG_MGMT_DATA_SHA_LEN - req.data_sha_len);
 
-#ifdef IMG_MGMT_LAZY_ERASE
+#if IMG_MGMT_LAZY_ERASE
         /* setup for lazy sector by sector erase */
         g_img_mgmt_state.sector_id = -1;
         g_img_mgmt_state.sector_end = 0;
@@ -454,7 +456,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
 
     /* Write the image data to flash. */
     if (req.data_len != 0) {
-#ifdef IMG_MGMT_LAZY_ERASE
+#if IMG_MGMT_LAZY_ERASE
         /* erase as we cross sector boundaries */
         if (img_mgmt_impl_erase_if_needed(req.off, action.write_bytes) != 0) {
             rc = MGMT_ERR_EUNKNOWN;
@@ -462,7 +464,12 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
             goto end;
         }
 #endif
-        rc = img_mgmt_impl_write_image_data(req.off, req.img_data, action.write_bytes, 0);
+        /* If this is the last chunk */
+        if (g_img_mgmt_state.off + req.data_len == g_img_mgmt_state.size) {
+            last = true;
+        }
+
+        rc = img_mgmt_impl_write_image_data(req.off, req.img_data, action.write_bytes, last);
         if (rc != 0) {
             rc = MGMT_ERR_EUNKNOWN;
             errstr = img_mgmt_err_str_flash_write_failed;
@@ -472,6 +479,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
             if (g_img_mgmt_state.off == g_img_mgmt_state.size) {
                 /* Done */
                 img_mgmt_dfu_pending();
+                cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_ONGOING;
                 g_img_mgmt_state.area_id = -1;
             }
         }
@@ -480,6 +488,8 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
 end:
 
     img_mgmt_upload_log(req.off == 0, g_img_mgmt_state.off == g_img_mgmt_state.size, rc);
+    mgmt_evt(MGMT_EVT_OP_CMD_STATUS, MGMT_GROUP_ID_IMAGE, IMG_MGMT_ID_UPLOAD,
+             &cmd_status_arg);
 
     if (rc != 0) {
         img_mgmt_dfu_stopped();

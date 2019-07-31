@@ -94,7 +94,7 @@ struct img_mgmt_state {
     /** Hash of image data; used for resumption of a partial upload. */
     uint8_t data_sha_len;
     uint8_t data_sha[IMG_MGMT_DATA_SHA_LEN];
-#ifdef IMG_MGMT_LAZY_ERASE
+#if IMG_MGMT_LAZY_ERASE
     int sector_id;
     uint32_t sector_end;
 #endif
@@ -188,7 +188,7 @@ void img_mgmt_dfu_started(void);
 void img_mgmt_dfu_pending(void);
 void img_mgmt_dfu_confirmed(void);
 
-#ifdef IMG_MGMT_VERBOSE_ERR
+#if IMG_MGMT_VERBOSE_ERR
 int
 img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn);
 extern const char *img_mgmt_err_str_app_reject;
@@ -200,7 +200,7 @@ extern const char *img_mgmt_err_str_flash_erase_failed;
 extern const char *img_mgmt_err_str_flash_write_failed;
 extern const char *img_mgmt_err_str_downgrade;
 #else
-#define img_mgmt_error_rsp(ctxt, rc, rsn)         (rc)
+#define img_mgmt_error_rsp(ctxt, rc, rsn)             (rc)
 #define img_mgmt_err_str_app_reject                   NULL
 #define img_mgmt_err_str_hdr_malformed                NULL
 #define img_mgmt_err_str_magic_mismatch               NULL

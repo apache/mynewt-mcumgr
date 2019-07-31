@@ -482,15 +482,19 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
     return 0;
 }
 
-#if MYNEWT_VAL(IMGMGR_LAZY_ERASE)
+#if MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
 int
-img_mgmt_impl_erase_if_needed(const void *fa, uint32_t off, uint32_t len)
+img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
 {
     int rc = 0;
     struct flash_area sector;
     const struct flash_area *cfa;
 
-    cfa = (const struct flash_area *)fa;
+    rc = flash_area_open(FLASH_AREA_IMAGE_1, &cfa);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
     while ((cfa->fa_off + off + len) > g_img_mgmt_state.sector_end) {
         rc = flash_area_getnext_sector(cfa->fa_id, &g_img_mgmt_state.sector_id, &sector);
         if (rc) {
@@ -531,13 +535,6 @@ img_mgmt_module_init(void)
     SYSINIT_ASSERT_ACTIVE();
 
     img_mgmt_register_group();
-
-#if MYNEWT_VAL(IMGMGR_CLI)
-    int rc;
-
-    rc = img_mgmt_cli_register();
-    SYSINIT_PANIC_ASSERT(rc == 0);
-#endif
 
     /* setup for lazy sector by sector erase */
     upload_state.sector_id = -1;

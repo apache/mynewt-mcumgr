@@ -129,7 +129,6 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes);
  * We could check for empty to increase efficiency, but instead we always erase
  *   for consistency and simplicity.
  *
- * @param fa       Flash area being traversed
  * @param off      Offset that is about to be written
  * @param len      Number of bytes to be written
  *
@@ -137,7 +136,7 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes);
  *                 ERROR_CODE if could not erase sector
  */
 int
-img_mgmt_impl_erase_if_needed(const void *fa, uint32_t off, uint32_t len);
+img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len);
 
 /**
  * Verifies an upload request and indicates the actions that should be taken
