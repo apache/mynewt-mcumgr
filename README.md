@@ -5,7 +5,7 @@ This is mcumgr, version 0.0.1
 mcumgr is a management library for 32-bit MCUs.   The goal of mcumgr is to
 define a common management infrastructure with pluggable transport and encoding
 components.  In addition, mcumgr provides definitions and handlers for some
-core commands: image management, file system management, and OS managment.
+core commands: image management, file system management, and OS management.
 
 mcumgr is operating system and hardware independent.  It relies on hardware
 porting layers from the operating system it runs on.  Currently, mcumgr runs on
