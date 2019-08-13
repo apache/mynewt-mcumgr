@@ -118,22 +118,83 @@ struct img_mgmt_upload_action {
  * @brief Registers the image management command handler group.
  */ 
 void img_mgmt_register_group(void);
+
 /**
  * @brief Read info of an image give the slot number
+ *
+ * @param image_slot     Image slot to read info from
+ * @param image_version  Image version to be filled up
+ * @param hash           Ptr to the read image hash
+ * @param flags          Ptr to flags filled up from the image
  */
 int img_mgmt_read_info(int image_slot, struct image_version *ver,
                        uint8_t *hash, uint32_t *flags);
+
 /**
  * @brief Get the current running image version
+ *
+ * @param image_version Given image version
+ *
+ * @return 0 on success, non-zero on failure
  */
 int
 img_mgmt_my_version(struct image_version *ver);
 
 /**
+ * @brief Get image version in string from image_version
+ *
+ * @param image_version Structure filled with image version
+ *                      information
+ * @param dst           Destination string created from the given
+ *                      in image version
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+img_mgmt_ver_str(const struct image_version *ver, char *dst);
+
+/**
  * @brief Check if the image slot is in use
+ *
+ * @param slot Slot to check if its in use
+ *
+ * @return 0 on success, non-zero on failure
  */
 int
 img_mgmt_slot_in_use(int slot);
+
+/**
+ * @brief Collects information about the specified image slot
+ *
+ * @param query_slot Slot to read state flags from
+ *
+ * @return return the state flags
+ */
+uint8_t
+img_mgmt_state_flags(int query_slot);
+
+/**
+ * @brief Sets the pending flag for the specified image slot.  That is, the system
+ * will swap to the specified image on the next reboot.  If the permanent
+ * argument is specified, the system doesn't require a confirm after the swap
+ * occurs.
+ *
+ * @param slot       Image slot to set pending
+ * @param permanent  If set no confirm is required after image swap
+ *
+ * @return 0 on success, non-zero on failure
+ */
+int
+img_mgmt_state_set_pending(int slot, int permanent);
+
+/**
+ * Confirms the current image state.  Prevents a fallback from occurring on the
+ * next reboot if the active image is currently being tested.
+ *
+ * @return 0 on success, non -zero on failure
+ */
+int
+img_mgmt_state_confirm(void);
 
 /** @brief Generic callback function for events */
 typedef void (*img_mgmt_dfu_cb)(void);
