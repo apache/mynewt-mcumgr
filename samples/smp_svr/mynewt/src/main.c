@@ -34,6 +34,7 @@
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
+#include "smp_svr.h"
 
 /* smp_svr uses the first "peruser" log module. */
 #define SMP_SVR_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
@@ -294,8 +295,6 @@ main(void)
                  LOG_SYSLEVEL);
 
     /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = smp_svr_on_reset;
     ble_hs_cfg.sync_cb = smp_svr_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
