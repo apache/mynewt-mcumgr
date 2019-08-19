@@ -35,6 +35,7 @@
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
 #include "smp_svr.h"
+#include "host/util/util.h"
 
 /* smp_svr uses the first "peruser" log module. */
 #define SMP_SVR_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
@@ -93,11 +94,19 @@ smp_svr_print_conn_desc(struct ble_gap_conn_desc *desc)
 static void
 smp_svr_advertise(void)
 {
+    uint8_t own_addr_type;
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
     const char *name;
     int rc;
 
+
+    /* Figure out address to use while advertising (no privacy for now) */
+    rc = ble_hs_id_infer_auto(0, &own_addr_type);
+    if (rc != 0) {
+        MODLOG_DFLT(ERROR, "error determining address type; rc=%d\n", rc);
+        return;
+    }
     /**
      *  Set the advertisement data included in our advertisements:
      *     o Flags (indicates advertisement type and other general info).
@@ -127,12 +136,6 @@ smp_svr_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids16 = (ble_uuid16_t[]){
-        BLE_UUID16_INIT(GATT_SVR_SVC_ALERT_UUID)
-    };
-    fields.num_uuids16 = 1;
-    fields.uuids16_is_complete = 1;
-
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
         SMP_SVR_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
@@ -143,7 +146,7 @@ smp_svr_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER,
                            &adv_params, smp_svr_gap_event, NULL);
     if (rc != 0) {
         SMP_SVR_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
@@ -270,6 +273,12 @@ smp_svr_on_reset(int reason)
 static void
 smp_svr_on_sync(void)
 {
+    int rc;
+
+    /* Make sure we have proper identity address set (public preferred) */
+    rc = ble_hs_util_ensure_addr(0);
+    assert(rc == 0);
+
     /* Begin advertising. */
     smp_svr_advertise();
 }
