@@ -30,8 +30,6 @@
 #include "img_mgmt_priv.h"
 #include "img_mgmt_config.h"
 
-#define IMG_MGMT_DATA_SHA_LEN 32
-
 static mgmt_handler_fn img_mgmt_upload;
 static mgmt_handler_fn img_mgmt_erase;
 static img_mgmt_upload_fn *img_mgmt_upload_cb;
@@ -110,6 +108,30 @@ int
 img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
                    uint32_t *flags)
 {
+
+#if MYNEWT_VAL(IMGMGR_DUMMY_HDR)
+    uint8_t dummy_hash[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+                            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
+ 
+    if (!hash && !ver && !flags) {
+        return 0;
+    }
+
+    if (hash) {
+        memcpy(hash, dummy_hash, IMG_MGMT_HASH_LEN);
+    }
+
+    if (ver) {
+        memset(ver, 0xff, sizeof *ver);
+    }
+
+    if (flags) {
+        *flags = 0;
+    }
+
+    return 0;
+#endif
+
     struct image_header hdr;
     struct image_tlv tlv;
     size_t data_off;

@@ -32,6 +32,7 @@ extern "C" {
 
 #define IMG_MGMT_MAX_IMGR         2
 #define IMG_MGMT_HASH_STR         48
+#define IMG_MGMT_HASH_LEN         32
 #define IMG_MGMT_DATA_SHA_LEN     32 /* SHA256 */
 
 /*
