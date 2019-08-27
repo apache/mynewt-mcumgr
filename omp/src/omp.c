@@ -136,10 +136,6 @@ omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr, struct mgmt_hdr *rsp_hdr,
             rc = MGMT_ERR_ENOENT;
         } else {
             rsp_hdr->nh_op = MGMT_OP_READ_RSP;
-            /* mgmt_evt(MGMT_EVT_OP_CMD_RECV, */
-            /*          req_hdr->nh_group, */
-            /*          req_hdr->nh_id, */
-            /*          NULL); */
             rc = handler->mh_read(ctxt);
         }
         break;
@@ -149,10 +145,6 @@ omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr, struct mgmt_hdr *rsp_hdr,
             rc = MGMT_ERR_ENOENT;
         } else {
             rsp_hdr->nh_op = MGMT_OP_WRITE_RSP;
-            /* mgmt_evt(MGMT_EVT_OP_CMD_RECV, */
-            /*          req_hdr->nh_group, */
-            /*          req_hdr->nh_id, */
-            /*          NULL); */
             rc = handler->mh_write(ctxt);
         }
         break;
@@ -188,7 +180,6 @@ omp_process_request_packet(struct omp_streamer *streamer, struct os_mbuf *m,
 {
     struct mgmt_ctxt ctxt;
     struct mgmt_hdr req_hdr, rsp_hdr;
-    struct os_mbuf *m_rsp;
     int rc = 0;
 
     rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, m);
@@ -204,19 +195,13 @@ omp_process_request_packet(struct omp_streamer *streamer, struct os_mbuf *m,
 
     }
 
+    memcpy(&rsp_hdr, &req_hdr, sizeof(struct mgmt_hdr));
+
     rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, m);
     assert(rc == 0);
     rc = cbor_parser_init(streamer->mgmt_stmr.reader, 0, &ctxt.parser, &ctxt.it);
     assert(rc == 0);
 
-
-    m_rsp = mgmt_streamer_alloc_rsp(&streamer->mgmt_stmr, m);
-    assert(m_rsp != NULL);
-
-    rc = mgmt_streamer_init_writer(&streamer->mgmt_stmr, m_rsp);
-    assert(rc == 0);
-
-    //cbor_encoder_init(&streamer->rsp_encoder, streamer->mgmt_stmr.writer, 0);
     rc = cbor_encoder_create_map(streamer->rsp_encoder, //encoder
                                  &ctxt.encoder, //mapEncoder
                                  CborIndefiniteLength);
@@ -235,6 +220,7 @@ omp_process_request_packet(struct omp_streamer *streamer, struct os_mbuf *m,
 
     rc = cbor_encoder_close_container(streamer->rsp_encoder, &ctxt.encoder);
     assert(rc == 0);
+
     streamer->tx_rsp_cb(&ctxt, req, rc);
     return rc;
 }
