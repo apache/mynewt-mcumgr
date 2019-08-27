@@ -15,9 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-pkg.name: samples/smp_svr/mynewt
+pkg.name: samples/omp_svr/mynewt
 pkg.type: app
-pkg.description: Simple BLE peripheral running an mcumgr SMP server.
+pkg.description: Simple BLE peripheral running an mcumgr OMP server.
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
@@ -40,4 +40,22 @@ pkg.deps:
     - '@apache-mynewt-mcumgr/cmd/fs_mgmt'
     - '@apache-mynewt-mcumgr/cmd/img_mgmt'
     - '@apache-mynewt-mcumgr/cmd/os_mgmt'
+    - "@apache-mynewt-mcumgr/cmd/stat_mgmt"
+    - "@apache-mynewt-mcumgr/mgmt"
     - '@apache-mynewt-mcumgr/smp'
+    - "@apache-mynewt-core/sys/reboot"
+    - "@apache-mynewt-core/boot/split"
+    - "@apache-mynewt-core/sys/log/modlog"
+    - "@apache-mynewt-core/sys/id"
+    - "@apache-mynewt-core/sys/shell"
+    - "@apache-mynewt-core/sys/config"
+    - "@apache-mynewt-core/kernel/os"
+    - "@apache-mynewt-core/mgmt/oicmgr"
+    - "@apache-mynewt-core/sys/sysinit"
+    - "@apache-mynewt-core/mgmt/smp/smp_os"
+
+pkg.deps.CONFIG_NFFS:
+    - "@apache-mynewt-core/fs/nffs"
+
+pkg.deps.CONFIG_FCB:
+    - "@apache-mynewt-core/fs/fcb"
