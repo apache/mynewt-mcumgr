@@ -65,7 +65,7 @@ typedef void omp_tx_rsp_fn(struct mgmt_ctxt *ctxt, void *request, int retval);
 struct omp_streamer {
     struct mgmt_streamer mgmt_stmr;
     omp_tx_rsp_fn *tx_rsp_cb;
-    struct CborEncoder rsp_encoder;
+    struct CborEncoder *rsp_encoder;
 };
 
 /**
