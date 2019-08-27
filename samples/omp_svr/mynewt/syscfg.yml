@@ -49,3 +49,9 @@ syscfg.vals:
     MSYS_1_BLOCK_SIZE: 110
 
     OC_SERVER: 1
+    #Enables OIC transport over nlip serial
+    OC_TRANSPORT_SERIAL: 1
+    # Enables API to send delayed responses
+    OC_SEPARATE_RESPONSES: '0'
+    # Enable gatt tranport
+    OC_TRANSPORT_GATT: 1

@@ -31,10 +31,12 @@
 #include <bootutil/image.h>
 #include <imgmgr/imgmgr.h>
 #include <mgmt/mgmt.h>
-#include <oic/oc_api.h>
 #include <assert.h>
 #include <string.h>
 #include <reboot/log_reboot.h>
+#include <oic/oc_api.h>
+#include <oic/oc_gatt.h>
+#include <cborattr/cborattr.h>
 
 /* BLE */
 #include "nimble/ble.h"
@@ -504,14 +506,13 @@ main(int argc, char **argv)
 
     sysinit();
 
+    oc_ble_coap_gatt_srv_init();
+
     /* Initialize the NimBLE host configuration. */
     ble_hs_cfg.reset_cb = omp_svr_on_reset;
     ble_hs_cfg.sync_cb = omp_svr_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
     ble_hs_cfg.store_status_cb = ble_store_util_status_rr;
-
-    rc = gatt_svr_init();
-    assert(rc == 0);
 
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("mynewt-omp-svr");

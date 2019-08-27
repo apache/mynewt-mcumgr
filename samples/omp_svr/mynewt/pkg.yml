@@ -29,7 +29,6 @@ pkg.deps:
     - '@apache-mynewt-nimble/nimble/controller'
     - '@apache-mynewt-nimble/nimble/host'
     - '@apache-mynewt-nimble/nimble/host/util'
-    - '@apache-mynewt-nimble/nimble/host/services/ans'
     - '@apache-mynewt-nimble/nimble/host/services/gap'
     - '@apache-mynewt-nimble/nimble/host/services/gatt'
     - '@apache-mynewt-nimble/nimble/host/store/config'
@@ -53,6 +52,7 @@ pkg.deps:
     - "@apache-mynewt-core/mgmt/oicmgr"
     - "@apache-mynewt-core/sys/sysinit"
     - "@apache-mynewt-core/mgmt/smp/smp_os"
+    - "@apache-mynewt-core/net/oic"
 
 pkg.deps.CONFIG_NFFS:
     - "@apache-mynewt-core/fs/nffs"
