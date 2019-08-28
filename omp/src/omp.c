@@ -26,21 +26,9 @@
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
 
-#include "omp/omp_streamer.h"
-/* #include <oic/oc_api.h> */
+#include "omp/omp_impl.h"
 
-/* struct omgr_ctxt { */
-/*     struct mgmt_ctxt ob_mc; */
-/*     struct cbor_mbuf_reader ob_reader; */
-/* }; */
-
-/* struct omgr_state { */
-/*     struct omgr_ctxt os_ctxt;		/\* CBOR buffer for MGMT task *\/ */
-/* }; */
-
-/* static struct omgr_state omgr_state; */
-
-static int
+int
 omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr)
 {
     int rc;
@@ -62,7 +50,7 @@ omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr)
     return 0;
 }
 
-static int
+int
 omp_send_err_rsp(struct CborEncoder *enc,
                  const struct mgmt_hdr *hdr,
                  int mgmt_status)
@@ -87,7 +75,7 @@ omp_send_err_rsp(struct CborEncoder *enc,
     return 0;
 }
 
-static int
+int
 omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr)
 {
     size_t hlen;
@@ -116,18 +104,19 @@ omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr)
     return 0;
 }
 
-static int
-omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr, struct mgmt_hdr *rsp_hdr,
+int
+omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
+                     struct mgmt_hdr *rsp_hdr,
                      struct mgmt_ctxt *ctxt)
 {
     int rc = 0;
-    bool rsp_hdr_filled = false;
+    bool rsp_hdr_filled = true;
     const struct mgmt_handler *handler;
 
     handler = mgmt_find_handler(req_hdr->nh_group, req_hdr->nh_id);
     if (handler == NULL) {
         rc = MGMT_ERR_ENOENT;
-        goto done;
+        return rc;
     }
 
     switch (req_hdr->nh_op) {
@@ -151,76 +140,23 @@ omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr, struct mgmt_hdr *rsp_hdr,
 
     default:
         rc = MGMT_ERR_EINVAL;
-        break;
-    }
-    if (rc != 0) {
+        rsp_hdr_filled = false;
         goto done;
-    } else {
-        rsp_hdr_filled = true;
+        break;
     }
 
     /* Encode the MGMT header in the response. */
-    rc = omp_encode_mgmt_hdr(&ctxt->encoder, *rsp_hdr);
-    if (rc != 0) {
-        rc = MGMT_ERR_ENOMEM;
-    }
-
 done:
     if (rc != 0) {
         if (rsp_hdr_filled) {
             rc = omp_send_err_rsp(&ctxt->encoder, rsp_hdr, rc);
         }
-    }
-    return rc;
-}
-
-int
-omp_process_request_packet(struct omp_streamer *streamer, struct os_mbuf *m,
-                           void *req)
-{
-    struct mgmt_ctxt ctxt;
-    struct mgmt_hdr req_hdr, rsp_hdr;
-    int rc = 0;
-
-    rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, m);
-    assert(rc == 0);
-    rc = cbor_parser_init(streamer->mgmt_stmr.reader, 0, &ctxt.parser, &ctxt.it);
-    assert(rc == 0);
-
-    rc = omp_read_hdr(&ctxt.it, &req_hdr);
-    assert(rc == 0);
-    if (rc != 0) {
-        rc = MGMT_ERR_EINVAL;
-        return rc;
-
+    } else {
+        rc = omp_encode_mgmt_hdr(&ctxt->encoder, *rsp_hdr);
+        if (rc != 0) {
+            rc = MGMT_ERR_ENOMEM;
+        }
     }
 
-    memcpy(&rsp_hdr, &req_hdr, sizeof(struct mgmt_hdr));
-
-    rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, m);
-    assert(rc == 0);
-    rc = cbor_parser_init(streamer->mgmt_stmr.reader, 0, &ctxt.parser, &ctxt.it);
-    assert(rc == 0);
-
-    rc = cbor_encoder_create_map(streamer->rsp_encoder, //encoder
-                                 &ctxt.encoder, //mapEncoder
-                                 CborIndefiniteLength);
-    assert(rc == 0);
-    if (rc != 0) {
-        rc = MGMT_ERR_EINVAL;
-        return rc;
-    }
-
-    rc = omp_process_mgmt_hdr(&req_hdr, &rsp_hdr, &ctxt);
-    assert(rc == 0);
-    if (rc != 0) {
-        rc = MGMT_ERR_EINVAL;
-        return rc;
-    }
-
-    rc = cbor_encoder_close_container(streamer->rsp_encoder, &ctxt.encoder);
-    assert(rc == 0);
-
-    streamer->tx_rsp_cb(&ctxt, req, rc);
     return rc;
 }

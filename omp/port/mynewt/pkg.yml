@@ -17,8 +17,12 @@
 # under the License.
 #
 
-syscfg.defs:
-    OMP_OIC_RESOURCE_NAME:
-        description: >
-            The OMP OIC Resource name. 
-        value: '"x.mynewt.nmgr"'
+pkg.name: omp/port/mynewt
+pkg.description: 'OIC Management Protocol.'
+pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
+pkg.homepage: "http://mynewt.apache.org/"
+pkg.keywords:
+
+pkg.deps:
+    - '@apache-mynewt-mcumgr/omp'
+    - '@apache-mynewt-mcumgr/mgmt'

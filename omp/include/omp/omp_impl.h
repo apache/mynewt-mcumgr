@@ -20,7 +20,6 @@
 /**
  * @file
  * @brief OMP - OIC Management Protocol.
- * XXX: REVIEW THIS
  *
  * OMP is an OIC implementation of SMP, a basic protocol that sits on top of
  * the mgmt layer. SMP requests and responses have the following format:
@@ -36,8 +35,8 @@
  * processing of the packet is aborted.
  */
 
-#ifndef H_OMP_
-#define H_OMP_
+#ifndef H_OMP_IMPL
+#define H_OMP_IMPL
 
 #include "mgmt/mgmt.h"
 
@@ -45,50 +44,17 @@
 extern "C" {
 #endif
 
-struct omp_streamer;
-struct mgmt_hdr;
-
-/** @typedef smp_tx_rsp_fn
- * @brief Transmits an OMP response packet.
- *
- * @param ss                    The streamer to transmit via.
- * @param buf                   Buffer containing the response packet.
- * @param arg                   Optional streamer argument.
- *
- * @return                      0 on success, MGMT_ERR_[...] code on failure.
- */
-typedef void omp_tx_rsp_fn(struct mgmt_ctxt *ctxt, void *request, int retval);
-
-/**
- * @brief Decodes, encodes, and transmits SMP packets.
- */
-struct omp_streamer {
-    struct mgmt_streamer mgmt_stmr;
-    omp_tx_rsp_fn *tx_rsp_cb;
-    struct CborEncoder *rsp_encoder;
-};
-
-/**
- * @brief Processes a single OMP request packet and sends all corresponding
- *        responses.
- *
- * Processes all OMP requests in an incoming packet.  Requests are processed
- * sequentially from the start of the packet to the end.  Each response is sent
- * individually in its own packet.  If a request elicits an error response,
- * processing of the packet is aborted.  This function consumes the supplied
- * request buffer regardless of the outcome.
- *
- * @param streamer              The streamer providing the required OMP
- *                                  callbacks.
- * @param req                   The request packet to process.
- *
- * @return                      0 on success, MGMT_ERR_[...] code on failure.
- */
-int omp_process_request_packet(struct omp_streamer *streamer, struct os_mbuf *m,
-                               void *req);
+int omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr);
+int omp_send_err_rsp(struct CborEncoder *enc,
+                     const struct mgmt_hdr *hdr,
+                     int mgmt_status);
+int omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr);
+int omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
+                         struct mgmt_hdr *rsp_hdr,
+                         struct mgmt_ctxt *ctxt);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* H_OMP_ */
+#endif /* H_OMP_IMPL */
