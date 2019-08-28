@@ -17,26 +17,8 @@
  * under the License.
  */
 
-/**
- * @file
- * @brief OMP - OIC Management Protocol.
- *
- * OMP is an OIC implementation of SMP, a basic protocol that sits on top of
- * the mgmt layer. SMP requests and responses have the following format:
- *
- *     [Offset 0]: Mgmt header
- *     [Offset 8]: CBOR map of command-specific key-value pairs.
- *
- * SMP request packets may contain multiple concatenated requests.  Each
- * request must start at an offset that is a multiple of 4, so padding should
- * be inserted between requests as necessary.  Requests are processed
- * sequentially from the start of the packet to the end.  Each response is sent
- * individually in its own packet.  If a request elicits an error response,
- * processing of the packet is aborted.
- */
-
-#ifndef H_OMP_IMPL
-#define H_OMP_IMPL
+#ifndef H_OMP_PRIV
+#define H_OMP_PRIV
 
 #include "mgmt/mgmt.h"
 

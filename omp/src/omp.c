@@ -26,7 +26,7 @@
 #include <cborattr/cborattr.h>
 #include <tinycbor/cbor.h>
 
-#include "omp/omp_impl.h"
+#include "omp/omp_priv.h"
 
 int
 omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr)

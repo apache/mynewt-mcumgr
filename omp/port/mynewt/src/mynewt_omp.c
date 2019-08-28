@@ -27,7 +27,7 @@
 #include <tinycbor/cbor.h>
 
 #include "omp/omp.h"
-#include "omp/omp_impl.h"
+#include "omp/omp_priv.h"
 
 int
 omp_impl_process_request_packet(struct omp_state *omgr_st, void *req_buf)

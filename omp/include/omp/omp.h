@@ -76,6 +76,7 @@ struct omp_state {
     void *request;
 };
 
+
 /**
  * @brief Processes a single OMP request packet and sends all corresponding
  *        responses.
