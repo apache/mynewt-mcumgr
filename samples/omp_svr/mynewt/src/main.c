@@ -29,7 +29,7 @@
 #include "split/split.h"
 #endif
 #include <bootutil/image.h>
-#include <imgmgr/imgmgr.h>
+#include <img_mgmt/img_mgmt.h>
 #include <mgmt/mgmt.h>
 #include <assert.h>
 #include <string.h>
@@ -62,8 +62,6 @@ static volatile int g_task1_loops;
 #define TASK2_PRIO (9)
 #define TASK2_STACK_SIZE    OS_STACK_ALIGN(64)
 static struct os_task task2;
-
-static struct log my_log;
 
 static volatile int g_task2_loops;
 
@@ -100,8 +98,6 @@ static struct conf_handler test_conf_handler = {
 static uint8_t test8;
 static uint8_t test8_shadow;
 static char test_str[32];
-static uint32_t cbmem_buf[MAX_CBMEM_BUF];
-static struct cbmem cbmem;
 
 static char *
 test_conf_get(int argc, char **argv, char *buf, int max_len)
@@ -391,15 +387,17 @@ task1_handler(void *arg)
     struct os_task *t;
     int prev_pin_state, curr_pin_state;
     struct image_version ver;
+    char ver_str[IMG_MGMT_VER_MAX_STR_LEN];
+    int rc;
 
     /* Set the led pin for the E407 devboard */
     g_led_pin = LED_BLINK_PIN;
     hal_gpio_init_out(g_led_pin, 1);
 
-    if (imgr_my_version(&ver) == 0) {
-        console_printf("\nOMP_SVR %u.%u.%u.%u\n",
-          ver.iv_major, ver.iv_minor, ver.iv_revision,
-          (unsigned int)ver.iv_build_num);
+    if (img_mgmt_read_info(0, &ver, NULL, NULL) == 0) {
+        rc = img_mgmt_ver_str(&ver, ver_str);
+        assert(rc == 0);
+        console_printf("\nOMP_SVR %s\n", ver_str);
     } else {
         console_printf("\nOMP_SVR\n");
     }
@@ -416,7 +414,7 @@ task1_handler(void *arg)
         /* Toggle the LED */
         prev_pin_state = hal_gpio_read(g_led_pin);
         curr_pin_state = hal_gpio_toggle(g_led_pin);
-        MODLOG_DFLT(INFO, "GPIO toggle from %u to %u",
+        MODLOG_DFLT(INFO, "GPIO %d: %u to %u\n", g_led_pin,
                     prev_pin_state, curr_pin_state);
         STATS_INC(g_stats_gpio_toggle, toggles);
 
@@ -519,13 +517,6 @@ main(int argc, char **argv)
     assert(rc == 0);
 
     rc = conf_register(&test_conf_handler);
-    assert(rc == 0);
-
-    cbmem_init(&cbmem, cbmem_buf, MAX_CBMEM_BUF);
-    log_register("log", &my_log, &log_cbmem_handler, &cbmem, LOG_SYSLEVEL);
-
-    /* Point the default module at the cbmem log just registered. */
-    rc = modlog_register(LOG_MODULE_DEFAULT, &my_log, LOG_LEVEL_DEBUG, NULL);
     assert(rc == 0);
 
     stats_init(STATS_HDR(g_stats_gpio_toggle),
