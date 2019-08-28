@@ -185,10 +185,6 @@ smp_svr_gap_event(struct ble_gap_event *event, void *arg)
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
             smp_svr_print_conn_desc(&desc);
-
-#if MYNEWT_VAL(SMP_SVR_LE_PHY_SUPPORT)
-            phy_conn_changed(event->connect.conn_handle);
-#endif
         }
         SMP_SVR_LOG(INFO, "\n");
 
@@ -202,10 +198,6 @@ smp_svr_gap_event(struct ble_gap_event *event, void *arg)
         SMP_SVR_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
         smp_svr_print_conn_desc(&event->disconnect.conn);
         SMP_SVR_LOG(INFO, "\n");
-
-#if MYNEWT_VAL(SMP_SVR_LE_PHY_SUPPORT)
-        phy_conn_changed(CONN_HANDLE_INVALID);
-#endif
 
         /* Connection terminated; resume advertising. */
         smp_svr_advertise();
