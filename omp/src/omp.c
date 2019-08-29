@@ -112,6 +112,7 @@ omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
     int rc = 0;
     bool rsp_hdr_filled = true;
     const struct mgmt_handler *handler;
+    mgmt_handler_fn *handler_fn = NULL;
 
     handler = mgmt_find_handler(req_hdr->nh_group, req_hdr->nh_id);
     if (handler == NULL) {
@@ -121,32 +122,27 @@ omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
 
     switch (req_hdr->nh_op) {
     case MGMT_OP_READ:
-        if (handler->mh_read == NULL) {
-            rc = MGMT_ERR_ENOENT;
-        } else {
-            rsp_hdr->nh_op = MGMT_OP_READ_RSP;
-            rc = handler->mh_read(ctxt);
-        }
+        rsp_hdr->nh_op = MGMT_OP_READ_RSP;
+        handler_fn = handler->mh_read;
         break;
 
     case MGMT_OP_WRITE:
-        if (handler->mh_write == NULL) {
-            rc = MGMT_ERR_ENOENT;
-        } else {
-            rsp_hdr->nh_op = MGMT_OP_WRITE_RSP;
-            rc = handler->mh_write(ctxt);
-        }
+        rsp_hdr->nh_op = MGMT_OP_WRITE_RSP;
+        handler_fn = handler->mh_write;
         break;
 
     default:
         rc = MGMT_ERR_EINVAL;
-        rsp_hdr_filled = false;
-        goto done;
-        break;
+    }
+
+    if (handler_fn) {
+        rc = handler_fn(ctxt);
+    } else {
+        rc = MGMT_ERR_ENOTSUP;
     }
 
     /* Encode the MGMT header in the response. */
-done:
+
     if (rc != 0) {
         if (rsp_hdr_filled) {
             rc = omp_send_err_rsp(&ctxt->encoder, rsp_hdr, rc);
@@ -158,5 +154,5 @@ done:
         }
     }
 
-    return rc;
+    return mgmt_err_from_cbor(rc);
 }

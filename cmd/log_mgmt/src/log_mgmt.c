@@ -317,6 +317,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
             /* Log list fully iterated. */
             if (name_len != 0) {
                 /* Client specified log name, but the log wasn't found. */
+                cbor_encoder_close_container(&ctxt->encoder, &logs);
                 return MGMT_ERR_ENOENT;
             } else {
                 break;

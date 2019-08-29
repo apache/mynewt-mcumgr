@@ -78,9 +78,6 @@ omp_impl_process_request_packet(struct omp_state *omgr_st, void *req_buf)
     }
 
     rc = omp_process_mgmt_hdr(&req_hdr, &rsp_hdr, &ctxt);
-    /* if (err != 0) { */
-    /*     rc = MGMT_ERR_EINVAL; */
-    /* } */
 
     cbor_encoder_close_container(streamer->rsp_encoder, &ctxt.encoder);
     if (rc != 0) {
