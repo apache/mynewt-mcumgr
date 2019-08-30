@@ -110,7 +110,6 @@ omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
                      struct mgmt_ctxt *ctxt)
 {
     int rc = 0;
-    bool rsp_hdr_filled = true;
     const struct mgmt_handler *handler;
     mgmt_handler_fn *handler_fn = NULL;
 
@@ -144,7 +143,7 @@ omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
     /* Encode the MGMT header in the response. */
 
     if (rc != 0) {
-        if (rsp_hdr_filled) {
+        if (handler_fn) {
             rc = omp_send_err_rsp(&ctxt->encoder, rsp_hdr, rc);
         }
     } else {
