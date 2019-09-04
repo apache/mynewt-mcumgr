@@ -94,6 +94,14 @@ struct omp_state {
  */
 int omp_impl_process_request_packet(struct omp_state *omgr_st, void *req);
 
+/**
+ * @brief Read the management header out from a cbor value
+ *
+ * @param cv      Ptr to CoberValue
+ * @param out_hdr Ptr to management header to be filled in
+ */ 
+int omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr);
+
 #ifdef __cplusplus
 }
 #endif

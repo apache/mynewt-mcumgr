@@ -243,7 +243,7 @@ typedef int img_mgmt_upload_fn(uint32_t offset, uint32_t size, void *arg);
  * @param arg                   Optional argument that gets passed to the
  *                                  callback.
  */
-void imgr_set_upload_cb(img_mgmt_upload_fn *cb, void *arg);
+void img_mgmt_set_upload_cb(img_mgmt_upload_fn *cb, void *arg);
 void img_mgmt_register_callbacks(const img_mgmt_dfu_callbacks_t *cb_struct);
 void img_mgmt_dfu_stopped(void);
 void img_mgmt_dfu_started(void);

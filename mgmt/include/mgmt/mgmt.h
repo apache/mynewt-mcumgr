@@ -91,6 +91,8 @@ struct mgmt_hdr {
     uint8_t  nh_id;             /* Message ID within group */
 };
 
+#define nmgr_hdr mgmt_hdr
+
 /*
  * MGMT_EVT_OP_CMD_STATUS argument
  */
