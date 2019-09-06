@@ -38,3 +38,7 @@ syscfg.defs:
             of this size gets allocated on the stack during handling of all log
             management commands.
         value: 64
+
+# For backwards compatibility with log nmgr
+syscfg.vals.LOG_NMGR_MAX_RSP_LEN:
+    LOG_MGMT_CHUNK_SIZE: MYNEWT_VAL(LOG_NMGR_MAX_RSP_LEN)
