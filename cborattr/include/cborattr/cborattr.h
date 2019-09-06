@@ -27,7 +27,10 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include "tinycbor/cbor.h"
+
+#ifndef __ZEPHYR__
 #include <os/os_mbuf.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -145,8 +148,10 @@ int cbor_read_array(struct CborValue *, const struct cbor_array_t *);
 
 int cbor_read_flat_attrs(const uint8_t *data, int len,
                          const struct cbor_attr_t *attrs);
+#ifndef __ZEPHYR__
 int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
                          const struct cbor_attr_t *attrs);
+#endif
 
 #ifdef __cplusplus
 }
