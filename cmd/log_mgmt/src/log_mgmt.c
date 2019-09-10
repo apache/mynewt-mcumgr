@@ -77,15 +77,15 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     err |= cbor_encoder_create_map(enc, &rsp, CborIndefiniteLength);
 
     switch (entry->type) {
-    case LOG_ETYPE_CBOR:
+    case LOG_MGMT_ETYPE_CBOR:
         err |= cbor_encode_text_stringz(&rsp, "type");
         err |= cbor_encode_text_stringz(&rsp, "cbor");
         break;
-    case LOG_ETYPE_BINARY:
+    case LOG_MGMT_ETYPE_BINARY:
         err |= cbor_encode_text_stringz(&rsp, "type");
         err |= cbor_encode_text_stringz(&rsp, "bin");
         break;
-    case LOG_ETYPE_STRING:
+    case LOG_MGMT_ETYPE_STRING:
         err |= cbor_encode_text_stringz(&rsp, "type");
         err |= cbor_encode_text_stringz(&rsp, "str");
         break;
@@ -108,7 +108,7 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     }
 
     err |= cbor_encoder_close_container(&rsp, &str_encoder);
-    
+
     err |= cbor_encode_text_stringz(&rsp, "ts");
     err |= cbor_encode_int(&rsp, entry->ts);
     err |= cbor_encode_text_stringz(&rsp, "level");
@@ -117,6 +117,11 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     err |= cbor_encode_uint(&rsp, entry->index);
     err |= cbor_encode_text_stringz(&rsp, "module");
     err |= cbor_encode_uint(&rsp, entry->module);
+    if (entry->flags & LOG_MGMT_FLAGS_IMG_HASH) {
+        err |= cbor_encode_text_stringz(&rsp, "imghash");
+        err |= cbor_encode_byte_string(&rsp, entry->imghash,
+                                       LOG_MGMT_IMG_HASHLEN);
+    }
     err |= cbor_encoder_close_container(enc, &rsp);
 
     if (out_len != NULL) {

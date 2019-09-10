@@ -108,11 +108,12 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
 {
     struct mynewt_log_mgmt_walk_arg *mynewt_log_mgmt_walk_arg;
     struct log_mgmt_entry entry;
+    int header_len;
     int read_len;
     int rc;
 
     mynewt_log_mgmt_walk_arg = log_offset->lo_arg;
-    
+
     /* If specified timestamp is nonzero, it is the primary criterion, and the
      * specified index is the secondary criterion.  If specified timetsamp is
      * zero, specified index is the only criterion.
@@ -122,7 +123,6 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
      * Else: encode entries whose timestamp >= specified timestamp and whose
      *      index >= specified index
      */
-
     if (log_offset->lo_ts == 0) {
         if (log_offset->lo_index > leh->ue_index) {
             return 0;
@@ -133,21 +133,32 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
         return 0;
     }
 
-    read_len = min(len - sizeof leh, LOG_MGMT_BODY_LEN - sizeof leh);
-    rc = log_read(log, dptr, mynewt_log_mgmt_walk_arg->body, sizeof leh,
+    entry.ts = leh->ue_ts;
+    entry.index = leh->ue_index;
+    entry.module = leh->ue_module;
+    entry.level = leh->ue_level;
+
+#if MYNEWT_VAL(LOG_VERSION) < 3
+    entry.type = LOG_ETYPE_STRING;
+    entry.flags = 0;
+    header_len = sizeof leh;
+#else
+    entry.type = leh->ue_etype;
+    entry.flags = leh->ue_flags;
+    entry.imghash = (leh->ue_flags & LOG_FLAGS_IMG_HASH) ?
+        leh->ue_imghash : NULL;
+    header_len = log_hdr_len(leh);
+#endif
+
+    read_len = min(len - header_len, LOG_MGMT_BODY_LEN - header_len);
+    rc = log_read(log, dptr, mynewt_log_mgmt_walk_arg->body, header_len,
                   read_len);
     if (rc < 0) {
         return MGMT_ERR_EUNKNOWN;
     }
 
-    entry.ts = leh->ue_ts;
-    entry.index = leh->ue_index;
-    entry.module = leh->ue_module;
-    entry.level = leh->ue_level;
     entry.len = rc;
-    entry.type = leh->ue_etype;
     entry.data = mynewt_log_mgmt_walk_arg->body;
-
     return mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
 }
 
