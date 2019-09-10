@@ -19,12 +19,6 @@
 # Package: apps/omp_svr
 
 syscfg.vals:
-    # Disable central and observer roles.
-    BLE_ROLE_BROADCASTER: 1
-    BLE_ROLE_CENTRAL: 0
-    BLE_ROLE_OBSERVER: 0
-    BLE_ROLE_PERIPHERAL: 1
-
     # Log reboot messages to a flash circular buffer.
     REBOOT_LOG_FCB: 1
     LOG_FCB: 1
@@ -53,5 +47,13 @@ syscfg.vals:
     OC_TRANSPORT_SERIAL: 1
     # Enables API to send delayed responses
     OC_SEPARATE_RESPONSES: '0'
+
+syscfg.vals.!BSP_SIMULATED:
+    # Disable central and observer roles.
+    BLE_ROLE_BROADCASTER: 1
+    BLE_ROLE_CENTRAL: 0
+    BLE_ROLE_OBSERVER: 0
+    BLE_ROLE_PERIPHERAL: 1
+
     # Enable gatt tranport
     OC_TRANSPORT_GATT: 1

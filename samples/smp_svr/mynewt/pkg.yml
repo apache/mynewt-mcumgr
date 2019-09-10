@@ -23,9 +23,18 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps: 
+    - '@apache-mynewt-core/mgmt/smp/transport/smp_shell'
+    - '@apache-mynewt-core/sys/console/full'
+    - '@apache-mynewt-core/sys/log/full'
+    - '@apache-mynewt-core/sys/stats/full'
+    - '@apache-mynewt-mcumgr/cmd/fs_mgmt'
+    - '@apache-mynewt-mcumgr/cmd/img_mgmt'
+    - '@apache-mynewt-mcumgr/cmd/os_mgmt'
+    - '@apache-mynewt-mcumgr/smp'
+
+pkg.deps.!BSP_SIMULATED:
     - '@mcuboot/boot/bootutil'
     - '@apache-mynewt-core/mgmt/smp/transport/ble'
-    - '@apache-mynewt-core/mgmt/smp/transport/smp_shell'
     - '@apache-mynewt-nimble/nimble/controller'
     - '@apache-mynewt-nimble/nimble/host'
     - '@apache-mynewt-nimble/nimble/host/util'
@@ -34,10 +43,9 @@ pkg.deps:
     - '@apache-mynewt-nimble/nimble/host/services/gatt'
     - '@apache-mynewt-nimble/nimble/host/store/config'
     - '@apache-mynewt-nimble/nimble/transport/ram'
-    - '@apache-mynewt-core/sys/console/full'
-    - '@apache-mynewt-core/sys/log/full'
-    - '@apache-mynewt-core/sys/stats/full'
-    - '@apache-mynewt-mcumgr/cmd/fs_mgmt'
-    - '@apache-mynewt-mcumgr/cmd/img_mgmt'
-    - '@apache-mynewt-mcumgr/cmd/os_mgmt'
-    - '@apache-mynewt-mcumgr/smp'
+
+pkg.deps.BSP_SIMULATED:
+    - '@apache-mynewt-core/boot/stub'
+
+pkg.ign_files.BSP_SIMULATED:
+    - "gatt_svr.c"

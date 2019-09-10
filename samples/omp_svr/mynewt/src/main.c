@@ -35,21 +35,23 @@
 #include <string.h>
 #include <reboot/log_reboot.h>
 #include <oic/oc_api.h>
-#include <oic/oc_gatt.h>
 #include <cborattr/cborattr.h>
 
+#ifndef ARCH_sim
 /* BLE */
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
 #include "host/util/util.h"
 #include "services/gap/ble_svc_gap.h"
 
+#include <oic/oc_gatt.h>
+
 /* Application-specified header. */
 #include "omp_svr.h"
 
-#ifdef ARCH_sim
+#else
 #include <mcu/mcu_sim.h>
-#endif
+#endif /* !ARCH_sim */
 
 /* Task 1 */
 #define TASK1_PRIO (8)
@@ -144,6 +146,7 @@ test_conf_export(void (*func)(char *name, char *val), enum conf_export_tgt tgt)
     return 0;
 }
 
+#ifndef ARCH_sim
 static int omp_svr_gap_event(struct ble_gap_event *event, void *arg);
 
 /**
@@ -380,6 +383,7 @@ omp_svr_on_sync(void)
     /* Begin advertising. */
     omp_svr_advertise();
 }
+#endif /* ARCH_sim */
 
 void
 task1_handler(void *arg)
@@ -501,9 +505,9 @@ main(int argc, char **argv)
 #ifdef ARCH_sim
     mcu_sim_parse_args(argc, argv);
 #endif
-
     sysinit();
 
+#ifndef ARCH_sim
     oc_ble_coap_gatt_srv_init();
 
     /* Initialize the NimBLE host configuration. */
@@ -515,6 +519,7 @@ main(int argc, char **argv)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("mynewt-omp-svr");
     assert(rc == 0);
+#endif
 
     rc = conf_register(&test_conf_handler);
     assert(rc == 0);

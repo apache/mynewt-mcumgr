@@ -23,19 +23,24 @@
 #include <errno.h>
 #include "sysinit/sysinit.h"
 #include "bsp/bsp.h"
-#include "bsp/bsp.h"
 #include "config/config.h"
 #include "console/console.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_system.h"
 #include "os/os.h"
+#include "modlog/modlog.h"
 
+#ifndef ARCH_sim
 /* BLE */
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
 #include "smp_svr.h"
 #include "host/util/util.h"
+
+#else
+#include <mcu/mcu_sim.h>
+#endif  /* !ARCH_sim */
 
 /* smp_svr uses the first "peruser" log module. */
 #define SMP_SVR_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
@@ -47,6 +52,7 @@
 /** Log data. */
 struct log smp_svr_log;
 
+#ifndef ARCH_sim
 static int smp_svr_gap_event(struct ble_gap_event *event, void *arg);
 
 void
@@ -274,6 +280,7 @@ smp_svr_on_sync(void)
     /* Begin advertising. */
     smp_svr_advertise();
 }
+#endif /* !ARCH_sim */
 
 /**
  * main
@@ -284,10 +291,13 @@ smp_svr_on_sync(void)
  * @return int NOTE: this function should never return!
  */
 int
-main(void)
+main(int argc, char **argv)
 {
+#ifndef ARCH_sim
     int rc;
-
+#else
+    mcu_sim_parse_args(argc, argv);
+#endif
     /* Initialize OS */
     sysinit();
 
@@ -295,6 +305,7 @@ main(void)
     log_register("smp_svr", &smp_svr_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
 
+#ifndef ARCH_sim
     /* Initialize the NimBLE host configuration. */
     ble_hs_cfg.reset_cb = smp_svr_on_reset;
     ble_hs_cfg.sync_cb = smp_svr_on_sync;
@@ -307,7 +318,7 @@ main(void)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("smp_svr");
     assert(rc == 0);
-
+#endif
     conf_load();
 
     /*
