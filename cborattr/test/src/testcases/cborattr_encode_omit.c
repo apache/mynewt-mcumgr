@@ -21,7 +21,7 @@
 TEST_CASE_SELF(test_cborattr_encode_omit)
 {
     /* Omit everything except the "str" value. */
-    const struct cbor_out_attr_t attrs[] = {
+    const struct cbor_out_attr_t attrs[11] = {
         {
             .attribute = "null",
             .val = {
