@@ -35,18 +35,25 @@ stat_mgmt_impl_get_group(int idx, const char **out_name)
 {
     const struct stats_hdr *cur;
     int i;
+    int rc;
+
+    rc = MGMT_ERR_ENOENT;
 
     cur = NULL;
     i = 0;
     STAILQ_FOREACH(cur, &g_stats_registry, s_next) {
-        if (i > idx) {
+        if (i == idx) {
+            rc = 0;
             break;
         }
         i++;
     }
 
-    *out_name = cur->s_name;
-    return 0;
+    if (!rc) {
+        *out_name = cur->s_name;
+    }
+
+    return rc;
 }
 
 static int
