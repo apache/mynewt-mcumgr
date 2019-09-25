@@ -100,17 +100,13 @@ stat_mgmt_show(struct mgmt_ctxt *ctxt)
 
     rc = stat_mgmt_impl_foreach_entry(stat_name, stat_mgmt_cb_encode,
                                       &map_enc);
-    if (rc != 0) {
-        return rc;
-    }
 
     err |= cbor_encoder_close_container(&ctxt->encoder, &map_enc);
-
     if (err != 0) {
-        return MGMT_ERR_ENOMEM;
+        rc = MGMT_ERR_ENOMEM;
     }
 
-    return 0;
+    return rc;
 }
 
 /**
