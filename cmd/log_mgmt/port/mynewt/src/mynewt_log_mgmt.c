@@ -142,15 +142,15 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
     entry.type = LOG_ETYPE_STRING;
     entry.flags = 0;
     header_len = sizeof leh;
+    read_len = min(len - header_len, LOG_MGMT_BODY_LEN - header_len);
 #else
     entry.type = leh->ue_etype;
     entry.flags = leh->ue_flags;
     entry.imghash = (leh->ue_flags & LOG_FLAGS_IMG_HASH) ?
         leh->ue_imghash : NULL;
     header_len = log_hdr_len(leh);
+    read_len = LOG_MGMT_BODY_LEN - header_len;
 #endif
-
-    read_len = min(len - header_len, LOG_MGMT_BODY_LEN - header_len);
     rc = log_read(log, dptr, mynewt_log_mgmt_walk_arg->body, header_len,
                   read_len);
     if (rc < 0) {
