@@ -26,7 +26,6 @@
 #include "log_mgmt/log_mgmt.h"
 #include "log_mgmt/log_mgmt_impl.h"
 #include "log_mgmt_config.h"
-#include "log_common/log_common.h"
 #include "log/log.h"
 
 /** Context used during walks. */
