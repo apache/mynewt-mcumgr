@@ -25,7 +25,7 @@
 
 struct mynewt_log_mgmt_walk_arg {
     log_mgmt_foreach_entry_fn *cb;
-    uint8_t chunk[128];
+    uint8_t chunk[LOG_MGMT_CHUNK_LEN];
     void *arg;
 };
 
@@ -149,11 +149,11 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
         leh->ue_imghash : NULL;
 #endif
 
-    for (offset = 0; offset < len; offset += 128) {
-        if (len - offset < 128) {
+    for (offset = 0; offset < len; offset += LOG_MGMT_CHUNK_LEN) {
+        if (len - offset < LOG_MGMT_CHUNK_LEN) {
             read_len = len - offset;
         } else {
-            read_len = 128;
+            read_len = LOG_MGMT_CHUNK_LEN;
         }
 
         rc += log_read_body(log, dptr, mynewt_log_mgmt_walk_arg->chunk, offset,

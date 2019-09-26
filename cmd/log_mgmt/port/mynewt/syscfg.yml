@@ -17,18 +17,16 @@
 #
 
 syscfg.defs:
-    LOG_MGMT_BODY_LEN:
+    LOG_MGMT_CHUNK_LEN:
         description: >
-            Limits the maximum length of log entry bodies, in bytes. If a log
-            entry's body length exceeds this number, it gets truncated in management
-            responses. A buffer of this size gets allocated on the stack during
-            handling of the log show command.
+            Limits the maximum length of log entry bodies chunks, so, every log entry gets
+            read in chunks upto a point where the entire entry is read. Also, a buffer gets
+            allocated on the stack with this size.
         value: 128
 
-    LOG_MGMT_CHUNK_SIZE:
+    LOG_MGMT_MAX_RSP_LEN:
         description: >
-            Limits the maximum chunk size for log downloads, in bytes. A buffer of
-            this size gets allocated on the stack during handling of the log show command.
+            Limits the maximum chunk len for log downloads, in bytes.
         value: 512
 
     LOG_MGMT_NAME_LEN:
@@ -41,4 +39,4 @@ syscfg.defs:
 
 # For backwards compatibility with log nmgr
 syscfg.vals.LOG_NMGR_MAX_RSP_LEN:
-    LOG_MGMT_CHUNK_SIZE: MYNEWT_VAL(LOG_NMGR_MAX_RSP_LEN)
+    LOG_MGMT_MAX_RSP_SIZE: MYNEWT_VAL(LOG_NMGR_MAX_RSP_LEN)

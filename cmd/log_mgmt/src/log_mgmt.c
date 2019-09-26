@@ -161,14 +161,14 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
      * is just a single entry we add the generic too long message text.
      */
     /* `+ 1` to account for the CBOR array terminator. */
-    if (ctxt->rsp_len + entry_len + 1 > LOG_MGMT_CHUNK_SIZE) {
+    if (ctxt->rsp_len + entry_len + 1 > LOG_MGMT_MAX_RSP_LEN) {
         /*
          * Is this just a single entry? If so, encode the generic error
          * message in the "msg" field of the response
          */
         if (ctxt->counter == 0) {
             entry->type = LOG_ETYPE_STRING;
-            snprintf((char *)entry->data, LOG_MGMT_BODY_LEN,
+            snprintf((char *)entry->data, LOG_MGMT_MAX_RSP_LEN,
                      "error: entry too large (%d bytes)", entry_len);
         }
 
@@ -176,7 +176,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
     }
     ctxt->rsp_len += entry_len;
 
-    /*** The entry fits.  Now encode it. */
+    /*** The entry fits. Now encode it. */
 
     rc = log_mgmt_encode_entry(ctxt->enc, entry, NULL);
     if (rc != 0) {
