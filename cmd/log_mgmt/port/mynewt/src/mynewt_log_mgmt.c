@@ -25,7 +25,7 @@
 
 struct mynewt_log_mgmt_walk_arg {
     log_mgmt_foreach_entry_fn *cb;
-    uint8_t body[LOG_MGMT_CHUNK_SIZE];
+    uint8_t chunk[128];
     void *arg;
 };
 
@@ -108,8 +108,8 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
 {
     struct mynewt_log_mgmt_walk_arg *mynewt_log_mgmt_walk_arg;
     struct log_mgmt_entry entry;
-    int header_len;
     int read_len;
+    int offset;
     int rc;
 
     mynewt_log_mgmt_walk_arg = log_offset->lo_arg;
@@ -141,25 +141,34 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
 #if MYNEWT_VAL(LOG_VERSION) < 3
     entry.type = LOG_ETYPE_STRING;
     entry.flags = 0;
-    header_len = sizeof leh;
-    read_len = min(len - header_len, log->l_max_entry_len - header_len);
 #else
     entry.type = leh->ue_etype;
     entry.flags = leh->ue_flags;
     entry.imghash = (leh->ue_flags & LOG_FLAGS_IMG_HASH) ?
         leh->ue_imghash : NULL;
-    header_len = log_hdr_len(leh);
-    read_len = log->l_max_entry_len - header_len;
 #endif
-    rc = log_read(log, dptr, mynewt_log_mgmt_walk_arg->body, header_len,
-                  read_len);
-    if (rc < 0) {
-        return MGMT_ERR_EUNKNOWN;
+
+    for (offset = 0; offset < len; offset += 128) {
+        if (len - offset < 128) {
+            read_len = len - offset;
+        } else {
+            read_len = 128;
+        }
+
+        rc = log_read_body(log, dptr, mynewt_log_mgmt_walk_arg->chunk, offset,
+                           read_len);
+        if (rc < 0) {
+            return MGMT_ERR_EUNKNOWN;
+        }
+        entry.len = rc;
+        entry.data = mynewt_log_mgmt_walk_arg->chunk;
+        rc = mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
+        if (rc) {
+            return rc;
+        }
     }
 
-    entry.len = rc;
-    entry.data = mynewt_log_mgmt_walk_arg->body;
-    return mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
+    return 0;
 }
 
 int
