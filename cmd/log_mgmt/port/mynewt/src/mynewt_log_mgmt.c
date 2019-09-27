@@ -110,9 +110,9 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
     struct log_mgmt_entry entry;
     int read_len;
     int offset;
-    int rc;
+    int rc, entrylen;
 
-    rc = 0;
+    entrylen = 0;
     mynewt_log_mgmt_walk_arg = log_offset->lo_arg;
 
     /* If specified timestamp is nonzero, it is the primary criterion, and the
@@ -156,14 +156,15 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
             read_len = LOG_MGMT_CHUNK_LEN;
         }
 
-        rc += log_read_body(log, dptr, mynewt_log_mgmt_walk_arg->chunk, offset,
-                            read_len);
+        rc = log_read_body(log, dptr, mynewt_log_mgmt_walk_arg->chunk, offset,
+                           read_len);
         if (rc < 0) {
             return MGMT_ERR_EUNKNOWN;
         }
+        entrylen += rc;
     }
 
-    entry.len = rc;
+    entry.len = entrylen;
     entry.data = mynewt_log_mgmt_walk_arg->chunk;
     rc = mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
     if (rc) {
