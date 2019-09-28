@@ -163,6 +163,12 @@ img_mgmt_impl_log_upload_start(int status);
 int
 img_mgmt_impl_log_upload_done(int status, const uint8_t *hashp);
 
+int
+img_mgmt_impl_log_pending(int status, const uint8_t *hash);
+
+int
+img_mgmt_impl_log_confirm(int status, const uint8_t *hash);
+
 #ifdef __cplusplus
 }
 #endif

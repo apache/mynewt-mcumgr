@@ -540,17 +540,3 @@ img_mgmt_module_init(void)
     upload_state.sector_id = -1;
     upload_state.sector_end = 0;
 }
-
-int
-img_mgmt_impl_log_upload_start(int status)
-{
-    return 0;
-}
-
-int
-img_mgmt_impl_log_upload_done(int status, const uint8_t *hashp)
-{
-    return 0;
-}
-
-

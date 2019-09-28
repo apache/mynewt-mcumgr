@@ -120,7 +120,9 @@ img_mgmt_slot_in_use(int slot)
 int
 img_mgmt_state_set_pending(int slot, int permanent)
 {
+    uint8_t hash[IMAGE_HASH_LEN];
     uint8_t state_flags;
+    const uint8_t *hashp;
     int rc;
 
     state_flags = img_mgmt_state_flags(slot);
@@ -129,15 +131,29 @@ img_mgmt_state_set_pending(int slot, int permanent)
      * run if it is a loader in a split image setup.
      */
     if (state_flags & IMG_MGMT_STATE_F_CONFIRMED && slot != 0) {
-        return MGMT_ERR_EBADSTATE;
+        rc = MGMT_ERR_EBADSTATE;
+        goto done;
     }
 
     rc = img_mgmt_impl_write_pending(slot, permanent);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        rc = MGMT_ERR_EUNKNOWN;
     }
 
-    return 0;
+done:
+    /* Log the image hash if we know it. */
+    rc = img_mgmt_read_info(slot, NULL, hash, NULL);
+    if (rc != 0) {
+        hashp = NULL;
+    } else {
+        hashp = hash;
+    }
+
+    if (permanent) {
+        return img_mgmt_impl_log_confirm(rc, hashp);
+    } else {
+        return img_mgmt_impl_log_pending(rc, hashp);
+    }
 }
 
 /**
@@ -151,15 +167,17 @@ img_mgmt_state_confirm(void)
 
     /* Confirm disallowed if a test is pending. */
     if (img_mgmt_state_any_pending()) {
-        return MGMT_ERR_EBADSTATE;
+        rc = MGMT_ERR_EBADSTATE;
+        goto err;
     }
 
     rc = img_mgmt_impl_write_confirmed();
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        rc = MGMT_ERR_EUNKNOWN;
     }
 
-    return 0;
+err:
+    return img_mgmt_impl_log_confirm(rc, NULL);
 }
 
 /**
