@@ -89,6 +89,7 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
         err |= cbor_encode_text_stringz(&rsp, "str");
         break;
     default:
+        cbor_encoder_close_container(&rsp, &str_encoder);
         return MGMT_ERR_ECORRUPT;
     }
 
@@ -213,6 +214,7 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
     rc = log_mgmt_impl_foreach_entry(log->name, &filter,
                                      log_mgmt_cb_encode, &ctxt);
     if (rc != 0 && rc != MGMT_ERR_EMSGSIZE) {
+        cbor_encoder_close_container(enc, &entries);
         return rc;
     }
 
@@ -242,6 +244,7 @@ log_encode(const struct log_mgmt_log *log, CborEncoder *ctxt,
 
     rc = log_encode_entries(log, &logs, timestamp, index);
     if (rc != 0) {
+        cbor_encoder_close_container(ctxt, &logs);
         return rc;
     }
 
@@ -327,6 +330,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
                 break;
             }
         } else if (rc != 0) {
+            cbor_encoder_close_container(&ctxt->encoder, &logs);
             return rc;
         }
 
@@ -335,6 +339,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
             if (name_len == 0 || strcmp(name, log.name) == 0) {
                 rc = log_encode(&log, &logs, timestamp, index);
                 if (rc != 0) {
+                    cbor_encoder_close_container(&ctxt->encoder, &logs);
                     return rc;
                 }
 
@@ -384,6 +389,7 @@ log_mgmt_module_list(struct mgmt_ctxt *ctxt)
             break;
         }
         if (rc != 0) {
+            cbor_encoder_close_container(&ctxt->encoder, &modules);
             return rc;
         }
 
@@ -427,6 +433,7 @@ log_mgmt_logs_list(struct mgmt_ctxt *ctxt)
             break;
         }
         if (rc != 0) {
+            cbor_encoder_close_container(&ctxt->encoder, &log_list);
             return rc;
         }
 
@@ -469,6 +476,7 @@ log_mgmt_level_list(struct mgmt_ctxt *ctxt)
             break;
         }
         if (rc != 0) {
+            cbor_encoder_close_container(&ctxt->encoder, &level_map);
             return rc;
         }
 

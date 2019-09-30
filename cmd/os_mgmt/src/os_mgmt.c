@@ -175,6 +175,7 @@ os_mgmt_taskstat_read(struct mgmt_ctxt *ctxt)
 
         rc = os_mgmt_taskstat_encode_one(&tasks_map, &task_info);
         if (rc != 0) {
+            cbor_encoder_close_container(&ctxt->encoder, &tasks_map);
             return rc;
         }
     }

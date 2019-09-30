@@ -138,6 +138,7 @@ stat_mgmt_list(struct mgmt_ctxt *ctxt)
             break;
         } else if (rc != 0) {
             /* Error. */
+            cbor_encoder_close_container(&ctxt->encoder, &arr_enc);
             return rc;
         }
 
