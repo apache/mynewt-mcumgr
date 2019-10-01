@@ -48,6 +48,23 @@ mynewt_log_mgmt_find_log(const char *log_name)
 }
 
 int
+log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index)
+{
+    struct log *tmplog;
+    int i;
+
+    tmplog = NULL;
+    for (i = 0; i <= index; i++) {
+        tmplog = log_list_get_next(tmplog);
+        if (tmplog == NULL) {
+            return MGMT_ERR_ENOENT;
+        }
+    }
+
+    return log_set_watermark(tmplog, index);
+}
+
+int
 log_mgmt_impl_get_log(int idx, struct log_mgmt_log *out_log)
 {
     struct log *log;

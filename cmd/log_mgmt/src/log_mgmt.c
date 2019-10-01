@@ -74,7 +74,7 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     len = cbor_encode_bytes_written(enc);
 
     err |= cbor_encoder_create_map(enc, &rsp, CborIndefiniteLength);
-
+#if MYNEWT_VAL(LOG_VERSION) > 2
     switch (entry->type) {
     case LOG_MGMT_ETYPE_CBOR:
         err |= cbor_encode_text_stringz(&rsp, "type");
@@ -108,7 +108,10 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     }
 
     err |= cbor_encoder_close_container(&rsp, &str_encoder);
-
+#else
+    err |= cbor_encode_text_stringz(&rsp, "msg");
+    err |= cbor_encode_text_stringz(&rsp, (char *)data);
+#endif
     err |= cbor_encode_text_stringz(&rsp, "ts");
     err |= cbor_encode_int(&rsp, entry->ts);
     err |= cbor_encode_text_stringz(&rsp, "level");
@@ -122,7 +125,12 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
         err |= cbor_encode_byte_string(&rsp, entry->imghash,
                                        LOG_MGMT_IMG_HASHLEN);
     }
+
     err |= cbor_encoder_close_container(enc, &rsp);
+
+    if (err != 0) {
+        return MGMT_ERR_ENOMEM;
+    }
 
     if (out_len != NULL) {
         *out_len = cbor_encode_bytes_written(enc) - len;
@@ -167,7 +175,9 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
          * message in the "msg" field of the response
          */
         if (ctxt->counter == 0) {
+#if MYNEWT_VAL(LOG_VERSION) > 2
             entry->type = LOG_ETYPE_STRING;
+#endif
             snprintf((char *)entry->data, LOG_MGMT_MAX_RSP_LEN,
                      "error: entry too large (%d bytes)", entry_len);
         }
@@ -330,29 +340,37 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
                 break;
             }
         } else if (rc != 0) {
-            cbor_encoder_close_container(&ctxt->encoder, &logs);
-            return rc;
+            goto err;
         }
 
         /* Stream logs cannot be read. */
         if (log.type != LOG_MGMT_TYPE_STREAM) {
             if (name_len == 0 || strcmp(name, log.name) == 0) {
                 rc = log_encode(&log, &logs, timestamp, index);
-                if (rc != 0) {
-                    cbor_encoder_close_container(&ctxt->encoder, &logs);
-                    return rc;
+
+#if LOG_MGMT_READ_WATERMARK_UPDATE
+                if (rc == 0 || rc == OS_ENOMEM) {
+                    log_mgmt_impl_set_watermark(&log, index);
+                }
+#endif
+                if (rc) {
+                    goto err;
                 }
 
+#if LOG_MGMT_READ_WATERMARK_UPDATE
+                log_mgmt_impl_set_watermark(&log, index);
+#endif
                 /* If the client specified this log, he isn't interested in the
                  * remaining ones.
                  */
-                if (name_len != 0) {
+                if (name_len > 0) {
                     break;
                 }
             }
         }
     }
 
+err:
     err |= cbor_encoder_close_container(&ctxt->encoder, &logs);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
     err |= cbor_encode_int(&ctxt->encoder, rc);

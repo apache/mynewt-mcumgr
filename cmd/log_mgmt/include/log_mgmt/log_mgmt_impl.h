@@ -113,6 +113,17 @@ int log_mgmt_impl_foreach_entry(const char *log_name,
  */
 int log_mgmt_impl_clear(const char *log_name);
 
+/**
+ * @brief set watermark for specified log index
+ *
+ * @param log                   Log pointer
+ * @param index                 Log ndex
+ *
+ * @return                      0 on success, non-zero on failure
+ */
+int
+log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index);
+
 #ifdef __cplusplus
 }
 #endif

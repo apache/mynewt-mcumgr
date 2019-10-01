@@ -43,4 +43,10 @@ config LOG_MGMT_CHUNK_LEN
       Limits the maximum length of log entry bodies chunks, so, every log entry gets
       read in chunks upto a point where the entire entry is read. Also, a buffer gets
       allocated on the stack with this size.
+
+config LOG_READ_WATERMARK_UPDATE
+    bool "Enable reading of log watermark update"
+    help
+      Enables reading of log watermark update 
+
 endif
