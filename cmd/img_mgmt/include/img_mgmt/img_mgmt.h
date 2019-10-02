@@ -137,8 +137,7 @@ int img_mgmt_read_info(int image_slot, struct image_version *ver,
  *
  * @return 0 on success, non-zero on failure
  */
-int
-img_mgmt_my_version(struct image_version *ver);
+int img_mgmt_my_version(struct image_version *ver);
 
 /**
  * @brief Get image version in string from image_version
@@ -150,8 +149,7 @@ img_mgmt_my_version(struct image_version *ver);
  *
  * @return 0 on success, non-zero on failure
  */
-int
-img_mgmt_ver_str(const struct image_version *ver, char *dst);
+int img_mgmt_ver_str(const struct image_version *ver, char *dst);
 
 /**
  * @brief Check if the image slot is in use
@@ -160,8 +158,7 @@ img_mgmt_ver_str(const struct image_version *ver, char *dst);
  *
  * @return 0 on success, non-zero on failure
  */
-int
-img_mgmt_slot_in_use(int slot);
+int img_mgmt_slot_in_use(int slot);
 
 /**
  * @brief Collects information about the specified image slot
@@ -170,8 +167,7 @@ img_mgmt_slot_in_use(int slot);
  *
  * @return return the state flags
  */
-uint8_t
-img_mgmt_state_flags(int query_slot);
+uint8_t img_mgmt_state_flags(int query_slot);
 
 /**
  * @brief Sets the pending flag for the specified image slot.  That is, the system
@@ -184,8 +180,7 @@ img_mgmt_state_flags(int query_slot);
  *
  * @return 0 on success, non-zero on failure
  */
-int
-img_mgmt_state_set_pending(int slot, int permanent);
+int img_mgmt_state_set_pending(int slot, int permanent);
 
 /**
  * Confirms the current image state.  Prevents a fallback from occurring on the
@@ -193,8 +188,7 @@ img_mgmt_state_set_pending(int slot, int permanent);
  *
  * @return 0 on success, non -zero on failure
  */
-int
-img_mgmt_state_confirm(void);
+int img_mgmt_state_confirm(void);
 
 /** @brief Generic callback function for events */
 typedef void (*img_mgmt_dfu_cb)(void);
@@ -249,8 +243,7 @@ void img_mgmt_dfu_pending(void);
 void img_mgmt_dfu_confirmed(void);
 
 #if IMG_MGMT_VERBOSE_ERR
-int
-img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn);
+int img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn);
 extern const char *img_mgmt_err_str_app_reject;
 extern const char *img_mgmt_err_str_hdr_malformed;
 extern const char *img_mgmt_err_str_magic_mismatch;
