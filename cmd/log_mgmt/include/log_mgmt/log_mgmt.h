@@ -69,6 +69,8 @@ struct log_mgmt_entry {
     uint8_t type:4;
     uint8_t flags:4;
     const uint8_t *imghash;
+    size_t offset;
+    size_t chunklen;
     void *ctxt;
 };
 

@@ -28,6 +28,12 @@
 #include "log_mgmt_config.h"
 #include "log/log.h"
 
+struct log_mgmt_enc_ctxt
+{
+    CborEncoder mapenc;
+    CborEncoder msgenc;
+};
+    
 /** Context used during walks. */
 struct log_walk_ctxt {
     /* The number of bytes encoded to the response so far. */
@@ -36,6 +42,8 @@ struct log_walk_ctxt {
     struct CborEncoder *enc;
     /* Counter per encoder to understand if we are encoding the first chunk */
     uint32_t counter;
+    /* Log management encode context containing map and msg encoder */
+    struct log_mgmt_enc_ctxt lmec;
 };
 
 static mgmt_handler_fn log_mgmt_show;
@@ -60,135 +68,162 @@ static struct mgmt_group log_mgmt_group = {
     .mg_handlers_count = LOG_MGMT_HANDLER_CNT,
     .mg_group_id = MGMT_GROUP_ID_LOG,
 };
-
+    
 static int
 log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
-                      size_t *out_len)
+                      size_t *out_len, struct log_mgmt_enc_ctxt *lmec)
 {
     CborError err = CborNoError;
-    CborEncoder rsp;
-    CborEncoder str_encoder;
+    uint16_t chunklen;
     uint16_t len;
     int off;
+    uint16_t bytes_encoded;
 
     len = cbor_encode_bytes_written(enc);
 
-    err |= cbor_encoder_create_map(enc, &rsp, CborIndefiniteLength);
+    bytes_encoded = 0;
+    if (entry->offset == 0) {
+        err |= cbor_encoder_create_map(enc, &lmec->mapenc, CborIndefiniteLength);
+    
 #if MYNEWT_VAL(LOG_VERSION) > 2
-    switch (entry->type) {
-    case LOG_MGMT_ETYPE_CBOR:
-        err |= cbor_encode_text_stringz(&rsp, "type");
-        err |= cbor_encode_text_stringz(&rsp, "cbor");
-        break;
-    case LOG_MGMT_ETYPE_BINARY:
-        err |= cbor_encode_text_stringz(&rsp, "type");
-        err |= cbor_encode_text_stringz(&rsp, "bin");
-        break;
-    case LOG_MGMT_ETYPE_STRING:
-        err |= cbor_encode_text_stringz(&rsp, "type");
-        err |= cbor_encode_text_stringz(&rsp, "str");
-        break;
-    default:
-        cbor_encoder_close_container(&rsp, &str_encoder);
-        return MGMT_ERR_ECORRUPT;
-    }
-
-    err |= cbor_encode_text_stringz(&rsp, "msg");
-
-    /*
-     * Write entry data as byte string. Since this may not fit into single
-     * chunk of data we will write as indefinite-length byte string which is
-     * basically a indefinite-length container with definite-length strings
-     * inside.
-     */
-    err |= cbor_encoder_create_indef_byte_string(&rsp, &str_encoder);
-    for (off = 0; off < entry->len && !err; ) {
-        err |= cbor_encode_byte_string(&str_encoder, entry->data, entry->len);
-        off += entry->len;
-    }
-
-    err |= cbor_encoder_close_container(&rsp, &str_encoder);
-#else
-    err |= cbor_encode_text_stringz(&rsp, "msg");
-    err |= cbor_encode_text_stringz(&rsp, (char *)data);
+        switch (entry->type) {
+        case LOG_MGMT_ETYPE_CBOR:
+            err |= cbor_encode_text_stringz(&lmec->mapenc, "type");
+            err |= cbor_encode_text_stringz(&lmec->mapenc, "cbor");
+            break;
+        case LOG_MGMT_ETYPE_BINARY:
+            err |= cbor_encode_text_stringz(&lmec->mapenc, "type");
+            err |= cbor_encode_text_stringz(&lmec->mapenc, "bin");
+            break;
+        case LOG_MGMT_ETYPE_STRING:
+            err |= cbor_encode_text_stringz(&lmec->mapenc, "type");
+            err |= cbor_encode_text_stringz(&lmec->mapenc, "str");
+            break;
+        default:
+            return MGMT_ERR_ECORRUPT;
+        }
 #endif
-    err |= cbor_encode_text_stringz(&rsp, "ts");
-    err |= cbor_encode_int(&rsp, entry->ts);
-    err |= cbor_encode_text_stringz(&rsp, "level");
-    err |= cbor_encode_uint(&rsp, entry->level);
-    err |= cbor_encode_text_stringz(&rsp, "index");
-    err |= cbor_encode_uint(&rsp, entry->index);
-    err |= cbor_encode_text_stringz(&rsp, "module");
-    err |= cbor_encode_uint(&rsp, entry->module);
-    if (entry->flags & LOG_MGMT_FLAGS_IMG_HASH) {
-        err |= cbor_encode_text_stringz(&rsp, "imghash");
-        err |= cbor_encode_byte_string(&rsp, entry->imghash,
-                                       LOG_MGMT_IMG_HASHLEN);
-    }
+        err |= cbor_encode_text_stringz(&lmec->mapenc, "ts");
+        err |= cbor_encode_int(&lmec->mapenc, entry->ts);
+        err |= cbor_encode_text_stringz(&lmec->mapenc, "level");
+        err |= cbor_encode_uint(&lmec->mapenc, entry->level);
+        err |= cbor_encode_text_stringz(&lmec->mapenc, "index");
+        err |= cbor_encode_uint(&lmec->mapenc, entry->index);
+        err |= cbor_encode_text_stringz(&lmec->mapenc, "module");
+        err |= cbor_encode_uint(&lmec->mapenc, entry->module);
+        if (entry->flags & LOG_MGMT_FLAGS_IMG_HASH) {
+            err |= cbor_encode_text_stringz(&lmec->mapenc, "imghash");
+            err |= cbor_encode_byte_string(&lmec->mapenc, entry->imghash,
+                                           LOG_MGMT_IMG_HASHLEN);
+        }
 
-    err |= cbor_encoder_close_container(enc, &rsp);
+#if MYNEWT_VAL(LOG_VERSION) > 2
+        err |= cbor_encode_text_stringz(&lmec->mapenc, "msg");
+   
+        /*
+         * Write entry data as byte string. Since this may not fit into single
+         * chunk of data we will write as indefinite-length byte string which is
+         * basically a indefinite-length container with definite-length strings
+         * inside.
+         */
+        err |= cbor_encoder_create_indef_byte_string(&lmec->mapenc, &lmec->msgenc);
+        if (out_len != NULL) {
+            for (off = 0; off < entry->len; off += entry->chunklen) {
+                chunklen = entry->chunklen;
+                if (entry->chunklen > entry->len - off) {
+                    chunklen = entry->len - off;
+                }
+                err |= cbor_encode_byte_string(&lmec->msgenc, entry->data, chunklen);
+                bytes_encoded += chunklen;
+            }
+        } else {
+            err |= cbor_encode_byte_string(&lmec->msgenc, entry->data, entry->chunklen);
+            bytes_encoded = entry->chunklen;
+        }
+#else
+        err |= cbor_encode_text_stringz(&lmec->mapenc, "msg");
+        err |= cbor_encode_text_stringz(&lmec->mapenc, (char *)data);
+#endif
+    } else {
+        /*
+         * Write entry data as byte string. Since this may not fit into single
+         * chunk of data we will write as indefinite-length byte string which is
+         * basically a indefinite-length container with definite-length strings
+         * inside.
+         */
+        err |= cbor_encode_byte_string(&lmec->msgenc, entry->data, entry->chunklen);
+        bytes_encoded = entry->chunklen;
+   }
 
-    if (err != 0) {
-        return MGMT_ERR_ENOMEM;
-    }
+   if (entry->offset + bytes_encoded >= entry->len) {
+       err |= cbor_encoder_close_container(&lmec->mapenc, &lmec->msgenc);
+       err |= cbor_encoder_close_container(enc, &lmec->mapenc);
+   }
+        
+   if (out_len) {
+       *out_len = cbor_encode_bytes_written(enc) - len;
+   }
+    
+   if (err != 0) {
+       return MGMT_ERR_ENOMEM;
+   }
 
-    if (out_len != NULL) {
-        *out_len = cbor_encode_bytes_written(enc) - len;
-    }
-
-    return MGMT_ERR_EOK;
+   return MGMT_ERR_EOK;
 }
 
 static int
 log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
 {
     struct CborCntWriter cnt_writer;
+    struct log_mgmt_enc_ctxt *lmec;
     struct log_walk_ctxt *ctxt;
     CborEncoder cnt_encoder;
     size_t entry_len;
     int rc;
 
     ctxt = arg;
+    lmec = &ctxt->lmec;
 
-    /*** First, determine if this entry would fit. */
-
-    cbor_cnt_writer_init(&cnt_writer);
+    if (entry->offset == 0) {
+        /*** First, determine if this entry would fit. */
+    
+        cbor_cnt_writer_init(&cnt_writer);
 #ifdef __ZEPHYR__
-    cbor_encoder_cust_writer_init(&cnt_encoder, &cnt_writer.enc, 0);
+        cbor_encoder_cust_writer_init(&cnt_encoder, &cnt_writer.enc, 0);
 #else
-    cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
+        cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
 #endif
-    rc = log_mgmt_encode_entry(&cnt_encoder, entry, &entry_len);
-    if (rc != 0) {
-        return rc;
-    }
-
-    /*
-     * Check if the response is too long. If more than one entry is in the
-     * response we will not add the current one and will return ENOMEM. If this
-     * is just a single entry we add the generic too long message text.
-     */
-    /* `+ 1` to account for the CBOR array terminator. */
-    if (ctxt->rsp_len + entry_len + 1 > LOG_MGMT_MAX_RSP_LEN) {
-        /*
-         * Is this just a single entry? If so, encode the generic error
-         * message in the "msg" field of the response
-         */
-        if (ctxt->counter == 0) {
-#if MYNEWT_VAL(LOG_VERSION) > 2
-            entry->type = LOG_ETYPE_STRING;
-#endif
-            snprintf((char *)entry->data, LOG_MGMT_MAX_RSP_LEN,
-                     "error: entry too large (%d bytes)", entry_len);
+        rc = log_mgmt_encode_entry(&cnt_encoder, entry, &entry_len, lmec);
+        if (rc != 0) {
+            return rc;
         }
-
-        return MGMT_ERR_EMSGSIZE;
+    
+        /*
+         * Check if the response is too long. If more than one entry is in the
+         * response we will not add the current one and will return ENOMEM. If this
+         * is just a single entry we add the generic too long message text.
+         */
+        /* `+ 1` to account for the CBOR array terminator. */
+        if (ctxt->rsp_len + entry_len + 1 > LOG_MGMT_MAX_RSP_LEN) {
+            /*
+             * Is this just a single entry? If so, encode the generic error
+             * message in the "msg" field of the response
+             */
+            if (ctxt->counter == 0) {
+#if MYNEWT_VAL(LOG_VERSION) > 2
+                entry->type = LOG_ETYPE_STRING;
+#endif
+                snprintf((char *)entry->data, LOG_MGMT_MAX_RSP_LEN,
+                         "error: entry too large (%d bytes)", entry_len);
+            }
+    
+            return MGMT_ERR_EMSGSIZE;
+        }
+        ctxt->rsp_len += entry_len;
     }
-    ctxt->rsp_len += entry_len;
 
     /*** The entry fits. Now encode it. */
-
-    rc = log_mgmt_encode_entry(ctxt->enc, entry, NULL);
+    rc = log_mgmt_encode_entry(ctxt->enc, entry, NULL, lmec);
     if (rc != 0) {
         return rc;
     }

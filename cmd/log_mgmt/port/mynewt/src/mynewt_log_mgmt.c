@@ -127,9 +127,8 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
     struct log_mgmt_entry entry;
     int read_len;
     int offset;
-    int rc, entrylen;
+    int rc;
 
-    entrylen = 0;
     mynewt_log_mgmt_walk_arg = log_offset->lo_arg;
 
     /* If specified timestamp is nonzero, it is the primary criterion, and the
@@ -165,6 +164,8 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
     entry.imghash = (leh->ue_flags & LOG_FLAGS_IMG_HASH) ?
         leh->ue_imghash : NULL;
 #endif
+    entry.len = len;
+    entry.data = mynewt_log_mgmt_walk_arg->chunk;
 
     for (offset = 0; offset < len; offset += LOG_MGMT_CHUNK_LEN) {
         if (len - offset < LOG_MGMT_CHUNK_LEN) {
@@ -172,20 +173,18 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
         } else {
             read_len = LOG_MGMT_CHUNK_LEN;
         }
+        entry.offset = offset;
+        entry.chunklen = read_len;
 
         rc = log_read_body(log, dptr, mynewt_log_mgmt_walk_arg->chunk, offset,
                            read_len);
         if (rc < 0) {
             return MGMT_ERR_EUNKNOWN;
         }
-        entrylen += rc;
-    }
-
-    entry.len = entrylen;
-    entry.data = mynewt_log_mgmt_walk_arg->chunk;
-    rc = mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
-    if (rc) {
-        return rc;
+        rc = mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
+        if (rc) {
+            return rc;
+        }
     }
 
     return 0;
