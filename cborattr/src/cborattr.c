@@ -409,7 +409,7 @@ cbor_read_flat_attrs(const uint8_t *data, int len,
     return cbor_read_object(&value, attrs);
 }
 
-#ifndef __ZEPHYR__
+#ifdef MYNEWT
 /*
  * Read in cbor key/values from os_mbuf pointed by m, and fill them
  * into attrs.

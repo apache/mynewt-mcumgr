@@ -28,7 +28,7 @@
 #include <sys/types.h>
 #include "tinycbor/cbor.h"
 
-#ifndef __ZEPHYR__
+#ifdef MYNEWT
 #include <os/os_mbuf.h>
 #endif
 
@@ -123,32 +123,32 @@ struct cbor_attr_t {
 
 #ifndef __ZEPHYR__
 /** An array value to be encoded as CBOR. */
-    struct cbor_out_arr_val_t {
-        struct cbor_out_val_t *elems;
-        size_t len;
-    };
+struct cbor_out_arr_val_t {
+    struct cbor_out_val_t *elems;
+    size_t len;
+};
 
 /** A single value to be encoded as CBOR. */
-    struct cbor_out_val_t {
-        /** The type of data. */
-        CborAttrType type;
+struct cbor_out_val_t {
+    /** The type of data. */
+    CborAttrType type;
 
-        /** The data value. */
-        union {
-            long long int integer;
-            long long unsigned int uinteger;
-            double real;
-            float fval;
-            const char *string;
-            bool boolean;
-            struct {
-                const uint8_t *data;
-                size_t len;
-            } bytestring;
-            struct cbor_out_arr_val_t array;
-            struct cbor_out_attr_t *obj; /* Terminated with a type=0 entry. */
-        };
+    /** The data value. */
+    union {
+        long long int integer;
+        long long unsigned int uinteger;
+        double real;
+        float fval;
+        const char *string;
+        bool boolean;
+        struct {
+            const uint8_t *data;
+            size_t len;
+        } bytestring;
+        struct cbor_out_arr_val_t array;
+        struct cbor_out_attr_t *obj; /* Terminated with a type=0 entry. */
     };
+};
 
 /** An object key-value pair to be encoded as CBOR. */
 struct cbor_out_attr_t {
@@ -185,7 +185,7 @@ int cbor_read_array(struct CborValue *, const struct cbor_array_t *);
 
 int cbor_read_flat_attrs(const uint8_t *data, int len,
                          const struct cbor_attr_t *attrs);
-#ifndef __ZEPHYR__
+#ifdef MYNEWT
 int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
                          const struct cbor_attr_t *attrs);
 
