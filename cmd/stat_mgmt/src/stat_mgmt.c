@@ -24,7 +24,7 @@
 #include "cborattr/cborattr.h"
 #include "stat_mgmt/stat_mgmt.h"
 #include "stat_mgmt/stat_mgmt_impl.h"
-#include "stat_mgmt_config.h"
+#include "stat_mgmt/stat_mgmt_config.h"
 
 static mgmt_handler_fn stat_mgmt_show;
 static mgmt_handler_fn stat_mgmt_list;

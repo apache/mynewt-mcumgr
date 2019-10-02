@@ -118,8 +118,7 @@ uint8_t img_mgmt_state_flags(int query_slot);
  * @param num_bytes             The number of bytes to erase.
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-int
-img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes);
+int img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes);
 
 /**
  * Erases a flash sector as image upload crosses a sector boundary.
@@ -135,8 +134,7 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes);
  * @return         0 if success 
  *                 ERROR_CODE if could not erase sector
  */
-int
-img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len);
+int img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len);
 
 /**
  * Verifies an upload request and indicates the actions that should be taken
@@ -152,22 +150,17 @@ img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len);
  *                              A MGMT_ERR code if an error response should be
  *                                  sent instead.
  */
-int
-img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
-                             struct img_mgmt_upload_action *action,
-                             const char **errstr);
+int img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
+                                 struct img_mgmt_upload_action *action,
+                                 const char **errstr);
 
-int
-img_mgmt_impl_log_upload_start(int status);
+int img_mgmt_impl_log_upload_start(int status);
 
-int
-img_mgmt_impl_log_upload_done(int status, const uint8_t *hashp);
+int img_mgmt_impl_log_upload_done(int status, const uint8_t *hashp);
 
-int
-img_mgmt_impl_log_pending(int status, const uint8_t *hash);
+int img_mgmt_impl_log_pending(int status, const uint8_t *hash);
 
-int
-img_mgmt_impl_log_confirm(int status, const uint8_t *hash);
+int img_mgmt_impl_log_confirm(int status, const uint8_t *hash);
 
 #ifdef __cplusplus
 }

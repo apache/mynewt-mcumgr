@@ -25,7 +25,7 @@
 #include "tinycbor/cbor_cnt_writer.h"
 #include "log_mgmt/log_mgmt.h"
 #include "log_mgmt/log_mgmt_impl.h"
-#include "log_mgmt_config.h"
+#include "log_mgmt/log_mgmt_config.h"
 #include "log/log.h"
 
 /* Log mgmt encoder context used for multiple calls of the

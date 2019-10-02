@@ -23,7 +23,7 @@
 #include "mgmt/mgmt.h"
 #include "fs_mgmt/fs_mgmt.h"
 #include "fs_mgmt/fs_mgmt_impl.h"
-#include "fs_mgmt_config.h"
+#include "fs_mgmt/fs_mgmt_config.h"
 
 static mgmt_handler_fn fs_mgmt_file_download;
 static mgmt_handler_fn fs_mgmt_file_upload;

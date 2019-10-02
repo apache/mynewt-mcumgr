@@ -23,7 +23,7 @@
 #include "sysinit/sysinit.h"
 #include "stat_mgmt/stat_mgmt.h"
 #include "stat_mgmt/stat_mgmt_impl.h"
-#include "../../../src/stat_mgmt_config.h"
+#include "stat_mgmt/stat_mgmt_config.h"
 
 struct mynewt_stat_mgmt_walk_arg {
     stat_mgmt_foreach_entry_fn *cb;

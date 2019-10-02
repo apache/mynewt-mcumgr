@@ -24,7 +24,7 @@
 #include "mgmt/mgmt.h"
 #include "os_mgmt/os_mgmt.h"
 #include "os_mgmt/os_mgmt_impl.h"
-#include "os_mgmt_config.h"
+#include "os_mgmt/os_mgmt_config.h"
 
 #if OS_MGMT_ECHO
 static mgmt_handler_fn os_mgmt_echo;

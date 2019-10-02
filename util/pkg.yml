@@ -18,7 +18,11 @@
 #
 
 pkg.name: util 
-pkg.description: Image management utility library
+pkg.description: >
+    Library containing utility functions including
+    but not limited to  convert integer to strings
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
+    - lltos
+    - ultos

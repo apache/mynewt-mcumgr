@@ -18,7 +18,7 @@
 #
 
 pkg.name: cmd/stat_mgmt
-pkg.description: 'OS management command handlers for mcumgr.'
+pkg.description: 'Stat management command handlers for mcumgr.'
 pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
 pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:

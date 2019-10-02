@@ -498,15 +498,18 @@ img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
     while ((cfa->fa_off + off + len) > g_img_mgmt_state.sector_end) {
         rc = flash_area_getnext_sector(cfa->fa_id, &g_img_mgmt_state.sector_id, &sector);
         if (rc) {
-            return rc;
+            goto done;
         }
         rc = flash_area_erase(&sector, 0, sector.fa_size);
         if (rc) {
-            return rc;
+            goto done;
         }
         g_img_mgmt_state.sector_end = sector.fa_off + sector.fa_size;
     }
-    return 0;
+
+done:
+    flash_area_close(cfa);
+    return rc;
 }
 #endif
     

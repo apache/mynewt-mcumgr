@@ -31,6 +31,3 @@ pkg.deps:
     - '@apache-mynewt-mcumgr/mgmt'
     - '@apache-mynewt-mcumgr/cborattr'
     - '@apache-mynewt-mcumgr/util'
-
-IMG_MGMT_LAZY_ERASE.cflags:
-  - "-DUPLOAD_LAZY_ERASE"

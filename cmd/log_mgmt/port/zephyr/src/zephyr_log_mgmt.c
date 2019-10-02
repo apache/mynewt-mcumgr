@@ -22,7 +22,7 @@
 #include <mgmt/mgmt.h>
 #include <log_mgmt/log_mgmt.h>
 #include <log_mgmt/log_mgmt_impl.h>
-#include "../../../src/log_mgmt_config.h"
+#include "log_mgmt/log_mgmt_config.h"
 
 struct zephyr_log_mgmt_walk_arg {
     log_mgmt_foreach_entry_fn *cb;

@@ -28,7 +28,7 @@
 #include "img_mgmt/img_mgmt.h"
 #include "img_mgmt/img_mgmt_impl.h"
 #include "img_mgmt_priv.h"
-#include "img_mgmt_config.h"
+#include "img_mgmt/img_mgmt_config.h"
 
 static mgmt_handler_fn img_mgmt_upload;
 static mgmt_handler_fn img_mgmt_erase;

@@ -22,7 +22,7 @@
 #include "tinycbor/cbor.h"
 #include "tinycbor/cbor_buf_reader.h"
 
-#ifndef __ZEPHYR__
+#ifdef MYNEWT
 #include "tinycbor/cbor_mbuf_reader.h"
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "os/os_mbuf.h"
@@ -546,6 +546,11 @@ cbor_write_attr(struct CborEncoder *enc, const struct cbor_out_attr_t *attr)
 
     if (attr->omit) {
         return 0;
+    }
+
+    if (!attr->attribute) {
+        rc = SYS_EINVAL;
+        return rc;
     }
 
     len = strlen(attr->attribute);

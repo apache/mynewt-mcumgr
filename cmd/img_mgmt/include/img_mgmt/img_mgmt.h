@@ -21,7 +21,7 @@
 #define H_IMG_MGMT_
 
 #include <inttypes.h>
-#include "../../src/img_mgmt_config.h"
+#include "img_mgmt_config.h"
 #include "mgmt/mgmt.h"
 
 struct image_version;
@@ -30,7 +30,6 @@ struct image_version;
 extern "C" {
 #endif
 
-#define IMG_MGMT_MAX_IMGR         2
 #define IMG_MGMT_HASH_STR         48
 #define IMG_MGMT_HASH_LEN         32
 #define IMG_MGMT_DATA_SHA_LEN     32 /* SHA256 */
@@ -201,8 +200,7 @@ img_mgmt_state_confirm(void);
 typedef void (*img_mgmt_dfu_cb)(void);
 
 /** Callback function pointers */
-typedef struct
-{
+typedef struct {
     img_mgmt_dfu_cb dfu_started_cb;
     img_mgmt_dfu_cb dfu_stopped_cb;
     img_mgmt_dfu_cb dfu_pending_cb;

@@ -21,7 +21,7 @@
 #include "mgmt/mgmt.h"
 #include "log_mgmt/log_mgmt.h"
 #include "log_mgmt/log_mgmt_impl.h"
-#include "../../../src/log_mgmt_config.h"
+#include "log_mgmt/log_mgmt_config.h"
 
 struct mynewt_log_mgmt_walk_arg {
     log_mgmt_foreach_entry_fn *cb;
@@ -183,11 +183,11 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
         }
         rc = mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
         if (rc) {
-            return rc;
+            break;
         }
     }
 
-    return 0;
+    return rc;
 }
 
 int
