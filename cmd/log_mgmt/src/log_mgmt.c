@@ -28,6 +28,11 @@
 #include "log_mgmt_config.h"
 #include "log/log.h"
 
+/* Log mgmt encoder context used for multiple calls of the
+ * entry encode function since the function gets called twice,
+ * once for counter encoder and the second time for the actual
+ * encoding
+ */
 struct log_mgmt_enc_ctxt
 {
     CborEncoder mapenc;
@@ -82,6 +87,10 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     len = cbor_encode_bytes_written(enc);
 
     bytes_encoded = 0;
+    /* If offset is 0, we encode the keys for maps and other fields which are
+     * necessary per entry since only the keys need to be encoded only in the
+     * for the first offset
+     */
     if (entry->offset == 0) {
         err |= cbor_encoder_create_map(enc, &lmec->mapenc, CborIndefiniteLength);
     
@@ -146,6 +155,8 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
 #endif
     } else {
         /*
+         * The else case is executed for non-first chunks of data to be encoded
+         *
          * Write entry data as byte string. Since this may not fit into single
          * chunk of data we will write as indefinite-length byte string which is
          * basically a indefinite-length container with definite-length strings
@@ -155,6 +166,11 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
         bytes_encoded = entry->chunklen;
    }
 
+   /*
+    * Containers need to get closed when encoding is done, the only way to know at
+    * this point in the code that encoding is done is using the number of bytes
+    * that got encoded and comparing it to the length of the entry
+    */ 
    if (entry->offset + bytes_encoded >= entry->len) {
        err |= cbor_encoder_close_container(&lmec->mapenc, &lmec->msgenc);
        err |= cbor_encoder_close_container(enc, &lmec->mapenc);
@@ -185,7 +201,10 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
     lmec = &ctxt->lmec;
 
     if (entry->offset == 0) {
-        /*** First, determine if this entry would fit. */
+        /* 
+         * First, determine if this entry would fit using
+         * a counter encoder
+         */
     
         cbor_cnt_writer_init(&cnt_writer);
 #ifdef __ZEPHYR__
