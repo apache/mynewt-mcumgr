@@ -26,3 +26,4 @@ pkg.keywords:
 pkg.deps:
     - '@apache-mynewt-mcumgr/cmd/os_mgmt'
     - '@apache-mynewt-mcumgr/mgmt'
+    - '@apache-mynewt-core/sys/reboot'
