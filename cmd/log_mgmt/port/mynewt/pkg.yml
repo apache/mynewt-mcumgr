@@ -25,7 +25,6 @@ pkg.keywords:
 
 pkg.deps:
     - '@apache-mynewt-mcumgr/cmd/log_mgmt'
-    - '@apache-mynewt-core/sys/log'
     - '@apache-mynewt-mcumgr/mgmt'
 
 pkg.init:
