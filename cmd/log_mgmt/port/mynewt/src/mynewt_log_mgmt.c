@@ -50,6 +50,7 @@ mynewt_log_mgmt_find_log(const char *log_name)
 int
 log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index)
 {
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     struct log *tmplog;
     int i;
 
@@ -62,6 +63,9 @@ log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index)
     }
 
     return log_set_watermark(tmplog, index);
+#else
+    return MGMT_ERR_ENOTSUP;
+#endif
 }
 
 int
