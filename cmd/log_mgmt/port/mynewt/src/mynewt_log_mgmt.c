@@ -129,6 +129,7 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
     int offset;
     int rc;
 
+    rc = 0;
     mynewt_log_mgmt_walk_arg = log_offset->lo_arg;
 
     /* If specified timestamp is nonzero, it is the primary criterion, and the
