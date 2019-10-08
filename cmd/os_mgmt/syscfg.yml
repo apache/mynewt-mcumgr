@@ -24,3 +24,13 @@ syscfg.defs:
             milliseconds before performing the reset.  This delay allows time
             for the mcumgr response to be delivered.
         value: 250
+
+    OS_MGMT_TASKSTAT:
+        description: >
+            Enable support for taskstat command.
+        value: 1
+
+    OS_MGMT_ECHO:
+        description: >
+            Enable support for echo command.
+        value: 1

@@ -25,3 +25,12 @@ pkg.keywords:
 
 pkg.deps:
     - '@apache-mynewt-core/kernel/os'
+    - '@apache-mynewt-mcumgr/cmd/os_mgmt/port/mynewt'
+    - '@apache-mynewt-mcumgr/mgmt'
+    - '@apache-mynewt-mcumgr/cborattr'
+
+pkg.ign_files:
+    - "stubs.c"
+
+pkg.init:
+    os_mgmt_module_init: 501

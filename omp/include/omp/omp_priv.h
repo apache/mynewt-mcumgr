@@ -17,25 +17,25 @@
  * under the License.
  */
 
-#ifndef H_IMG_MGMT_CONFIG_
-#define H_IMG_MGMT_CONFIG_
+#ifndef H_OMP_PRIV
+#define H_OMP_PRIV
 
-#if defined MYNEWT
+#include "mgmt/mgmt.h"
 
-#include "syscfg/syscfg.h"
-
-#define IMG_MGMT_UL_CHUNK_SIZE  MYNEWT_VAL(IMG_MGMT_UL_CHUNK_SIZE)
-
-#elif defined __ZEPHYR__
-
-#define IMG_MGMT_UL_CHUNK_SIZE  CONFIG_IMG_MGMT_UL_CHUNK_SIZE
-
-#else
-
-/* No direct support for this OS.  The application needs to define the above
- * settings itself.
- */
-
+#ifdef __cplusplus
+extern "C" {
 #endif
 
+int omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr);
+int omp_send_err_rsp(struct CborEncoder *enc,
+                     const struct mgmt_hdr *hdr,
+                     int mgmt_status);
+int omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,
+                         struct mgmt_hdr *rsp_hdr,
+                         struct mgmt_ctxt *ctxt);
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* H_OMP_IMPL */

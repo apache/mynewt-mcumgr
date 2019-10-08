@@ -43,6 +43,15 @@ extern "C" {
 /** @brief Log entries are persisted across reboots. */
 #define LOG_MGMT_TYPE_STORAGE    2
 
+/* @brief Flags used to indicate type of data in reserved payload. */
+#define LOG_MGMT_FLAGS_IMG_HASH  (1 << 0)
+
+/* @brief Log entry types. */
+#define LOG_MGMT_ETYPE_STRING         0
+#define LOG_MGMT_ETYPE_CBOR           1
+#define LOG_MGMT_ETYPE_BINARY         2
+
+
 /** @brief Generic descriptor for an OS-specific log. */
 struct log_mgmt_log {
     const char *name;
@@ -57,6 +66,12 @@ struct log_mgmt_entry {
     size_t len;
     uint8_t module;
     uint8_t level;
+    uint8_t type:4;
+    uint8_t flags:4;
+    const uint8_t *imghash;
+    size_t offset;
+    size_t chunklen;
+    void *ctxt;
 };
 
 /** @brief Indicates which log entries to operate on. */

@@ -21,11 +21,11 @@
 #include "mgmt/mgmt.h"
 #include "log_mgmt/log_mgmt.h"
 #include "log_mgmt/log_mgmt_impl.h"
-#include "../../../src/log_mgmt_config.h"
+#include "log_mgmt/log_mgmt_config.h"
 
 struct mynewt_log_mgmt_walk_arg {
     log_mgmt_foreach_entry_fn *cb;
-    uint8_t body[LOG_MGMT_BODY_LEN];
+    uint8_t chunk[LOG_MGMT_CHUNK_LEN];
     void *arg;
 };
 
@@ -48,6 +48,27 @@ mynewt_log_mgmt_find_log(const char *log_name)
 }
 
 int
+log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index)
+{
+#if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
+    struct log *tmplog;
+    int i;
+
+    tmplog = NULL;
+    for (i = 0; i <= index; i++) {
+        tmplog = log_list_get_next(tmplog);
+        if (tmplog == NULL) {
+            return MGMT_ERR_ENOENT;
+        }
+    }
+
+    return log_set_watermark(tmplog, index);
+#else
+    return MGMT_ERR_ENOTSUP;
+#endif
+}
+
+int
 log_mgmt_impl_get_log(int idx, struct log_mgmt_log *out_log)
 {
     struct log *log;
@@ -62,7 +83,7 @@ log_mgmt_impl_get_log(int idx, struct log_mgmt_log *out_log)
     }
 
     out_log->name = log->l_name;
-    out_log->type = log->l_handler->type;
+    out_log->type = log->l_log->log_type;
     return 0;
 }
 
@@ -103,20 +124,17 @@ log_mgmt_impl_get_next_idx(uint32_t *out_idx)
 
 static int
 mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
-                        const void *desciptor, uint16_t len)
+                        const struct log_entry_hdr *leh,
+                        const void *dptr, uint16_t len)
 {
     struct mynewt_log_mgmt_walk_arg *mynewt_log_mgmt_walk_arg;
     struct log_mgmt_entry entry;
-    struct log_entry_hdr ueh;
     int read_len;
+    int offset;
     int rc;
 
+    rc = 0;
     mynewt_log_mgmt_walk_arg = log_offset->lo_arg;
-
-    rc = log_read(log, desciptor, &ueh, 0, sizeof ueh);
-    if (rc != sizeof ueh) {
-        return MGMT_ERR_EUNKNOWN;
-    }
 
     /* If specified timestamp is nonzero, it is the primary criterion, and the
      * specified index is the secondary criterion.  If specified timetsamp is
@@ -127,32 +145,54 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
      * Else: encode entries whose timestamp >= specified timestamp and whose
      *      index >= specified index
      */
-
     if (log_offset->lo_ts == 0) {
-        if (log_offset->lo_index > ueh.ue_index) {
+        if (log_offset->lo_index > leh->ue_index) {
             return 0;
         }
-    } else if (ueh.ue_ts < log_offset->lo_ts   ||
-               (ueh.ue_ts == log_offset->lo_ts &&
-                ueh.ue_index < log_offset->lo_index)) {
+    } else if (leh->ue_ts < log_offset->lo_ts   ||
+               (leh->ue_ts == log_offset->lo_ts &&
+                leh->ue_index < log_offset->lo_index)) {
         return 0;
     }
 
-    read_len = min(len - sizeof ueh, LOG_MGMT_BODY_LEN - sizeof ueh);
-    rc = log_read(log, desciptor, mynewt_log_mgmt_walk_arg->body, sizeof ueh,
-                  read_len);
-    if (rc < 0) {
-        return MGMT_ERR_EUNKNOWN;
+    entry.ts = leh->ue_ts;
+    entry.index = leh->ue_index;
+    entry.module = leh->ue_module;
+    entry.level = leh->ue_level;
+
+#if MYNEWT_VAL(LOG_VERSION) < 3
+    entry.type = LOG_ETYPE_STRING;
+    entry.flags = 0;
+#else
+    entry.type = leh->ue_etype;
+    entry.flags = leh->ue_flags;
+    entry.imghash = (leh->ue_flags & LOG_FLAGS_IMG_HASH) ?
+        leh->ue_imghash : NULL;
+#endif
+    entry.len = len;
+    entry.data = mynewt_log_mgmt_walk_arg->chunk;
+
+    for (offset = 0; offset < len; offset += LOG_MGMT_CHUNK_LEN) {
+        if (len - offset < LOG_MGMT_CHUNK_LEN) {
+            read_len = len - offset;
+        } else {
+            read_len = LOG_MGMT_CHUNK_LEN;
+        }
+        entry.offset = offset;
+        entry.chunklen = read_len;
+
+        rc = log_read_body(log, dptr, mynewt_log_mgmt_walk_arg->chunk, offset,
+                           read_len);
+        if (rc < 0) {
+            return MGMT_ERR_EUNKNOWN;
+        }
+        rc = mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
+        if (rc) {
+            break;
+        }
     }
 
-    entry.ts = ueh.ue_ts;
-    entry.index = ueh.ue_index;
-    entry.module = ueh.ue_module;
-    entry.level = ueh.ue_level;
-    entry.len = rc;
-    entry.data = mynewt_log_mgmt_walk_arg->body;
-
-    return mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
+    return rc;
 }
 
 int
@@ -180,7 +220,7 @@ log_mgmt_impl_foreach_entry(const char *log_name,
         offset.lo_index = filter->min_index;
         offset.lo_data_len = 0;
 
-        return log_walk(log, mynewt_log_mgmt_walk_cb, &offset);
+        return log_walk_body(log, mynewt_log_mgmt_walk_cb, &offset);
     }
 
     return MGMT_ERR_ENOENT;
@@ -203,4 +243,13 @@ log_mgmt_impl_clear(const char *log_name)
     }
 
     return 0;
+}
+
+void
+log_mgmt_module_init(void)
+{
+    /* Ensure this function only gets called by sysinit. */
+    SYSINIT_ASSERT_ACTIVE();
+
+    log_mgmt_register_group();
 }

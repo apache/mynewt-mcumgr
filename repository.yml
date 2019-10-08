@@ -17,7 +17,7 @@
 # under the License.
 #
 
-repo.name: mynewt-mcumgr
+repo.name: apache-mynewt-mcumgr
 repo.versions:
     "0.0.0": "master"
 

@@ -23,17 +23,24 @@
 #include <errno.h>
 #include "sysinit/sysinit.h"
 #include "bsp/bsp.h"
-#include "bsp/bsp.h"
 #include "config/config.h"
 #include "console/console.h"
 #include "hal/hal_gpio.h"
 #include "hal/hal_system.h"
 #include "os/os.h"
+#include "modlog/modlog.h"
 
+#ifndef ARCH_sim
 /* BLE */
 #include "nimble/ble.h"
 #include "host/ble_hs.h"
 #include "services/gap/ble_svc_gap.h"
+#include "smp_svr.h"
+#include "host/util/util.h"
+
+#else
+#include <mcu/mcu_sim.h>
+#endif  /* !ARCH_sim */
 
 /* smp_svr uses the first "peruser" log module. */
 #define SMP_SVR_LOG_MODULE  (LOG_MODULE_PERUSER + 0)
@@ -45,6 +52,7 @@
 /** Log data. */
 struct log smp_svr_log;
 
+#ifndef ARCH_sim
 static int smp_svr_gap_event(struct ble_gap_event *event, void *arg);
 
 void
@@ -92,11 +100,19 @@ smp_svr_print_conn_desc(struct ble_gap_conn_desc *desc)
 static void
 smp_svr_advertise(void)
 {
+    uint8_t own_addr_type;
     struct ble_gap_adv_params adv_params;
     struct ble_hs_adv_fields fields;
     const char *name;
     int rc;
 
+
+    /* Figure out address to use while advertising (no privacy for now) */
+    rc = ble_hs_id_infer_auto(0, &own_addr_type);
+    if (rc != 0) {
+        MODLOG_DFLT(ERROR, "error determining address type; rc=%d\n", rc);
+        return;
+    }
     /**
      *  Set the advertisement data included in our advertisements:
      *     o Flags (indicates advertisement type and other general info).
@@ -126,12 +142,6 @@ smp_svr_advertise(void)
     fields.name_len = strlen(name);
     fields.name_is_complete = 1;
 
-    fields.uuids16 = (ble_uuid16_t[]){
-        BLE_UUID16_INIT(GATT_SVR_SVC_ALERT_UUID)
-    };
-    fields.num_uuids16 = 1;
-    fields.uuids16_is_complete = 1;
-
     rc = ble_gap_adv_set_fields(&fields);
     if (rc != 0) {
         SMP_SVR_LOG(ERROR, "error setting advertisement data; rc=%d\n", rc);
@@ -142,7 +152,7 @@ smp_svr_advertise(void)
     memset(&adv_params, 0, sizeof adv_params);
     adv_params.conn_mode = BLE_GAP_CONN_MODE_UND;
     adv_params.disc_mode = BLE_GAP_DISC_MODE_GEN;
-    rc = ble_gap_adv_start(BLE_OWN_ADDR_PUBLIC, NULL, BLE_HS_FOREVER,
+    rc = ble_gap_adv_start(own_addr_type, NULL, BLE_HS_FOREVER,
                            &adv_params, smp_svr_gap_event, NULL);
     if (rc != 0) {
         SMP_SVR_LOG(ERROR, "error enabling advertisement; rc=%d\n", rc);
@@ -181,10 +191,6 @@ smp_svr_gap_event(struct ble_gap_event *event, void *arg)
             rc = ble_gap_conn_find(event->connect.conn_handle, &desc);
             assert(rc == 0);
             smp_svr_print_conn_desc(&desc);
-
-#if MYNEWT_VAL(SMP_SVR_LE_PHY_SUPPORT)
-            phy_conn_changed(event->connect.conn_handle);
-#endif
         }
         SMP_SVR_LOG(INFO, "\n");
 
@@ -198,10 +204,6 @@ smp_svr_gap_event(struct ble_gap_event *event, void *arg)
         SMP_SVR_LOG(INFO, "disconnect; reason=%d ", event->disconnect.reason);
         smp_svr_print_conn_desc(&event->disconnect.conn);
         SMP_SVR_LOG(INFO, "\n");
-
-#if MYNEWT_VAL(SMP_SVR_LE_PHY_SUPPORT)
-        phy_conn_changed(CONN_HANDLE_INVALID);
-#endif
 
         /* Connection terminated; resume advertising. */
         smp_svr_advertise();
@@ -269,9 +271,16 @@ smp_svr_on_reset(int reason)
 static void
 smp_svr_on_sync(void)
 {
+    int rc;
+
+    /* Make sure we have proper identity address set (public preferred) */
+    rc = ble_hs_util_ensure_addr(0);
+    assert(rc == 0);
+
     /* Begin advertising. */
     smp_svr_advertise();
 }
+#endif /* !ARCH_sim */
 
 /**
  * main
@@ -282,10 +291,13 @@ smp_svr_on_sync(void)
  * @return int NOTE: this function should never return!
  */
 int
-main(void)
+main(int argc, char **argv)
 {
+#ifndef ARCH_sim
     int rc;
-
+#else
+    mcu_sim_parse_args(argc, argv);
+#endif
     /* Initialize OS */
     sysinit();
 
@@ -293,9 +305,8 @@ main(void)
     log_register("smp_svr", &smp_svr_log, &log_console_handler, NULL,
                  LOG_SYSLEVEL);
 
+#ifndef ARCH_sim
     /* Initialize the NimBLE host configuration. */
-    log_register("ble_hs", &ble_hs_log, &log_console_handler, NULL,
-                 LOG_SYSLEVEL);
     ble_hs_cfg.reset_cb = smp_svr_on_reset;
     ble_hs_cfg.sync_cb = smp_svr_on_sync;
     ble_hs_cfg.gatts_register_cb = gatt_svr_register_cb;
@@ -307,7 +318,7 @@ main(void)
     /* Set the default device name. */
     rc = ble_svc_gap_device_name_set("smp_svr");
     assert(rc == 0);
-
+#endif
     conf_load();
 
     /*

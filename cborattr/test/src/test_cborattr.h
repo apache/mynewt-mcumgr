@@ -35,6 +35,8 @@ extern "C" {
  */
 const uint8_t *test_str1(int *len);
 
+void cborattr_test_util_encode(const struct cbor_out_attr_t *attrs,
+                               const uint8_t *expected, int len);
 /*
  * Testcases
  */
