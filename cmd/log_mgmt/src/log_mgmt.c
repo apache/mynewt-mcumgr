@@ -33,12 +33,11 @@
  * once for counter encoder and the second time for the actual
  * encoding
  */
-struct log_mgmt_enc_ctxt
-{
+struct log_mgmt_enc_ctxt {
     CborEncoder mapenc;
     CborEncoder msgenc;
 };
-    
+
 /** Context used during walks. */
 struct log_walk_ctxt {
     /* The number of bytes encoded to the response so far. */
@@ -73,7 +72,7 @@ static struct mgmt_group log_mgmt_group = {
     .mg_handlers_count = LOG_MGMT_HANDLER_CNT,
     .mg_group_id = MGMT_GROUP_ID_LOG,
 };
-    
+
 static int
 log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
                       size_t *out_len, struct log_mgmt_enc_ctxt *lmec)
@@ -93,7 +92,7 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
      */
     if (entry->offset == 0) {
         err |= cbor_encoder_create_map(enc, &lmec->mapenc, CborIndefiniteLength);
-    
+
 #if MYNEWT_VAL(LOG_VERSION) > 2
         switch (entry->type) {
         case LOG_MGMT_ETYPE_CBOR:
@@ -128,7 +127,7 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
 
 #if MYNEWT_VAL(LOG_VERSION) > 2
         err |= cbor_encode_text_stringz(&lmec->mapenc, "msg");
-   
+
         /*
          * Write entry data as byte string. Since this may not fit into single
          * chunk of data we will write as indefinite-length byte string which is
@@ -170,16 +169,16 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     * Containers need to get closed when encoding is done, the only way to know at
     * this point in the code that encoding is done is using the number of bytes
     * that got encoded and comparing it to the length of the entry
-    */ 
+    */
    if (entry->offset + bytes_encoded >= entry->len) {
        err |= cbor_encoder_close_container(&lmec->mapenc, &lmec->msgenc);
        err |= cbor_encoder_close_container(enc, &lmec->mapenc);
    }
-        
+
    if (out_len) {
        *out_len = cbor_encode_bytes_written(enc) - len;
    }
-    
+
    if (err != 0) {
        return MGMT_ERR_ENOMEM;
    }
@@ -201,11 +200,11 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
     lmec = &ctxt->lmec;
 
     if (entry->offset == 0) {
-        /* 
+        /*
          * First, determine if this entry would fit using
          * a counter encoder
          */
-    
+
         cbor_cnt_writer_init(&cnt_writer);
 #ifdef __ZEPHYR__
         cbor_encoder_cust_writer_init(&cnt_encoder, &cnt_writer.enc, 0);
@@ -216,7 +215,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
         if (rc != 0) {
             return rc;
         }
-    
+
         /*
          * Check if the response is too long. If more than one entry is in the
          * response we will not add the current one and will return ENOMEM. If this
@@ -235,7 +234,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
                 snprintf((char *)entry->data, LOG_MGMT_MAX_RSP_LEN,
                          "error: entry too large (%d bytes)", entry_len);
             }
-    
+
             return MGMT_ERR_EMSGSIZE;
         }
         ctxt->rsp_len += entry_len;
@@ -305,6 +304,10 @@ log_encode(const struct log_mgmt_log *log, CborEncoder *ctxt,
     err |= cbor_encode_text_stringz(&logs, log->name);
     err |= cbor_encode_text_stringz(&logs, "type");
     err |= cbor_encode_uint(&logs, log->type);
+#if !LOG_MGMT_GLOBAL_IDX
+    err |= cbor_encode_text_stringz(&logs, "next_index");
+    err |= cbor_encode_int(&logs, log->index);
+#endif
 
     rc = log_encode_entries(log, &logs, timestamp, index);
     if (rc != 0) {
@@ -333,10 +336,12 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     CborError err;
     uint64_t index;
     int64_t timestamp;
-    uint32_t next_idx;
     int name_len;
     int log_idx;
     int rc;
+#if LOG_MGMT_GLOBAL_IDX
+    uint32_t next_idx;
+#endif
 
     const struct cbor_attr_t attr[] = {
         {
@@ -367,15 +372,17 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     }
     name_len = strlen(name);
 
+    err = 0;
+#if LOG_MGMT_GLOBAL_IDX
     /* Determine the index that the next log entry would use. */
     rc = log_mgmt_impl_get_next_idx(&next_idx);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
 
-    err = 0;
     err |= cbor_encode_text_stringz(&ctxt->encoder, "next_index");
     err |= cbor_encode_uint(&ctxt->encoder, next_idx);
+#endif
 
     err |= cbor_encode_text_stringz(&ctxt->encoder, "logs");
     err |= cbor_encoder_create_array(&ctxt->encoder, &logs,

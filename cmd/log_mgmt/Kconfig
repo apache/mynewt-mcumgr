@@ -49,4 +49,11 @@ config LOG_READ_WATERMARK_UPDATE
     help
       Enables reading of log watermark update 
 
+config LOG_GLOBAL_IDX
+    bool "Enable global index over all logs"
+    default false
+    help
+      Log entries indices are coming from same number space. Otherwise
+      every log has their own indexing.
+
 endif
