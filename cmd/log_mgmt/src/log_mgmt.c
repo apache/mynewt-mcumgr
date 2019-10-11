@@ -233,7 +233,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
                 entry->type = LOG_ETYPE_STRING;
 #endif
                 snprintf((char *)entry->data, LOG_MGMT_MAX_RSP_LEN,
-                         "error: entry too large (%d bytes)", entry_len);
+                         "error: entry too large (%zu bytes)", entry_len);
             }
     
             return MGMT_ERR_EMSGSIZE;
