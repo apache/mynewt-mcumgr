@@ -84,6 +84,9 @@ log_mgmt_impl_get_log(int idx, struct log_mgmt_log *out_log)
 
     out_log->name = log->l_name;
     out_log->type = log->l_log->log_type;
+#if !MYNEWT_VAL(LOG_GLOBAL_IDX)
+    out_log->index = log->l_idx;
+#endif
     return 0;
 }
 
@@ -115,12 +118,14 @@ log_mgmt_impl_get_level(int idx, const char **out_level_name)
     }
 }
 
+#if MYNEWT_VAL(LOG_GLOBAL_IDX)
 int
 log_mgmt_impl_get_next_idx(uint32_t *out_idx)
 {
     *out_idx = g_log_info.li_next_index;
     return 0;
 }
+#endif
 
 static int
 mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,

@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include "log_mgmt_config.h"
+
 /**
  * Command IDs for log management group.
  */
@@ -56,6 +58,9 @@ extern "C" {
 struct log_mgmt_log {
     const char *name;
     int type;
+#if !LOG_MGMT_GLOBAL_IDX
+    uint32_t index;
+#endif
 };
 
 /** @brief Generic descriptor for an OS-specific log entry. */
@@ -88,7 +93,7 @@ struct log_mgmt_filter {
 
 /**
  * @brief Registers the log management command handler group.
- */ 
+ */
 void log_mgmt_register_group(void);
 
 #ifdef __cplusplus
