@@ -235,7 +235,8 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
                          "error: entry too large (%zu bytes)", entry_len);
             }
 
-            return MGMT_ERR_EMSGSIZE;
+            /* We want a negative error code here */
+            return -1 * MGMT_ERR_EMSGSIZE;
         }
         ctxt->rsp_len += entry_len;
     }
@@ -255,13 +256,32 @@ static int
 log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
                    int64_t timestamp, uint32_t index)
 {
+    struct CborCntWriter cnt_writer;
     struct log_mgmt_filter filter;
     struct log_walk_ctxt ctxt;
+    CborEncoder cnt_encoder;
     CborEncoder entries;
     CborError err;
+    int rsp_len;
     int rc;
 
     err = 0;
+    rsp_len = 0;
+    /* this code counts how long the message would be if we encoded
+     * this outer structure using cbor. */
+    cbor_cnt_writer_init(&cnt_writer);
+    cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
+    err |= cbor_encode_text_stringz(&cnt_encoder, "entries");
+    err |= cbor_encoder_create_array(&cnt_encoder, &entries,
+                                       CborIndefiniteLength);
+    err |= cbor_encoder_close_container(&cnt_encoder, &entries);
+    rsp_len = cbor_encode_bytes_written(enc) +
+              cbor_encode_bytes_written(&cnt_encoder);
+    if (rsp_len > LOG_MGMT_MAX_RSP_LEN) {
+        rc = MGMT_ERR_EMSGSIZE;
+        goto err;
+    }
+
     err |= cbor_encode_text_stringz(enc, "entries");
     err |= cbor_encoder_create_array(enc, &entries, CborIndefiniteLength);
 
@@ -276,9 +296,12 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
 
     rc = log_mgmt_impl_foreach_entry(log->name, &filter,
                                      log_mgmt_cb_encode, &ctxt);
-    if (rc != 0 && rc != MGMT_ERR_EMSGSIZE) {
-        cbor_encoder_close_container(enc, &entries);
-        return rc;
+    if (rc < 0) {
+        /*
+         * If we receive negative error code from the walk function,
+         * make sure it gets converted to a positive error code
+         */
+        rc = -1 * rc;
     }
 
     err |= cbor_encoder_close_container(enc, &entries);
@@ -287,7 +310,8 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
         return MGMT_ERR_ENOMEM;
     }
 
-    return 0;
+err:
+    return rc;
 }
 
 static int
@@ -410,7 +434,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
                 rc = log_encode(&log, &logs, timestamp, index);
 
 #if LOG_MGMT_READ_WATERMARK_UPDATE
-                if (rc == 0 || rc == OS_ENOMEM) {
+                if (rc == 0 || rc == MGMT_ERR_EMSGSIZE) {
                     log_mgmt_impl_set_watermark(&log, index);
                 }
 #endif
