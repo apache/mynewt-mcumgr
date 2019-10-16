@@ -161,6 +161,13 @@ int img_mgmt_ver_str(const struct image_version *ver, char *dst);
 int img_mgmt_slot_in_use(int slot);
 
 /**
+ * @brief Check if the DFU status is pending
+ *
+ * @return 1 if there's pending DFU otherwise 0.
+ */
+int img_mgmt_state_any_pending(void);
+
+/**
  * @brief Collects information about the specified image slot
  *
  * @param query_slot Slot to read state flags from
