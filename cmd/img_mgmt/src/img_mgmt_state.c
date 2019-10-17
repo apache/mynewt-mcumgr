@@ -89,7 +89,7 @@ img_mgmt_state_flags(int query_slot)
  * Indicates whether any image slot is pending (i.e., whether a test swap will
  * happen on the next reboot.
  */
-static int
+int
 img_mgmt_state_any_pending(void)
 {
     return img_mgmt_state_flags(0) & IMG_MGMT_STATE_F_PENDING ||

@@ -26,6 +26,7 @@
 #include "os_mgmt/os_mgmt_impl.h"
 #include "os_mgmt/os_mgmt.h"
 #include "mgmt/mgmt.h"
+#include "img_mgmt/img_mgmt.h"
 
 static struct os_callout mynewt_os_mgmt_reset_callout;
 
@@ -111,6 +112,10 @@ os_mgmt_impl_reset(unsigned int delay_ms)
         .line = 0,
         .pc = 0,
     };
+
+    if (img_mgmt_state_any_pending()) {
+        info.reason = HAL_RESET_DFU;
+    }
 #endif
     os_callout_init(&mynewt_os_mgmt_reset_callout, os_eventq_dflt_get(),
                     mynewt_os_mgmt_reset_tmo, NULL);
