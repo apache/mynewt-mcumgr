@@ -40,7 +40,7 @@ log_mgmt_impl_get_log(int idx, struct log_mgmt_log *out_log)
     for (i = 0; i <= idx; i++) {
         mdlog = mdlog_get_next(mdlog);
         if (mdlog == NULL) {
-            return MGMT_ERR_ENOENT;
+            return LOG_MGMT_ERR_ENOENT;
         }
     }
 
@@ -56,7 +56,7 @@ log_mgmt_impl_get_module(int idx, const char **out_module_name)
 
     name = mdlog_module_name(idx);
     if (name == NULL) {
-        return MGMT_ERR_ENOENT;
+        return LOG_MGMT_ERR_ENOENT;
     } else {
         *out_module_name = name;
         return 0;
@@ -70,7 +70,7 @@ log_mgmt_impl_get_level(int idx, const char **out_level_name)
 
     name = mdlog_level_name(idx);
     if (name == NULL) {
-        return MGMT_ERR_ENOENT;
+        return LOG_MGMT_ERR_ENOENT;
     } else {
         *out_level_name = name;
         return 0;
@@ -98,7 +98,7 @@ zephyr_log_mgmt_walk_cb(struct mdlog *log, struct mdlog_offset *log_offset,
 
     rc = mdlog_read(log, desciptor, &ueh, 0, sizeof ueh);
     if (rc != sizeof ueh) {
-        return MGMT_ERR_EUNKNOWN;
+        return LOG_MGMT_ERR_EUNKNOWN;
     }
 
     /* If specified timestamp is nonzero, it is the primary criterion, and the
@@ -125,7 +125,7 @@ zephyr_log_mgmt_walk_cb(struct mdlog *log, struct mdlog_offset *log_offset,
     rc = mdlog_read(log, desciptor, zephyr_log_mgmt_walk_arg->body, sizeof ueh,
                     read_len);
     if (rc < 0) {
-        return MGMT_ERR_EUNKNOWN;
+        return LOG_MGMT_ERR_EUNKNOWN;
     }
 
     entry.ts = ueh.ue_ts;
@@ -154,7 +154,7 @@ log_mgmt_impl_foreach_entry(const char *log_name,
 
     mdlog = mdlog_find(log_name);
     if (mdlog == NULL) {
-        return MGMT_ERR_ENOENT;
+        return LOG_MGMT_ERR_ENOENT;
     }
 
     if (strcmp(mdlog->l_name, log_name) == 0) {
@@ -166,7 +166,7 @@ log_mgmt_impl_foreach_entry(const char *log_name,
         return mdlog_walk(mdlog, zephyr_log_mgmt_walk_cb, &offset);
     }
 
-    return MGMT_ERR_ENOENT;
+    return LOG_MGMT_ERR_ENOENT;
 }
 
 int
@@ -177,12 +177,12 @@ log_mgmt_impl_clear(const char *log_name)
 
     mdlog = mdlog_find(log_name);
     if (mdlog == NULL) {
-        return MGMT_ERR_ENOENT;
+        return LOG_MGMT_ERR_ENOENT;
     }
 
     rc = mdlog_flush(mdlog);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        return LOG_MGMT_ERR_EUNKNOWN;
     }
 
     return 0;

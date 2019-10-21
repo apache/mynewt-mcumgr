@@ -27,6 +27,22 @@ extern "C" {
 #include "log_mgmt_config.h"
 
 /**
+ * LOG MGMT specific error codes, 0 -> 6, 8 are same as mcumgr,
+ * 7 and 9 are different for backwards compatibility with newtmgr.
+ */
+#define LOG_MGMT_ERR_EOK        (0)                                  
+#define LOG_MGMT_ERR_EUNKNOWN   (1)                                  
+#define LOG_MGMT_ERR_ENOMEM     (2)                                  
+#define LOG_MGMT_ERR_EINVAL     (3)                                  
+#define LOG_MGMT_ERR_ETIMEOUT   (4)
+#define LOG_MGMT_ERR_ENOENT     (5)
+#define LOG_MGMT_ERR_EBADSTATE  (6)     /* Current state disallows command. */
+#define LOG_MGMT_ERR_ECORRUPT   (7)
+#define LOG_MGMT_ERR_ENOTSUP    (8)
+#define LOG_MGMT_ERR_EMSGSIZE   (9)
+#define LOG_MGMT_ERR_EPERUSER   (256)
+
+/**
  * Command IDs for log management group.
  */
 #define LOG_MGMT_ID_SHOW        0
