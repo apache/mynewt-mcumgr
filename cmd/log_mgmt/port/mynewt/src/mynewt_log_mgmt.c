@@ -58,13 +58,13 @@ log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index)
     for (i = 0; i <= index; i++) {
         tmplog = log_list_get_next(tmplog);
         if (tmplog == NULL) {
-            return MGMT_ERR_ENOENT;
+            return LOG_MGMT_ERR_ENOENT;
         }
     }
 
     return log_set_watermark(tmplog, index);
 #else
-    return MGMT_ERR_ENOTSUP;
+    return LOG_MGMT_ERR_ENOTSUP;
 #endif
 }
 
@@ -78,7 +78,7 @@ log_mgmt_impl_get_log(int idx, struct log_mgmt_log *out_log)
     for (i = 0; i <= idx; i++) {
         log = log_list_get_next(log);
         if (log == NULL) {
-            return MGMT_ERR_ENOENT;
+            return LOG_MGMT_ERR_ENOENT;
         }
     }
 
@@ -97,7 +97,7 @@ log_mgmt_impl_get_module(int idx, const char **out_module_name)
 
     name = LOG_MODULE_STR(idx);
     if (name == NULL) {
-        return MGMT_ERR_ENOENT;
+        return LOG_MGMT_ERR_ENOENT;
     } else {
         *out_module_name = name;
         return 0;
@@ -111,7 +111,7 @@ log_mgmt_impl_get_level(int idx, const char **out_level_name)
 
     name = LOG_LEVEL_STR(idx);
     if (name == NULL) {
-        return MGMT_ERR_ENOENT;
+        return LOG_MGMT_ERR_ENOENT;
     } else {
         *out_level_name = name;
         return 0;
@@ -189,7 +189,7 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
         rc = log_read_body(log, dptr, mynewt_log_mgmt_walk_arg->chunk, offset,
                            read_len);
         if (rc < 0) {
-            return MGMT_ERR_EUNKNOWN;
+            return LOG_MGMT_ERR_EUNKNOWN;
         }
         rc = mynewt_log_mgmt_walk_arg->cb(&entry, mynewt_log_mgmt_walk_arg->arg);
         if (rc) {
@@ -216,7 +216,7 @@ log_mgmt_impl_foreach_entry(const char *log_name,
 
     log = mynewt_log_mgmt_find_log(log_name);
     if (log == NULL) {
-        return MGMT_ERR_ENOENT;
+        return LOG_MGMT_ERR_ENOENT;
     }
 
     if (strcmp(log->l_name, log_name) == 0) {
@@ -228,7 +228,7 @@ log_mgmt_impl_foreach_entry(const char *log_name,
         return log_walk_body(log, mynewt_log_mgmt_walk_cb, &offset);
     }
 
-    return MGMT_ERR_ENOENT;
+    return LOG_MGMT_ERR_ENOENT;
 }
 
 int
@@ -239,12 +239,12 @@ log_mgmt_impl_clear(const char *log_name)
 
     log = mynewt_log_mgmt_find_log(log_name);
     if (log == NULL) {
-        return MGMT_ERR_ENOENT;
+        return LOG_MGMT_ERR_ENOENT;
     }
 
     rc = log_flush(log);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        return LOG_MGMT_ERR_EUNKNOWN;
     }
 
     return 0;

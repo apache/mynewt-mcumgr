@@ -108,7 +108,7 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
             err |= cbor_encode_text_stringz(&lmec->mapenc, "str");
             break;
         default:
-            return MGMT_ERR_ECORRUPT;
+            return LOG_MGMT_ERR_ECORRUPT;
         }
 #endif
         err |= cbor_encode_text_stringz(&lmec->mapenc, "ts");
@@ -180,10 +180,10 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
    }
 
    if (err != 0) {
-       return MGMT_ERR_ENOMEM;
+       return LOG_MGMT_ERR_ENOMEM;
    }
 
-   return MGMT_ERR_EOK;
+   return LOG_MGMT_ERR_EOK;
 }
 
 static int
@@ -236,7 +236,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
             }
 
             /* We want a negative error code here */
-            return -1 * MGMT_ERR_EMSGSIZE;
+            return -1 * LOG_MGMT_ERR_EUNKNOWN;
         }
         ctxt->rsp_len += entry_len;
     }
@@ -278,7 +278,7 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
     rsp_len = cbor_encode_bytes_written(enc) +
               cbor_encode_bytes_written(&cnt_encoder);
     if (rsp_len > LOG_MGMT_MAX_RSP_LEN) {
-        rc = MGMT_ERR_EMSGSIZE;
+        rc = LOG_MGMT_ERR_EUNKNOWN;
         goto err;
     }
 
@@ -307,7 +307,7 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
     err |= cbor_encoder_close_container(enc, &entries);
 
     if (err != 0) {
-        return MGMT_ERR_ENOMEM;
+        return LOG_MGMT_ERR_ENOMEM;
     }
 
 err:
@@ -342,7 +342,7 @@ log_encode(const struct log_mgmt_log *log, CborEncoder *ctxt,
     err |= cbor_encoder_close_container(ctxt, &logs);
 
     if (err != 0) {
-        return MGMT_ERR_ENOMEM;
+        return LOG_MGMT_ERR_ENOMEM;
     }
 
     return 0;
@@ -392,7 +392,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     name[0] = '\0';
     rc = cbor_read_object(&ctxt->it, attr);
     if (rc != 0) {
-        return MGMT_ERR_EINVAL;
+        return LOG_MGMT_ERR_EINVAL;
     }
     name_len = strlen(name);
 
@@ -401,7 +401,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     /* Determine the index that the next log entry would use. */
     rc = log_mgmt_impl_get_next_idx(&next_idx);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        return LOG_MGMT_ERR_EUNKNOWN;
     }
 
     err |= cbor_encode_text_stringz(&ctxt->encoder, "next_index");
@@ -415,12 +415,12 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     /* Iterate list of logs, encoding each that matches the client request. */
     for (log_idx = 0; ; log_idx++) {
         rc = log_mgmt_impl_get_log(log_idx, &log);
-        if (rc == MGMT_ERR_ENOENT) {
+        if (rc == LOG_MGMT_ERR_ENOENT) {
             /* Log list fully iterated. */
             if (name_len != 0) {
                 /* Client specified log name, but the log wasn't found. */
                 cbor_encoder_close_container(&ctxt->encoder, &logs);
-                return MGMT_ERR_ENOENT;
+                return LOG_MGMT_ERR_ENOENT;
             } else {
                 break;
             }
@@ -434,7 +434,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
                 rc = log_encode(&log, &logs, timestamp, index);
 
 #if LOG_MGMT_READ_WATERMARK_UPDATE
-                if (rc == 0 || rc == MGMT_ERR_EMSGSIZE) {
+                if (rc == 0 || rc == LOG_MGMT_ERR_EUNKNOWN) {
                     log_mgmt_impl_set_watermark(&log, index);
                 }
 #endif
@@ -461,7 +461,7 @@ err:
     err |= cbor_encode_int(&ctxt->encoder, rc);
 
     if (err != 0) {
-        return MGMT_ERR_ENOMEM;
+        return LOG_MGMT_ERR_ENOMEM;
     }
 
     return 0;
@@ -481,14 +481,14 @@ log_mgmt_module_list(struct mgmt_ctxt *ctxt)
 
     err = 0;
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
+    err |= cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "module_map");
     err |= cbor_encoder_create_map(&ctxt->encoder, &modules,
                                    CborIndefiniteLength);
 
     for (module = 0; ; module++) {
         rc = log_mgmt_impl_get_module(module, &module_name);
-        if (rc == MGMT_ERR_ENOENT) {
+        if (rc == LOG_MGMT_ERR_ENOENT) {
             break;
         }
         if (rc != 0) {
@@ -505,7 +505,7 @@ log_mgmt_module_list(struct mgmt_ctxt *ctxt)
     err |= cbor_encoder_close_container(&ctxt->encoder, &modules);
 
     if (err != 0) {
-        return MGMT_ERR_ENOMEM;
+        return LOG_MGMT_ERR_ENOMEM;
     }
 
     return 0;
@@ -525,14 +525,14 @@ log_mgmt_logs_list(struct mgmt_ctxt *ctxt)
 
     err = 0;
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
+    err |= cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "log_list");
     err |= cbor_encoder_create_array(&ctxt->encoder, &log_list,
                                      CborIndefiniteLength);
 
     for (log_idx = 0; ; log_idx++) {
         rc = log_mgmt_impl_get_log(log_idx, &log);
-        if (rc == MGMT_ERR_ENOENT) {
+        if (rc == LOG_MGMT_ERR_ENOENT) {
             break;
         }
         if (rc != 0) {
@@ -548,7 +548,7 @@ log_mgmt_logs_list(struct mgmt_ctxt *ctxt)
     err |= cbor_encoder_close_container(&ctxt->encoder, &log_list);
 
     if (err != 0) {
-        return MGMT_ERR_ENOMEM;
+        return LOG_MGMT_ERR_ENOMEM;
     }
 
     return 0;
@@ -568,14 +568,14 @@ log_mgmt_level_list(struct mgmt_ctxt *ctxt)
 
     err = 0;
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
+    err |= cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "level_map");
     err |= cbor_encoder_create_map(&ctxt->encoder, &level_map,
                                    CborIndefiniteLength);
 
     for (level = 0; ; level++) {
         rc = log_mgmt_impl_get_level(level, &level_name);
-        if (rc == MGMT_ERR_ENOENT) {
+        if (rc == LOG_MGMT_ERR_ENOENT) {
             break;
         }
         if (rc != 0) {
@@ -592,7 +592,7 @@ log_mgmt_level_list(struct mgmt_ctxt *ctxt)
     err |= cbor_encoder_close_container(&ctxt->encoder, &level_map);
 
     if (err != 0) {
-        return MGMT_ERR_ENOMEM;
+        return LOG_MGMT_ERR_ENOMEM;
     }
 
     return 0;
@@ -625,13 +625,13 @@ log_mgmt_clear(struct mgmt_ctxt *ctxt)
     name[0] = '\0';
     rc = cbor_read_object(&ctxt->it, attr);
     if (rc != 0) {
-        return MGMT_ERR_EINVAL;
+        return LOG_MGMT_ERR_EINVAL;
     }
     name_len = strlen(name);
 
     for (log_idx = 0; ; log_idx++) {
         rc = log_mgmt_impl_get_log(log_idx, &log);
-        if (rc == MGMT_ERR_ENOENT) {
+        if (rc == LOG_MGMT_ERR_ENOENT) {
             return 0;
         }
         if (rc != 0) {
@@ -653,7 +653,7 @@ log_mgmt_clear(struct mgmt_ctxt *ctxt)
     }
 
     if (name_len != 0) {
-        return MGMT_ERR_ENOENT;
+        return LOG_MGMT_ERR_ENOENT;
     }
 
     return 0;
