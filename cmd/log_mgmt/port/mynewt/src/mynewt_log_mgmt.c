@@ -47,22 +47,45 @@ mynewt_log_mgmt_find_log(const char *log_name)
     }
 }
 
+static int
+log_mgmt_mynewt_err_map(int mynewt_os_err)
+{
+    switch (mynewt_os_err) {
+        case OS_ENOENT:
+            /* no break */
+        case SYS_ENOENT:
+            return LOG_MGMT_ERR_ENOENT;
+        case OS_ENOMEM:
+            /* no break */
+        case SYS_ENOMEM:
+            return LOG_MGMT_ERR_ENOMEM;
+        case OS_OK:
+            return LOG_MGMT_ERR_EOK;
+        case OS_EINVAL:
+            /* no break */
+        case OS_INVALID_PARM:
+            /* no break */
+        case SYS_EINVAL:
+            return LOG_MGMT_ERR_EINVAL;
+        case SYS_ENOTSUP:
+            return LOG_MGMT_ERR_ENOTSUP;
+        default:
+            return LOG_MGMT_ERR_EUNKNOWN;
+    }
+}
+
 int
 log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index)
 {
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     struct log *tmplog;
-    int i;
 
-    tmplog = NULL;
-    for (i = 0; i <= index; i++) {
-        tmplog = log_list_get_next(tmplog);
-        if (tmplog == NULL) {
-            return LOG_MGMT_ERR_ENOENT;
-        }
+    tmplog = mynewt_log_mgmt_find_log(log->name);
+    if (tmplog) {
+        return log_mgmt_mynewt_err_map(log_set_watermark(tmplog, index));
+    } else {
+        return LOG_MGMT_ERR_ENOENT;
     }
-
-    return log_set_watermark(tmplog, index);
 #else
     return LOG_MGMT_ERR_ENOTSUP;
 #endif
