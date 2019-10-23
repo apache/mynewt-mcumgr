@@ -47,7 +47,7 @@ mynewt_log_mgmt_find_log(const char *log_name)
     }
 }
 
-static int
+__attribute__((__unused__)) static int
 log_mgmt_mynewt_err_map(int mynewt_os_err)
 {
     switch (mynewt_os_err) {
