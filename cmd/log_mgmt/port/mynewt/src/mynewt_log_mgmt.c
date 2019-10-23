@@ -52,17 +52,13 @@ log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index)
 {
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     struct log *tmplog;
-    int i;
 
-    tmplog = NULL;
-    for (i = 0; i <= index; i++) {
-        tmplog = log_list_get_next(tmplog);
-        if (tmplog == NULL) {
-            return LOG_MGMT_ERR_ENOENT;
-        }
+    tmplog = mynewt_log_mgmt_find_log(log->name);
+    if (tmplog) {
+        return log_set_watermark(tmplog, index);
+    } else {
+        return LOG_MGMT_ERR_ENOENT;
     }
-
-    return log_set_watermark(tmplog, index);
 #else
     return LOG_MGMT_ERR_ENOTSUP;
 #endif
