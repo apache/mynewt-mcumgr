@@ -328,10 +328,6 @@ log_encode(const struct log_mgmt_log *log, CborEncoder *ctxt,
     err |= cbor_encode_text_stringz(&logs, log->name);
     err |= cbor_encode_text_stringz(&logs, "type");
     err |= cbor_encode_uint(&logs, log->type);
-#if !LOG_MGMT_GLOBAL_IDX
-    err |= cbor_encode_text_stringz(&logs, "next_index");
-    err |= cbor_encode_int(&logs, log->index);
-#endif
 
     rc = log_encode_entries(log, &logs, timestamp, index);
     if (rc != 0) {
@@ -359,13 +355,11 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     CborEncoder logs;
     CborError err;
     uint64_t index;
+    uint32_t next_idx;
     int64_t timestamp;
     int name_len;
     int log_idx;
     int rc;
-#if LOG_MGMT_GLOBAL_IDX
-    uint32_t next_idx;
-#endif
 
     const struct cbor_attr_t attr[] = {
         {
@@ -403,10 +397,13 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     if (rc != 0) {
         return LOG_MGMT_ERR_EUNKNOWN;
     }
+#else
+    /* This field is deprecated.  Set it to 0 until it gets removed. */
+    next_idx = 0;
+#endif
 
     err |= cbor_encode_text_stringz(&ctxt->encoder, "next_index");
     err |= cbor_encode_uint(&ctxt->encoder, next_idx);
-#endif
 
     err |= cbor_encode_text_stringz(&ctxt->encoder, "logs");
     err |= cbor_encoder_create_array(&ctxt->encoder, &logs,
