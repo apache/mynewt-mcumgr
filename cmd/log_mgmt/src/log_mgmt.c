@@ -40,6 +40,8 @@ struct log_mgmt_enc_ctxt {
 
 /** Context used during walks. */
 struct log_walk_ctxt {
+    /* last encoded index */
+    uint32_t last_enc_index;
     /* The number of bytes encoded to the response so far. */
     size_t rsp_len;
     /* The encoder to use to write the current log entry. */
@@ -248,6 +250,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
     }
 
     ctxt->counter++;
+    ctxt->last_enc_index = entry->index;
 
     return 0;
 }
@@ -310,6 +313,11 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
         return LOG_MGMT_ERR_ENOMEM;
     }
 
+#if LOG_MGMT_READ_WATERMARK_UPDATE
+    if (!rc) {
+        rc = log_mgmt_impl_set_watermark(log, ctxt.last_enc_index);
+    }
+#endif
 err:
     return rc;
 }
@@ -429,19 +437,10 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
         if (log.type != LOG_MGMT_TYPE_STREAM) {
             if (name_len == 0 || strcmp(name, log.name) == 0) {
                 rc = log_encode(&log, &logs, timestamp, index);
-
-#if LOG_MGMT_READ_WATERMARK_UPDATE
-                if (rc == 0 || rc == LOG_MGMT_ERR_EUNKNOWN) {
-                    log_mgmt_impl_set_watermark(&log, index);
-                }
-#endif
                 if (rc) {
                     goto err;
                 }
 
-#if LOG_MGMT_READ_WATERMARK_UPDATE
-                log_mgmt_impl_set_watermark(&log, index);
-#endif
                 /* If the client specified this log, he isn't interested in the
                  * remaining ones.
                  */
