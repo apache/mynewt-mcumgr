@@ -315,7 +315,7 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
 
 #if LOG_MGMT_READ_WATERMARK_UPDATE
     if (!rc) {
-        rc = log_mgmt_impl_set_watermark(log, ctxt.last_enc_index);
+        log_mgmt_impl_set_watermark(log, ctxt.last_enc_index);
     }
 #endif
 err:

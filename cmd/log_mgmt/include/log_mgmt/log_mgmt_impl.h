@@ -122,7 +122,7 @@ int log_mgmt_impl_clear(const char *log_name);
  * @return                      0 on success, non-zero on failure
  */
 int
-log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index);
+log_mgmt_impl_set_watermark(const struct log_mgmt_log *log, int index);
 
 #ifdef __cplusplus
 }
