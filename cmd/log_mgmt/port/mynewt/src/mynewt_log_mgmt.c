@@ -75,7 +75,7 @@ log_mgmt_mynewt_err_map(int mynewt_os_err)
 }
 
 int
-log_mgmt_impl_set_watermark(struct log_mgmt_log *log, int index)
+log_mgmt_impl_set_watermark(const struct log_mgmt_log *log, int index)
 {
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
     struct log *tmplog;
