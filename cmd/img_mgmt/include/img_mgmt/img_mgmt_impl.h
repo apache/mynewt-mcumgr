@@ -131,7 +131,7 @@ int img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes);
  * @param off      Offset that is about to be written
  * @param len      Number of bytes to be written
  *
- * @return         0 if success 
+ * @return         0 if success
  *                 ERROR_CODE if could not erase sector
  */
 int img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len);

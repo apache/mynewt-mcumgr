@@ -11,13 +11,14 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
-#include <stats.h>
+#include <stats/stats.h>
 #include <mgmt/smp_bt.h>
 #include <mgmt/buf.h>
 
 #ifdef CONFIG_MCUMGR_CMD_FS_MGMT
 #include <device.h>
-#include <fs.h>
+#include <fs/fs.h>
+#include <nffs/nffs.h>
 #include "fs_mgmt/fs_mgmt.h"
 #endif
 #ifdef CONFIG_MCUMGR_CMD_OS_MGMT

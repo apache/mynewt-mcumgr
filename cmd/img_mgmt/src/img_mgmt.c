@@ -109,10 +109,10 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
                    uint32_t *flags)
 {
 
-#if MYNEWT_VAL(IMG_MGMT_DUMMY_HDR)
+#if IMG_MGMT_DUMMY_HDR
     uint8_t dummy_hash[] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
                             0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
- 
+
     if (!hash && !ver && !flags) {
         return 0;
     }
@@ -581,7 +581,7 @@ img_mgmt_register_callbacks(const img_mgmt_dfu_callbacks_t *cb_struct)
 int
 img_mgmt_my_version(struct image_version *ver)
 {
-    return img_mgmt_read_info(boot_current_slot, ver, NULL, NULL);
+    return img_mgmt_read_info(IMG_MGMT_BOOT_CURR_SLOT, ver, NULL, NULL);
 }
 
 void

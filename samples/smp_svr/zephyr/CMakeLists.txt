@@ -7,6 +7,8 @@
 # This provides a basic application structure suitable for communication using
 # mcumgr.  It can be used as a starting point for new applications.
 
+cmake_minimum_required(VERSION 3.14)
+
 # Zephyr uses Device Tree (DT) to describe some board hardware configuration.
 #
 # See the Zephyr documentation for more information on DT:

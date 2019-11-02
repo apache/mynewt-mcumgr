@@ -1,4 +1,5 @@
-target_include_directories(MCUMGR INTERFACE 
+if(CONFIG_MCUMGR)
+target_include_directories(MCUMGR INTERFACE
     include
 )
 
@@ -7,3 +8,4 @@ zephyr_library_sources(
     cmd/log_mgmt/src/log_mgmt.c
     cmd/log_mgmt/src/stubs.c
 )
+endif

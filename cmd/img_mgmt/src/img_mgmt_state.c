@@ -18,6 +18,7 @@
  */
 
 #include <assert.h>
+
 #include "tinycbor/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
