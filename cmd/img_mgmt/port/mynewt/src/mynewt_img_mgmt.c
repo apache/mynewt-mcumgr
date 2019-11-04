@@ -26,11 +26,6 @@
 #include "sysflash/sysflash.h"
 #include "img_mgmt/image.h"
 
-static struct {
-    int sector_id;
-    uint32_t sector_end;
-} upload_state;
-
 static int
 img_mgmt_find_best_area_id(void)
 {
@@ -407,8 +402,8 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
     }
 
     /* Check if there any unerased target sectors, if not clean them. */
-    while ((fa->fa_off + offset + num_bytes) > upload_state.sector_end) {
-        rc = flash_area_getnext_sector(fa->fa_id, &upload_state.sector_id,
+    while ((fa->fa_off + offset + num_bytes) > g_img_mgmt_state.sector_end) {
+        rc = flash_area_getnext_sector(fa->fa_id, &g_img_mgmt_state.sector_id,
                                        &sector);
         if (rc) {
             goto err;
@@ -417,12 +412,12 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
         if (rc) {
             goto err;
         }
-        upload_state.sector_end = sector.fa_off + sector.fa_size;
+        g_img_mgmt_state.sector_end = sector.fa_off + sector.fa_size;
     }
 
     if (last) {
-        upload_state.sector_id = -1;
-        upload_state.sector_end = 0;
+        g_img_mgmt_state.sector_id = -1;
+        g_img_mgmt_state.sector_end = 0;
     }
 
     rc = flash_area_write(fa, offset, data, num_bytes);
@@ -434,8 +429,8 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
     return 0;
 
 err:
-    upload_state.sector_id = -1;
-    upload_state.sector_end = 0;
+    g_img_mgmt_state.sector_id = -1;
+    g_img_mgmt_state.sector_end = 0;
     return MGMT_ERR_EUNKNOWN;
 }
 
@@ -496,7 +491,8 @@ img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
     }
 
     while ((cfa->fa_off + off + len) > g_img_mgmt_state.sector_end) {
-        rc = flash_area_getnext_sector(cfa->fa_id, &g_img_mgmt_state.sector_id, &sector);
+        rc = flash_area_getnext_sector(cfa->fa_id,
+                                       &g_img_mgmt_state.sector_id, &sector);
         if (rc) {
             goto done;
         }
@@ -512,7 +508,7 @@ done:
     return rc;
 }
 #endif
-    
+
 int
 img_mgmt_impl_swap_type(void)
 {
@@ -538,8 +534,4 @@ img_mgmt_module_init(void)
     SYSINIT_ASSERT_ACTIVE();
 
     img_mgmt_register_group();
-
-    /* setup for lazy sector by sector erase */
-    upload_state.sector_id = -1;
-    upload_state.sector_end = 0;
 }
