@@ -132,8 +132,12 @@ log_mgmt_impl_get_level(int idx, const char **out_level_name)
 {
     const char *name;
 
+    if (idx >= LOG_LEVEL_MAX) {
+        return LOG_MGMT_ERR_ENOENT;
+    }
+
     name = LOG_LEVEL_STR(idx);
-    if (name == NULL) {
+    if (!strcmp(name, "UNKNOWN")) {
         return LOG_MGMT_ERR_ENOENT;
     } else {
         *out_level_name = name;
