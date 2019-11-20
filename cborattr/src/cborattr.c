@@ -157,7 +157,7 @@ cbor_internal_read_object(CborValue *root_value,
     void *lptr;
     CborValue cur_value;
     CborError err = 0;
-    size_t len;
+    size_t len = 0;
     CborType type = CborInvalidType;
 
     /* stuff fields with defaults in case they're omitted in the JSON input */
@@ -191,7 +191,6 @@ cbor_internal_read_object(CborValue *root_value,
         }
     }
 
-    
     if (cbor_value_is_map(root_value)) {
         err |= cbor_value_enter_container(root_value, &cur_value);
     } else {
