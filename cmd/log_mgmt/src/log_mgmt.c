@@ -313,12 +313,12 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
         return LOG_MGMT_ERR_ENOMEM;
     }
 
+err:
 #if LOG_MGMT_READ_WATERMARK_UPDATE
-    if (!rc) {
+    if (!rc || rc == LOG_MGMT_ERR_EUNKNOWN) {
         log_mgmt_impl_set_watermark(log, ctxt.last_enc_index);
     }
 #endif
-err:
     return rc;
 }
 
