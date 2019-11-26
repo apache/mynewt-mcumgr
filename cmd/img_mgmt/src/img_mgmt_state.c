@@ -176,6 +176,7 @@ img_mgmt_state_confirm(void)
         rc = MGMT_ERR_EUNKNOWN;
     }
 
+     img_mgmt_dfu_confirmed();
 err:
     return img_mgmt_impl_log_confirm(rc, NULL);
 }
