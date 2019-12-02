@@ -44,19 +44,11 @@ mynewt_os_mgmt_reset_tmo(struct os_event *ev)
 static uint16_t
 mynewt_os_mgmt_stack_usage(const struct os_task *task)
 {
-    const os_stack_t *bottom;
-    const os_stack_t *top;
+    struct os_task_info oti;
 
-    top = task->t_stacktop;
-    bottom = task->t_stacktop - task->t_stacksize;
-    while (bottom < top) {
-        if (*bottom != OS_STACK_PATTERN) {
-            break;
-        }
-        ++bottom;
-    }
+    os_task_info_get(task, &oti);
 
-    return task->t_stacktop - bottom;
+    return oti.oti_stkusage;
 }
 
 static const struct os_task *
