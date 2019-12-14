@@ -78,8 +78,8 @@ const char *img_mgmt_err_str_downgrade = "downgrade";
  * Finds the TLVs in the specified image slot, if any.
  */
 static int
-img_mgmt_find_tlvs(const struct image_header *hdr,
-                   int slot, size_t *start_off, size_t *end_off)
+img_mgmt_find_tlvs(int slot, size_t *start_off, size_t *end_off,
+                   uint16_t magic)
 {
     struct image_tlv_info tlv_info;
     int rc;
@@ -90,7 +90,7 @@ img_mgmt_find_tlvs(const struct image_header *hdr,
         return MGMT_ERR_EUNKNOWN;
     }
 
-    if (tlv_info.it_magic != IMAGE_TLV_INFO_MAGIC) {
+    if (tlv_info.it_magic != magic) {
         /* No TLVs. */
         return MGMT_ERR_ENOENT;
     }
@@ -165,7 +165,15 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
      * the hash is missing, the image is considered invalid.
      */
     data_off = hdr.ih_hdr_size + hdr.ih_img_size;
-    rc = img_mgmt_find_tlvs(&hdr, image_slot, &data_off, &data_end);
+
+    rc = img_mgmt_find_tlvs(image_slot, &data_off, &data_end, IMAGE_TLV_PROT_INFO_MAGIC);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    data_off = data_end - sizeof(struct image_tlv_info);
+
+    rc = img_mgmt_find_tlvs(image_slot, &data_off, &data_end, IMAGE_TLV_INFO_MAGIC);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
