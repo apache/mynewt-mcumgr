@@ -28,6 +28,7 @@ extern "C" {
 
 #define IMAGE_MAGIC                 0x96f3b83d
 #define IMAGE_TLV_INFO_MAGIC        0x6907
+#define IMAGE_TLV_PROT_INFO_MAGIC   0x6908
 
 #define IMAGE_HEADER_SIZE           32
 
