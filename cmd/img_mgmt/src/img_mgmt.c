@@ -161,17 +161,20 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
         *flags = hdr.ih_flags;
     }
 
-    /* Read the image's TLVs.  All images are required to have a hash TLV.  If
-     * the hash is missing, the image is considered invalid.
+    /* Read the image's TLVs. We first try to find the protected TLVs, if the protected
+     * TLV does not exist, we try to find non-protected TLV which also contains the hash
+     * TLV. All images are required to have a hash TLV.  If the hash is missing, the image
+     * is considered invalid.
      */
     data_off = hdr.ih_hdr_size + hdr.ih_img_size;
 
     rc = img_mgmt_find_tlvs(image_slot, &data_off, &data_end, IMAGE_TLV_PROT_INFO_MAGIC);
-    if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+    if (!rc) {
+        /* The data offset should start after the header bytes after the end of the protected TLV,
+         * if one exists.
+         */
+        data_off = data_end - sizeof(struct image_tlv_info);
     }
-
-    data_off = data_end - sizeof(struct image_tlv_info);
 
     rc = img_mgmt_find_tlvs(image_slot, &data_off, &data_end, IMAGE_TLV_INFO_MAGIC);
     if (rc != 0) {
