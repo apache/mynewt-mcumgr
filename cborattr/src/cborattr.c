@@ -400,11 +400,7 @@ cbor_read_flat_attrs(const uint8_t *data, int len,
     CborError err;
 
     cbor_buf_reader_init(&reader, data, len);
-#ifdef __ZEPHYR__
-    err = cbor_parser_cust_reader_init(&reader.r, 0, &parser, &value);
-#else
     err = cbor_parser_init(&reader.r, 0, &parser, &value);
-#endif
     if (err != CborNoError) {
         return -1;
     }
