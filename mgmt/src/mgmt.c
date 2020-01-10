@@ -157,21 +157,12 @@ mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct mgmt_streamer *streamer)
 {
     int rc;
 
-#ifdef __ZEPHYR__
-    rc = cbor_parser_cust_reader_init(streamer->reader, 0, &ctxt->parser,
-                                      &ctxt->it);
-#else
     rc = cbor_parser_init(streamer->reader, 0, &ctxt->parser, &ctxt->it);
-#endif
     if (rc != CborNoError) {
         return mgmt_err_from_cbor(rc);
     }
 
-#ifdef __ZEPHYR__
-    cbor_encoder_cust_writer_init(&ctxt->encoder, streamer->writer, 0);
-#else
     cbor_encoder_init(&ctxt->encoder, streamer->writer, 0);
-#endif
 
     return 0;
 }
