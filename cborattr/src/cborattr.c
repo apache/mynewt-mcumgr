@@ -17,23 +17,22 @@
  * under the License.
  */
 
-//#include <syscfg/syscfg.h>
 #include "cborattr/cborattr.h"
 #include "tinycbor/cbor.h"
 #include "tinycbor/cbor_buf_reader.h"
 
+#ifdef __ZEPHYR__
+#include <zephyr.h>
+#define CBORATTR_MAX_SIZE CONFIG_MGMT_CBORATTR_MAX_SIZE
+#endif
+
 #ifdef MYNEWT
+#include "syscfg/syscfg.h"
 #include "tinycbor/cbor_mbuf_reader.h"
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "os/os_mbuf.h"
 #define CBORATTR_MAX_SIZE MYNEWT_VAL(CBORATTR_MAX_SIZE)
-#else
-#define CBORATTR_MAX_SIZE CONFIG_CBORATTR_MAX_SIZE
 #endif
-
-
-static int cbor_write_val(struct CborEncoder *enc,
-                          const struct cbor_out_val_t *val);
 
 /* this maps a CborType to a matching CborAtter Type. The mapping is not
  * one-to-one because of signedness of integers
@@ -409,6 +408,9 @@ cbor_read_flat_attrs(const uint8_t *data, int len,
 }
 
 #ifdef MYNEWT
+static int cbor_write_val(struct CborEncoder *enc,
+                          const struct cbor_out_val_t *val);
+
 /*
  * Read in cbor key/values from os_mbuf pointed by m, and fill them
  * into attrs.

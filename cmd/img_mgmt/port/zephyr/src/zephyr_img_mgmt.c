@@ -17,9 +17,14 @@
  * under the License.
  */
 
+#define LOG_MODULE_NAME mcumgr_flash_mgmt
+#define LOG_LEVEL CONFIG_IMG_MANAGER_LOG_LEVEL
+#include <logging/log.h>
+LOG_MODULE_REGISTER(LOG_MODULE_NAME);
+
 #include <assert.h>
 #include <flash.h>
-#include <flash_map.h>
+#include <storage/flash_map.h>
 #include <zephyr.h>
 #include <soc.h>
 #include <init.h>
@@ -28,6 +33,7 @@
 #include <mgmt/mgmt.h>
 #include <img_mgmt/img_mgmt_impl.h>
 #include <img_mgmt/img_mgmt.h>
+#include <img_mgmt/image.h>
 #include "../../../src/img_mgmt_priv.h"
 
 /**
@@ -105,6 +111,78 @@ zephyr_img_mgmt_flash_area_id(int slot)
     return fa_id;
 }
 
+static int
+img_mgmt_find_best_area_id(void)
+{
+    struct image_version ver;
+    int best = -1;
+    int i;
+    int rc;
+
+    for (i = 0; i < 2; i++) {
+        rc = img_mgmt_read_info(i, &ver, NULL, NULL);
+        if (rc < 0) {
+            continue;
+        }
+        if (rc == 0) {
+            /* Image in slot is ok. */
+            if (img_mgmt_slot_in_use(i)) {
+                /* Slot is in use; can't use this. */
+                continue;
+            } else {
+                /*
+                 * Not active slot, but image is ok. Use it if there are
+                 * no better candidates.
+                 */
+                best = i;
+            }
+            continue;
+        }
+        best = i;
+        break;
+    }
+    if (best >= 0) {
+        best = zephyr_img_mgmt_flash_area_id(best);
+    }
+    return best;
+}
+
+/**
+ * Compares two image version numbers in a semver-compatible way.
+ *
+ * @param a                     The first version to compare.
+ * @param b                     The second version to compare.
+ *
+ * @return                      -1 if a < b
+ * @return                       0 if a = b
+ * @return                       1 if a > b
+ */
+static int
+img_mgmt_vercmp(const struct image_version *a, const struct image_version *b)
+{
+    if (a->iv_major < b->iv_major) {
+        return -1;
+    } else if (a->iv_major > b->iv_major) {
+        return 1;
+    }
+
+    if (a->iv_minor < b->iv_minor) {
+        return -1;
+    } else if (a->iv_minor > b->iv_minor) {
+        return 1;
+    }
+
+    if (a->iv_revision < b->iv_revision) {
+        return -1;
+    } else if (a->iv_revision > b->iv_revision) {
+        return 1;
+    }
+
+    /* Note: For semver compatibility, don't compare the 32-bit build num. */
+
+    return 0;
+}
+
 int
 img_mgmt_impl_erase_slot(void)
 {
@@ -166,14 +244,14 @@ img_mgmt_impl_read(int slot, unsigned int offset, void *dst,
 
     rc = flash_area_open(zephyr_img_mgmt_flash_area_id(slot), &fa);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+      return MGMT_ERR_EUNKNOWN;
     }
 
     rc = flash_area_read(fa, offset, dst, num_bytes);
     flash_area_close(fa);
 
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+      return MGMT_ERR_EUNKNOWN;
     }
 
     return 0;
@@ -235,6 +313,34 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 }
 
 int
+img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
+{
+    const struct flash_area *fa;
+    int rc;
+
+    rc = flash_area_open(DT_FLASH_AREA_IMAGE_1_ID, &fa);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    rc = flash_area_erase(fa, off, num_bytes);
+    flash_area_close(fa);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
+
+    return 0;
+}
+
+#if IMG_MGMT_LAZY_ERASE
+int img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
+{
+    /* This is done internally to the flash_img API. */
+    return 0;
+}
+#endif
+
+int
 img_mgmt_impl_swap_type(void)
 {
     switch (mcuboot_swap_type()) {
@@ -250,4 +356,149 @@ img_mgmt_impl_swap_type(void)
         assert(0);
         return IMG_MGMT_SWAP_TYPE_NONE;
     }
+}
+
+/**
+ * Verifies an upload request and indicates the actions that should be taken
+ * during processing of the request.  This is a "read only" function in the
+ * sense that it doesn't write anything to flash and doesn't modify any global
+ * variables.
+ *
+ * @param req                   The upload request to inspect.
+ * @param action                On success, gets populated with information
+ *                                  about how to process the request.
+ *
+ * @return                      0 if processing should occur;
+ *                              A MGMT_ERR code if an error response should be
+ *                                  sent instead.
+ */
+int
+img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
+                             struct img_mgmt_upload_action *action,
+                             const char **errstr)
+{
+    const struct image_header *hdr;
+    const struct flash_area *fa;
+    struct image_version cur_ver;
+    uint8_t rem_bytes;
+    bool empty;
+    int rc;
+
+    memset(action, 0, sizeof *action);
+
+    if (req->off == -1) {
+        /* Request did not include an `off` field. */
+        *errstr = img_mgmt_err_str_hdr_malformed;
+        return MGMT_ERR_EINVAL;
+    }
+
+    if (req->off == 0) {
+        /* First upload chunk. */
+        if (req->data_len < sizeof(struct image_header)) {
+            /*
+             * Image header is the first thing in the image.
+             */
+            *errstr = img_mgmt_err_str_hdr_malformed;
+            return MGMT_ERR_EINVAL;
+        }
+
+        if (req->size == -1) {
+            /* Request did not include a `len` field. */
+            *errstr = img_mgmt_err_str_hdr_malformed;
+            return MGMT_ERR_EINVAL;
+        }
+        action->size = req->size;
+
+        hdr = (struct image_header *)req->img_data;
+        if (hdr->ih_magic != IMAGE_MAGIC) {
+            *errstr = img_mgmt_err_str_magic_mismatch;
+            return MGMT_ERR_EINVAL;
+        }
+
+        if (req->data_sha_len > IMG_MGMT_DATA_SHA_LEN) {
+            return MGMT_ERR_EINVAL;
+        }
+
+        /*
+         * If request includes proper data hash we can check whether there is
+         * upload in progress (interrupted due to e.g. link disconnection) with
+         * the same data hash so we can just resume it by simply including
+         * current upload offset in response.
+         */
+        if ((req->data_sha_len > 0) && (g_img_mgmt_state.area_id != -1)) {
+            if ((g_img_mgmt_state.data_sha_len == req->data_sha_len) &&
+                            !memcmp(g_img_mgmt_state.data_sha, req->data_sha,
+                                                        req->data_sha_len)) {
+                return 0;
+            }
+        }
+
+        action->area_id = img_mgmt_find_best_area_id();
+        if (action->area_id < 0) {
+            /* No slot where to upload! */
+            *errstr = img_mgmt_err_str_no_slot;
+            return MGMT_ERR_ENOMEM;
+        }
+
+        if (req->upgrade) {
+            /* User specified upgrade-only.  Make sure new image version is
+             * greater than that of the currently running image.
+             */
+            rc = img_mgmt_my_version(&cur_ver);
+            if (rc != 0) {
+                return MGMT_ERR_EUNKNOWN;
+            }
+
+            if (img_mgmt_vercmp(&cur_ver, &hdr->ih_ver) >= 0) {
+                *errstr = img_mgmt_err_str_downgrade;
+                return MGMT_ERR_EBADSTATE;
+            }
+        }
+
+#if IMG_MGMT_LAZY_ERASE
+        (void) empty;
+#else
+        rc = zephyr_img_mgmt_flash_check_empty(action->area_id, &empty);
+        if (rc) {
+            return MGMT_ERR_EUNKNOWN;
+        }
+
+        action->erase = !empty;
+#endif
+    } else {
+        /* Continuation of upload. */
+        action->area_id = g_img_mgmt_state.area_id;
+        action->size = g_img_mgmt_state.size;
+
+        if (req->off != g_img_mgmt_state.off) {
+            /*
+             * Invalid offset. Drop the data, and respond with the offset we're
+             * expecting data for.
+             */
+            return 0;
+        }
+    }
+
+    /* Calculate size of flash write. */
+    action->write_bytes = req->data_len;
+    if (req->off + req->data_len < action->size) {
+        /*
+         * Respect flash write alignment if not in the last block
+         */
+        rc = flash_area_open(action->area_id, &fa);
+        if (rc) {
+            *errstr = img_mgmt_err_str_flash_open_failed;
+            return MGMT_ERR_EUNKNOWN;
+        }
+
+        rem_bytes = req->data_len % flash_area_align(fa);
+        flash_area_close(fa);
+
+        if (rem_bytes) {
+            action->write_bytes -= rem_bytes;
+        }
+    }
+
+    action->proceed = true;
+    return 0;
 }
