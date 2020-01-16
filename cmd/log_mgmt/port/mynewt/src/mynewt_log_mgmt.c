@@ -192,15 +192,10 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
     entry.module = leh->ue_module;
     entry.level = leh->ue_level;
 
-#if MYNEWT_VAL(LOG_VERSION) < 3
-    entry.type = LOG_ETYPE_STRING;
-    entry.flags = 0;
-#else
     entry.type = leh->ue_etype;
     entry.flags = leh->ue_flags;
     entry.imghash = (leh->ue_flags & LOG_FLAGS_IMG_HASH) ?
         leh->ue_imghash : NULL;
-#endif
     entry.len = len;
     entry.data = mynewt_log_mgmt_walk_arg->chunk;
 

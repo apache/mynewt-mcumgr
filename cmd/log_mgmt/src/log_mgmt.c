@@ -95,7 +95,6 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
     if (entry->offset == 0) {
         err |= cbor_encoder_create_map(enc, &lmec->mapenc, CborIndefiniteLength);
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
         switch (entry->type) {
         case LOG_MGMT_ETYPE_CBOR:
             err |= cbor_encode_text_stringz(&lmec->mapenc, "type");
@@ -112,7 +111,6 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
         default:
             return LOG_MGMT_ERR_ECORRUPT;
         }
-#endif
         err |= cbor_encode_text_stringz(&lmec->mapenc, "ts");
         err |= cbor_encode_int(&lmec->mapenc, entry->ts);
         err |= cbor_encode_text_stringz(&lmec->mapenc, "level");
@@ -127,7 +125,6 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
                                            LOG_MGMT_IMG_HASHLEN);
         }
 
-#if MYNEWT_VAL(LOG_VERSION) > 2
         err |= cbor_encode_text_stringz(&lmec->mapenc, "msg");
 
         /*
@@ -150,10 +147,6 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
             err |= cbor_encode_byte_string(&lmec->msgenc, entry->data, entry->chunklen);
             bytes_encoded = entry->chunklen;
         }
-#else
-        err |= cbor_encode_text_stringz(&lmec->mapenc, "msg");
-        err |= cbor_encode_text_stringz(&lmec->mapenc, (char *)data);
-#endif
     } else {
         /*
          * The else case is executed for non-first chunks of data to be encoded
@@ -230,9 +223,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
              * message in the "msg" field of the response
              */
             if (ctxt->counter == 0) {
-#if MYNEWT_VAL(LOG_VERSION) > 2
                 entry->type = LOG_ETYPE_STRING;
-#endif
                 snprintf((char *)entry->data, LOG_MGMT_MAX_RSP_LEN,
                          "error: entry too large (%zu bytes)", entry_len);
             }

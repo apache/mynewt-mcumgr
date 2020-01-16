@@ -71,8 +71,7 @@
 static int
 img_mgmt_log_gen(const char *ev, int status, const uint8_t *hash)
 {
-#if MYNEWT_VAL(LOG_VERSION) > 2 && \
-    LOG_MOD_LEVEL_IS_ACTIVE(MYNEWT_VAL(IMG_MGMT_LOG_LVL), LOG_LEVEL_INFO)
+#if LOG_MOD_LEVEL_IS_ACTIVE(MYNEWT_VAL(IMG_MGMT_LOG_LVL), LOG_LEVEL_INFO)
 
     struct os_mbuf *om;
     int rc;
