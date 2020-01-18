@@ -36,7 +36,7 @@ syscfg.vals:
     CONFIG_MGMT: 1
 
     # OS main/default task
-    OS_MAIN_STACK_SIZE: 564
+    OS_MAIN_STACK_SIZE: 568
 
     # Lots of smaller mbufs are required for smp using typical BLE ATT MTU
     # values.
