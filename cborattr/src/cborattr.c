@@ -23,7 +23,11 @@
 
 #ifdef __ZEPHYR__
 #include <zephyr.h>
+#ifdef CONFIG_MGMT_CBORATTR_MAX_SIZE
 #define CBORATTR_MAX_SIZE CONFIG_MGMT_CBORATTR_MAX_SIZE
+#else
+#define CBORATTR_MAX_SIZE 512
+#endif
 #endif
 
 #ifdef MYNEWT
