@@ -23,7 +23,7 @@
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 #include <assert.h>
-#include <flash.h>
+#include <drivers/flash.h>
 #include <storage/flash_map.h>
 #include <zephyr.h>
 #include <soc.h>
