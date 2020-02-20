@@ -20,6 +20,7 @@
 #include <limits.h>
 #include <string.h>
 #include "cborattr/cborattr.h"
+#include "tinycbor/cbor_cnt_writer.h"
 #include "mgmt/mgmt.h"
 #include "fs_mgmt/fs_mgmt.h"
 #include "fs_mgmt/fs_mgmt_impl.h"
@@ -100,9 +101,60 @@ fs_mgmt_file_download(struct mgmt_ctxt *ctxt)
         }
     }
 
+#ifdef __ZEPHYR__
+    static size_t buff_used = 0;
+    size_t buff_free = MCUMGR_BUF_SIZE -
+                       cbor_encode_bytes_written(&ctxt->encoder);
+    if (off == 0) {
+        struct CborCntWriter cnt_writer;
+        CborEncoder cnt_encoder;
+
+        cbor_cnt_writer_init(&cnt_writer);
+        cbor_encoder_cust_writer_init(&cnt_encoder, &cnt_writer.enc, 0);
+
+        cbor_encode_text_stringz(&cnt_encoder, "off");
+        /* Length of offset field will wary with value of offset, lets
+         * reserve space for maximum offset, which would be length of data.
+         */
+        cbor_encode_uint(&cnt_encoder, file_len);
+
+        cbor_encode_text_stringz(&cnt_encoder, "data");
+        cbor_encode_byte_string(&cnt_encoder, NULL, MCUMGR_BUF_SIZE);
+
+        cbor_encode_text_stringz(&cnt_encoder, "rc");
+        cbor_encode_int(&cnt_encoder, MGMT_ERR_EOK);
+
+        /* Provided buffer is also used of storing mgmt_hdr and data is
+         * stored in infinite length map so there is additional space
+         * needed for brake.
+         */
+        buff_used = cbor_encode_bytes_written(&cnt_encoder);
+        buff_used += MGMT_HDR_SIZE + 1;
+
+        /* Exclude data from the calculated used size */
+        buff_used -= MCUMGR_BUF_SIZE;
+
+        /* Length is encoded into first packet only */
+        cbor_encode_text_stringz(&cnt_encoder, "len");
+        cbor_encode_uint(&cnt_encoder, file_len);
+
+        buff_free -= cbor_encode_bytes_written(&cnt_encoder) -
+                     MCUMGR_BUF_SIZE;
+
+    } else {
+        buff_free -= buff_used;
+    }
+
+    size_t to_read = MIN(FS_MGMT_DL_CHUNK_SIZE, buff_free);
+
+    rc = fs_mgmt_impl_read(path, off, to_read, file_data, &bytes_read);
+#endif
+
+#ifdef MYNEWT
     /* Read the requested chunk from the file. */
     rc = fs_mgmt_impl_read(path, off, FS_MGMT_DL_CHUNK_SIZE,
                            file_data, &bytes_read);
+#endif
     if (rc != 0) {
         return rc;
     }
@@ -211,7 +263,7 @@ fs_mgmt_file_upload(struct mgmt_ctxt *ctxt)
         if (!fs_mgmt_ctxt.uploading) {
             return MGMT_ERR_EINVAL;
         }
-        
+
         if (off != fs_mgmt_ctxt.off) {
             /* Invalid offset.  Drop the data and send the expected offset. */
             return fs_mgmt_file_upload_rsp(ctxt, MGMT_ERR_EINVAL,
