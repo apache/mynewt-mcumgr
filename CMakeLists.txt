@@ -29,7 +29,6 @@ zephyr_library_link_libraries(MCUMGR)
 
 target_link_libraries(MCUMGR INTERFACE
   zephyr_interface
-  TINYCBOR
   )
 
 endif()
