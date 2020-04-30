@@ -292,7 +292,7 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 		}
 	}
 
-	if (offset != ctx->bytes_written + ctx->buf_bytes) {
+	if (offset != ctx->stream.bytes_written + ctx->stream.buf_bytes) {
 		return MGMT_ERR_EUNKNOWN;
 	}
 
