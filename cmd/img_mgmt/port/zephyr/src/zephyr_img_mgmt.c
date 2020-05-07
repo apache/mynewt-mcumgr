@@ -95,16 +95,16 @@ zephyr_img_mgmt_flash_area_id(int slot)
 
     switch (slot) {
     case 0:
-        fa_id = DT_FLASH_AREA_IMAGE_0_ID;
+        fa_id = FLASH_AREA_ID(image_0);
         break;
 
     case 1:
-        fa_id = DT_FLASH_AREA_IMAGE_1_ID;
+        fa_id = FLASH_AREA_ID(image_1);
         break;
 
     default:
         assert(0);
-        fa_id = DT_FLASH_AREA_IMAGE_1_ID;
+        fa_id = FLASH_AREA_ID(image_1);
         break;
     }
 
@@ -189,14 +189,14 @@ img_mgmt_impl_erase_slot(void)
     bool empty;
     int rc;
 
-    rc = zephyr_img_mgmt_flash_check_empty(DT_FLASH_AREA_IMAGE_1_ID,
+    rc = zephyr_img_mgmt_flash_check_empty(FLASH_AREA_ID(image_1),
                                            &empty);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
 
     if (!empty) {
-        rc = boot_erase_img_bank(DT_FLASH_AREA_IMAGE_1_ID);
+        rc = boot_erase_img_bank(FLASH_AREA_ID(image_1));
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;
         }
@@ -318,7 +318,7 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
     const struct flash_area *fa;
     int rc;
 
-    rc = flash_area_open(DT_FLASH_AREA_IMAGE_1_ID, &fa);
+    rc = flash_area_open(FLASH_AREA_ID(image_1), &fa);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
