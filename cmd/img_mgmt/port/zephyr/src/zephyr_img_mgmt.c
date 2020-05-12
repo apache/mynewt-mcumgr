@@ -318,18 +318,67 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
     const struct flash_area *fa;
     int rc;
 
+    if (off != 0) {
+        rc = MGMT_ERR_EINVAL;
+        goto end;
+    }
+
     rc = flash_area_open(FLASH_AREA_ID(image_1), &fa);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        LOG_ERR("Can't bind to the flash area (err %d)", rc);
+        rc = MGMT_ERR_EUNKNOWN;
+        goto end;
     }
 
-    rc = flash_area_erase(fa, off, num_bytes);
-    flash_area_close(fa);
+    /* align requested erase size to the erase-block-size */
+    struct device *dev = flash_area_get_device(fa);
+    struct flash_pages_info page;
+
+    rc = flash_get_page_info_by_offs(dev, fa->fa_off + num_bytes -1, &page);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        LOG_ERR("bad offset (0x%x)", fa->fa_off + num_bytes -1);
+        rc = MGMT_ERR_EUNKNOWN;
+        goto end_fa;
     }
 
-    return 0;
+    size_t erase_size = page.start_offset + page.size - fa->fa_off;
+    
+    rc = flash_area_erase(fa, 0, erase_size);
+
+    if (rc != 0) {
+        LOG_ERR("image slot erase of 0x%x bytes failed (err %d)", erase_size,
+                rc);
+        rc = MGMT_ERR_EUNKNOWN;
+        goto end_fa;
+    }
+
+    LOG_INF("Erased 0x%x bytes of image slot", erase_size);
+
+    /* erase the image trailer area if it was not erased */
+    off = BOOT_TRAILER_IMG_STATUS_OFFS(fa);
+    if (off >= erase_size) {
+        rc = flash_get_page_info_by_offs(dev, fa->fa_off + off, &page);
+
+        off = page.start_offset - fa->fa_off;
+        erase_size = fa->fa_size - off;
+
+        rc = flash_area_erase(fa, off, erase_size);
+        if (rc != 0) {
+            LOG_ERR("image slot trailer erase of 0x%x bytes failed (err %d)",
+                    erase_size, rc);
+            rc = MGMT_ERR_EUNKNOWN;
+            goto end_fa;
+        }
+
+        LOG_INF("Erased 0x%x bytes of image slot trailer", erase_size);
+    }
+
+    rc = 0;
+
+end_fa:
+    flash_area_close(fa);
+end:
+    return rc;
 }
 
 #if IMG_MGMT_LAZY_ERASE
