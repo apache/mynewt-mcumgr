@@ -56,6 +56,9 @@ int
 os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
 {
     const struct k_thread *thread;
+#if defined(CONFIG_INIT_STACKS) && defined(CONFIG_THREAD_STACK_INFO)
+    size_t unused;
+#endif
 
     thread = zephyr_os_mgmt_task_at(idx);
     if (thread == NULL) {
@@ -63,12 +66,26 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
     }
 
     *out_info = (struct os_mgmt_task_info){ 0 };
+
+#ifdef CONFIG_THREAD_NAME
+    strncpy(out_info->oti_name, thread->name, OS_MGMT_TASK_NAME_LEN-1);
+    out_info->oti_name[OS_MGMT_TASK_NAME_LEN - 1] = '\0';
+#else
     ll_to_s(thread->base.prio, sizeof out_info->oti_name, out_info->oti_name);
+#endif
+
     out_info->oti_prio = thread->base.prio;
     out_info->oti_taskid = idx;
     out_info->oti_state = thread->base.thread_state;
 #ifdef CONFIG_THREAD_STACK_INFO
     out_info->oti_stksize = thread->stack_info.size / 4;
+#ifdef CONFIG_INIT_STACKS
+    if (k_thread_stack_space_get(thread, &unused) == 0) {
+        out_info->oti_stkusage = (thread->stack_info.size - unused) / 4;
+    } else {
+        out_info->oti_stkusage = 0;
+    }
+#endif
 #endif
 
     return 0;
