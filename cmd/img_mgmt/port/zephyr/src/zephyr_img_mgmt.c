@@ -40,7 +40,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
  * Determines if the specified area of flash is completely unwritten.
  */
 static int
-zephyr_img_mgmt_flash_check_empty(u8_t fa_id, bool *out_empty)
+zephyr_img_mgmt_flash_check_empty(uint8_t fa_id, bool *out_empty)
 {
     const struct flash_area *fa;
     uint32_t data[16];
@@ -88,10 +88,10 @@ zephyr_img_mgmt_flash_check_empty(u8_t fa_id, bool *out_empty)
 /**
  * Get flash_area ID for a image slot number.
  */
-static u8_t
+static uint8_t
 zephyr_img_mgmt_flash_area_id(int slot)
 {
-    u8_t fa_id;
+    uint8_t fa_id;
 
     switch (slot) {
     case 0:

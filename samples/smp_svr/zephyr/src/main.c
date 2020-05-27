@@ -95,7 +95,7 @@ static void advertise(struct k_work *work)
 	printk("Advertising successfully started\n");
 }
 
-static void connected(struct bt_conn *conn, u8_t err)
+static void connected(struct bt_conn *conn, uint8_t err)
 {
 	if (err) {
 		printk("Connection failed (err 0x%02x)\n", err);
@@ -104,7 +104,7 @@ static void connected(struct bt_conn *conn, u8_t err)
 	}
 }
 
-static void disconnected(struct bt_conn *conn, u8_t reason)
+static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	printk("Disconnected (reason 0x%02x)\n", reason);
 	k_work_submit(&advertise_work);
