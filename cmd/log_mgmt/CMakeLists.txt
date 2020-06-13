@@ -21,8 +21,8 @@ target_include_directories(MCUMGR INTERFACE
 )
 
 zephyr_library_sources(
-    cmd/log_mgmt/port/zephyr/src/zephyr_log_mgmt.c
-    cmd/log_mgmt/src/log_mgmt.c
-    cmd/log_mgmt/src/stubs.c
+    port/zephyr/src/zephyr_log_mgmt.c
+    src/log_mgmt.c
+    src/stubs.c
 )
-endif
+endif()
