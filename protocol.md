@@ -83,6 +83,18 @@ type NmpHdr struct {
 - **`Id`**: The command ID to send. Commands in the default `Group` are defined
   [here](https://github.com/apache/mynewt-mcumgr/blob/master/mgmt/include/mgmt/mgmt.h).
 
+SMP header (Little Endian)
+
+```
+ 0                   1                   2                   3  
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|  OP |   Res.  |      Flags    |             Length            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|            Group ID           |    Sequence   |   Command ID  |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+```
+
 #### `Data` Payload
 
 If `nh_len` (`Len` in nmp) is non-zero, the `nh_len` byte payload (referred to as **`Data`** in this document) immediately follows the frame header.
