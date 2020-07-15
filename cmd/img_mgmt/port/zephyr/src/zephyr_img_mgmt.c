@@ -333,10 +333,11 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
     /* align requested erase size to the erase-block-size */
     struct device *dev = flash_area_get_device(fa);
     struct flash_pages_info page;
+    off_t page_offset = fa->fa_off + num_bytes - 1;
 
-    rc = flash_get_page_info_by_offs(dev, fa->fa_off + num_bytes -1, &page);
+    rc = flash_get_page_info_by_offs(dev, page_offset, &page);
     if (rc != 0) {
-        LOG_ERR("bad offset (0x%x)", fa->fa_off + num_bytes -1);
+        LOG_ERR("bad offset (0x%lx)", (long)page_offset);
         rc = MGMT_ERR_EUNKNOWN;
         goto end_fa;
     }
