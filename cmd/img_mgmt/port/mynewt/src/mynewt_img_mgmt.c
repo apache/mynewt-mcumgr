@@ -33,6 +33,7 @@ img_mgmt_find_best_area_id(void)
     int best = -1;
     int i;
     int rc;
+    bool in_use = true;
 
     for (i = 0; i < 2; i++) {
         rc = img_mgmt_read_info(i, &ver, NULL, NULL);
@@ -41,7 +42,12 @@ img_mgmt_find_best_area_id(void)
         }
         if (rc == 0) {
             /* Image in slot is ok. */
-            if (img_mgmt_slot_in_use(i)) {
+            rc = img_mgmt_slot_in_use(i, &in_use);
+            if (rc != 0) {
+                /* Cannot determine if slot is in use */
+                continue;
+            }
+            if (in_use) {
                 /* Slot is in use; can't use this. */
                 continue;
             } else {

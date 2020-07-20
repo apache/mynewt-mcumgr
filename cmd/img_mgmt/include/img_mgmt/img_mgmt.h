@@ -156,9 +156,11 @@ int img_mgmt_ver_str(const struct image_version *ver, char *dst);
  *
  * @param slot Slot to check if its in use
  *
+ * @param in_use Destination boolean for in use state
+ *
  * @return 0 on success, non-zero on failure
  */
-int img_mgmt_slot_in_use(int slot);
+int img_mgmt_slot_in_use(int slot, bool *in_use);
 
 /**
  * @brief Check if the DFU status is pending

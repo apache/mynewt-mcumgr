@@ -98,18 +98,43 @@ img_mgmt_state_any_pending(void)
 }
 
 /**
- * Indicates whether the specified slot has any flags.  If no flags are set,
- * the slot can be freely erased.
+ * Indicates whether the specified slot has any flags.  If no flags are set or
+ * the image has an invalid header the slot can be freely erased.
  */
 int
-img_mgmt_slot_in_use(int slot)
+img_mgmt_slot_in_use(int slot, bool *in_use)
 {
     uint8_t state_flags;
+    struct image_header hdr;
+    int rc;
+
+    if (in_use == NULL) {
+        return MGMT_ERR_EINVAL;
+    }
 
     state_flags = img_mgmt_state_flags(slot);
-    return state_flags & IMG_MGMT_STATE_F_ACTIVE       ||
-           state_flags & IMG_MGMT_STATE_F_CONFIRMED    ||
-           state_flags & IMG_MGMT_STATE_F_PENDING;
+    *in_use = state_flags & IMG_MGMT_STATE_F_ACTIVE       ||
+             state_flags & IMG_MGMT_STATE_F_CONFIRMED    ||
+             state_flags & IMG_MGMT_STATE_F_PENDING;
+
+    if (*in_use == false) {
+        return 0;
+    }
+
+    /* Check validity of in_use state by checking the image header contains
+     * the magic value.  This is a fix for an mcuboot issue where the 
+     * secondary slot could be left partially erased due to a device reset
+     * or power outage during a secondary slot erase initated by an image
+     * check failure.  
+     */
+    rc = img_mgmt_impl_read(slot, 0, &hdr, sizeof hdr);
+
+    if (hdr.ih_magic != IMAGE_MAGIC) {
+        /* Image is invalid */
+        *in_use = false;
+    }
+
+    return rc;
 }
 
 /**
