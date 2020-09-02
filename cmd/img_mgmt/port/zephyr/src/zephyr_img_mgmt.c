@@ -331,7 +331,7 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
     }
 
     /* align requested erase size to the erase-block-size */
-    struct device *dev = flash_area_get_device(fa);
+    const struct device *dev = flash_area_get_device(fa);
     struct flash_pages_info page;
     off_t page_offset = fa->fa_off + num_bytes - 1;
 
@@ -343,7 +343,7 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
     }
 
     size_t erase_size = page.start_offset + page.size - fa->fa_off;
-    
+
     rc = flash_area_erase(fa, 0, erase_size);
 
     if (rc != 0) {
