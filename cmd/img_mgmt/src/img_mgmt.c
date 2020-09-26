@@ -285,12 +285,22 @@ img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn)
 static int
 img_mgmt_erase(struct mgmt_ctxt *ctxt)
 {
+    struct image_version ver;
     CborError err;
     int rc;
 
-    if (img_mgmt_slot_in_use(1)) {
-        /* No free slot. */
-        return MGMT_ERR_EBADSTATE;
+    /*
+     * First check if image info is valid.
+     * This check is done incase the flash area has a corrupted image.
+     */
+    rc = img_mgmt_read_info(1, &ver, NULL, NULL);
+
+    if (rc == 0) {
+        /* Image info is valid. */
+        if (img_mgmt_slot_in_use(1)) {
+            /* No free slot. */
+            return MGMT_ERR_EBADSTATE;
+        }
     }
     
     rc = img_mgmt_impl_erase_slot();
