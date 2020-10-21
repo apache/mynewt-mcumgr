@@ -15,8 +15,12 @@
 # specific language governing permissions and limitations
 # under the License.
 
-add_subdirectory_ifdef(CONFIG_MCUMGR_CMD_FS_MGMT   fs_mgmt)
-add_subdirectory_ifdef(CONFIG_MCUMGR_CMD_IMG_MGMT  img_mgmt)
-add_subdirectory_ifdef(CONFIG_MCUMGR_CMD_OS_MGMT   os_mgmt)
-add_subdirectory_ifdef(CONFIG_MCUMGR_CMD_STAT_MGMT stat_mgmt)
-add_subdirectory_ifdef(CONFIG_MCUMGR_CMD_SHELL_MGMT shell_mgmt)
+target_include_directories(MCUMGR INTERFACE
+    include
+)
+
+zephyr_library_sources(
+    port/zephyr/src/zephyr_shell_mgmt.c
+    src/shell_mgmt.c
+    src/stubs.c
+)
