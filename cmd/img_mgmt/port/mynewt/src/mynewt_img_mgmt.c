@@ -527,6 +527,23 @@ img_mgmt_impl_swap_type(void)
     }
 }
 
+int
+img_mgmt_impl_erased_val(int slot, uint8_t *erased_val)
+{
+    const struct flash_area *fa;
+    int rc;
+
+    rc = flash_area_open(flash_area_id_from_image_slot(slot), &fa);
+    if (rc != 0) {
+      return MGMT_ERR_EUNKNOWN;
+    }
+
+    *erased_val = flash_area_erased_val(fa);
+    flash_area_close(fa);
+
+    return 0;
+}
+
 void
 img_mgmt_module_init(void)
 {
