@@ -154,6 +154,9 @@ int img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
                                  struct img_mgmt_upload_action *action,
                                  const char **errstr);
 
+#define ERASED_VAL_32(x) (((x) << 24) | ((x) << 16) | ((x) << 8) | (x))
+int img_mgmt_impl_erased_val(int slot, uint8_t *erased_val);
+
 int img_mgmt_impl_log_upload_start(int status);
 
 int img_mgmt_impl_log_upload_done(int status, const uint8_t *hashp);

@@ -49,6 +49,8 @@ zephyr_img_mgmt_flash_check_empty(uint8_t fa_id, bool *out_empty)
     int bytes_to_read;
     int rc;
     int i;
+    uint8_t erased_val;
+    uint32_t erased_val_32;
 
     rc = flash_area_open(fa_id, &fa);
     if (rc != 0) {
@@ -56,6 +58,9 @@ zephyr_img_mgmt_flash_check_empty(uint8_t fa_id, bool *out_empty)
     }
 
     assert(fa->fa_size % 4 == 0);
+
+    erased_val = flash_area_erased_val(fa);
+    erased_val_32 = ERASED_VAL_32(erased_val);
 
     end = fa->fa_size;
     for (addr = 0; addr < end; addr += sizeof data) {
@@ -72,7 +77,7 @@ zephyr_img_mgmt_flash_check_empty(uint8_t fa_id, bool *out_empty)
         }
 
         for (i = 0; i < bytes_to_read / 4; i++) {
-            if (data[i] != 0xffffffff) {
+            if (data[i] != erased_val_32) {
                 *out_empty = false;
                 flash_area_close(fa);
                 return 0;
@@ -550,5 +555,22 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
     }
 
     action->proceed = true;
+    return 0;
+}
+
+int
+img_mgmt_impl_erased_val(int slot, uint8_t *erased_val)
+{
+    const struct flash_area *fa;
+    int rc;
+
+    rc = flash_area_open(zephyr_img_mgmt_flash_area_id(slot), &fa);
+    if (rc != 0) {
+      return MGMT_ERR_EUNKNOWN;
+    }
+
+    *erased_val = flash_area_erased_val(fa);
+    flash_area_close(fa);
+
     return 0;
 }

@@ -137,7 +137,14 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     size_t data_off;
     size_t data_end;
     bool hash_found;
+    uint8_t erased_val;
+    uint32_t erased_val_32;
     int rc;
+
+    rc = img_mgmt_impl_erased_val(image_slot, &erased_val);
+    if (rc != 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
 
     rc = img_mgmt_impl_read(image_slot, 0, &hdr, sizeof hdr);
     if (rc != 0) {
@@ -145,13 +152,14 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
     }
 
     if (ver != NULL) {
-        memset(ver, 0xff, sizeof(*ver));
+        memset(ver, erased_val, sizeof(*ver));
     }
+    erased_val_32 = ERASED_VAL_32(erased_val);
     if (hdr.ih_magic == IMAGE_MAGIC) {
         if (ver != NULL) {
             memcpy(ver, &hdr.ih_ver, sizeof(*ver));
         }
-    } else if (hdr.ih_magic == 0xffffffff) {
+    } else if (hdr.ih_magic == erased_val_32) {
         return MGMT_ERR_ENOENT;
     } else {
         return MGMT_ERR_EUNKNOWN;
