@@ -259,6 +259,7 @@ extern const char *img_mgmt_err_str_flash_open_failed;
 extern const char *img_mgmt_err_str_flash_erase_failed;
 extern const char *img_mgmt_err_str_flash_write_failed;
 extern const char *img_mgmt_err_str_downgrade;
+extern const char *img_mgmt_err_str_image_bad_flash_addr;
 #else
 #define img_mgmt_error_rsp(ctxt, rc, rsn)             (rc)
 #define img_mgmt_err_str_app_reject                   NULL
@@ -269,6 +270,7 @@ extern const char *img_mgmt_err_str_downgrade;
 #define img_mgmt_err_str_flash_erase_failed           NULL
 #define img_mgmt_err_str_flash_write_failed           NULL
 #define img_mgmt_err_str_downgrade                    NULL
+#define img_mgmt_err_str_image_bad_flash_addr         NULL
 #endif
 
 #ifdef __cplusplus

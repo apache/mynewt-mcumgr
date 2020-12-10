@@ -34,6 +34,7 @@ extern "C" {
 
 /** Image header flags. */
 #define IMAGE_F_NON_BOOTABLE        0x00000010 /* Split image app. */
+#define IMAGE_F_ROM_FIXED_ADDR      0x00000100
 
 /** Image trailer TLV types. */
 #define IMAGE_TLV_SHA256            0x10   /* SHA256 of image hdr and body */
