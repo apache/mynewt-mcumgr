@@ -72,6 +72,7 @@ const char *img_mgmt_err_str_flash_open_failed = "fa open fail";
 const char *img_mgmt_err_str_flash_erase_failed = "fa erase fail";
 const char *img_mgmt_err_str_flash_write_failed = "fa write fail";
 const char *img_mgmt_err_str_downgrade = "downgrade";
+const char *img_mgmt_err_str_image_bad_flash_addr = "img addr mismatch";
 #endif
 
 /**

@@ -495,6 +495,26 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
             return MGMT_ERR_ENOMEM;
         }
 
+
+#if defined(CONFIG_IMG_MGMT_REJECT_DIRECT_XIP_MISMATCHED_SLOT)
+        if (hdr->ih_flags & IMAGE_F_ROM_FIXED_ADDR) {
+            rc = flash_area_open(action->area_id, &fa);
+            if (rc) {
+                *errstr = img_mgmt_err_str_flash_open_failed;
+                return MGMT_ERR_EUNKNOWN;
+            }
+
+            if (fa->fa_off != hdr->ih_load_addr) {
+                *errstr = img_mgmt_err_str_image_bad_flash_addr;
+                flash_area_close(fa);
+                return MGMT_ERR_EINVAL;
+            }
+
+            flash_area_close(fa);
+        }
+#endif
+
+
         if (req->upgrade) {
             /* User specified upgrade-only.  Make sure new image version is
              * greater than that of the currently running image.
