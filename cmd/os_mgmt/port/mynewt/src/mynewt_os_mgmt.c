@@ -89,7 +89,8 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
     out_info->oti_last_checkin = task->t_sanity_check.sc_checkin_last;
     out_info->oti_next_checkin = task->t_sanity_check.sc_checkin_last +
                                  task->t_sanity_check.sc_checkin_itvl;
-    strncpy(out_info->oti_name, task->t_name, sizeof out_info->oti_name);
+    strncpy(out_info->oti_name, task->t_name, sizeof out_info->oti_name - 1);
+    out_info->oti_name[sizeof out_info->oti_name - 1] = '\0';
 
     return 0;
 }
