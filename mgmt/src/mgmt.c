@@ -71,6 +71,31 @@ mgmt_streamer_free_buf(struct mgmt_streamer *streamer, void *buf)
 }
 
 void
+mgmt_unregister_group(struct mgmt_group *group)
+{
+    struct mgmt_group *curr = mgmt_group_list, *prev;
+
+    if (curr && curr == group) {
+        mgmt_group_list = curr->mg_next;
+        return;
+    }
+
+    while (curr && curr != group) {
+        prev = curr;
+        curr = curr->mg_next;
+    }
+
+    if (!curr) {
+        return;
+    }
+
+    prev->mg_next = curr->mg_next;
+    if (curr->mg_next == NULL) {
+        mgmt_group_list_end = curr;
+    }
+}
+
+void
 mgmt_register_group(struct mgmt_group *group)
 {
     if (mgmt_group_list_end == NULL) {
