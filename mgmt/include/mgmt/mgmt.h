@@ -21,11 +21,14 @@
 #define H_MGMT_MGMT_
 
 #include <inttypes.h>
-#include "cbor.h"
+#include "tinycbor/cbor.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* MTU for newtmgr responses */
+#define MGMT_MAX_MTU            1024
 
 /** Opcodes; encoded in first byte of header. */
 #define MGMT_OP_READ            0
@@ -46,6 +49,7 @@ extern "C" {
 #define MGMT_GROUP_ID_SPLIT     6
 #define MGMT_GROUP_ID_RUN       7
 #define MGMT_GROUP_ID_FS        8
+#define MGMT_GROUP_ID_SHELL     9
 #define MGMT_GROUP_ID_PERUSER   64
 
 /**
@@ -60,6 +64,7 @@ extern "C" {
 #define MGMT_ERR_EBADSTATE      6       /* Current state disallows command. */
 #define MGMT_ERR_EMSGSIZE       7       /* Response too large. */
 #define MGMT_ERR_ENOTSUP        8       /* Command not supported. */
+#define MGMT_ERR_ECORRUPT       9       /* Corrupt */
 #define MGMT_ERR_EPERUSER       256
 
 #define MGMT_HDR_SIZE           8
@@ -86,6 +91,8 @@ struct mgmt_hdr {
     uint8_t  nh_seq;            /* Sequence number */
     uint8_t  nh_id;             /* Message ID within group */
 };
+
+#define nmgr_hdr mgmt_hdr
 
 /*
  * MGMT_EVT_OP_CMD_STATUS argument

@@ -1,0 +1,14 @@
+# Can't easily add license to rat-excludes file.
+.rat-excludes
+
+# Non-source files
+README-mynewt.md
+README-zephyr.md
+README.md
+README.rst
+protocol.md
+smp-bluetooth.md
+smp-console.md
+prj.conf
+prj_tiny.conf
+sample.yaml

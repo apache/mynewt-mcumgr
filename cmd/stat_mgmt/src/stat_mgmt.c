@@ -24,7 +24,7 @@
 #include "cborattr/cborattr.h"
 #include "stat_mgmt/stat_mgmt.h"
 #include "stat_mgmt/stat_mgmt_impl.h"
-#include "stat_mgmt_config.h"
+#include "stat_mgmt/stat_mgmt_config.h"
 
 static mgmt_handler_fn stat_mgmt_show;
 static mgmt_handler_fn stat_mgmt_list;
@@ -68,7 +68,7 @@ stat_mgmt_cb_encode(struct stat_mgmt_entry *entry, void *arg)
 static int
 stat_mgmt_show(struct mgmt_ctxt *ctxt)
 {
-    char stat_name[CONFIG_STAT_MGMT_MAX_NAME_LEN];
+    char stat_name[STAT_MGMT_MAX_NAME_LEN];
     CborEncoder map_enc;
     CborError err;
     int rc;
@@ -100,17 +100,13 @@ stat_mgmt_show(struct mgmt_ctxt *ctxt)
 
     rc = stat_mgmt_impl_foreach_entry(stat_name, stat_mgmt_cb_encode,
                                       &map_enc);
-    if (rc != 0) {
-        return rc;
-    }
 
     err |= cbor_encoder_close_container(&ctxt->encoder, &map_enc);
-
     if (err != 0) {
-        return MGMT_ERR_ENOMEM;
+        rc = MGMT_ERR_ENOMEM;
     }
 
-    return 0;
+    return rc;
 }
 
 /**
@@ -125,7 +121,9 @@ stat_mgmt_list(struct mgmt_ctxt *ctxt)
     int rc;
     int i;
 
-    err = 0;
+    err = CborNoError;
+    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
+    err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
     err |= cbor_encode_text_stringz(&ctxt->encoder, "stat_list");
     err |= cbor_encoder_create_array(&ctxt->encoder, &arr_enc,
                                      CborIndefiniteLength);
@@ -140,6 +138,7 @@ stat_mgmt_list(struct mgmt_ctxt *ctxt)
             break;
         } else if (rc != 0) {
             /* Error. */
+            cbor_encoder_close_container(&ctxt->encoder, &arr_enc);
             return rc;
         }
 

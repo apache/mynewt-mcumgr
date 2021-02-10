@@ -35,7 +35,7 @@ struct log_mgmt_filter;
 struct log_mgmt_entry;
 struct log_mgmt_log;
 
-typedef int log_mgmt_foreach_entry_fn(const struct log_mgmt_entry *entry,
+typedef int log_mgmt_foreach_entry_fn(struct log_mgmt_entry *entry,
                                       void *arg);
 
 /**
@@ -112,6 +112,17 @@ int log_mgmt_impl_foreach_entry(const char *log_name,
  * @return                      0 on success; MGMT_ERR_[...] code on failure.
  */
 int log_mgmt_impl_clear(const char *log_name);
+
+/**
+ * @brief set watermark for specified log index
+ *
+ * @param log                   Log pointer
+ * @param index                 Log ndex
+ *
+ * @return                      0 on success, non-zero on failure
+ */
+int
+log_mgmt_impl_set_watermark(const struct log_mgmt_log *log, int index);
 
 #ifdef __cplusplus
 }

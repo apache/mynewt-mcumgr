@@ -6,7 +6,7 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *  http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
@@ -40,10 +40,10 @@ img_mgmt_ver_str(const struct image_version *ver, char *dst)
 
     dst[off++] = '.';
     off += ull_to_s(ver->iv_revision, INT_MAX, dst + off);
-    
+
     if (ver->iv_build_num != 0) {
         dst[off++] = '.';
-        off += ull_to_s(ver->iv_revision, INT_MAX, dst + off);
+        off += ull_to_s(ver->iv_build_num, INT_MAX, dst + off);
     }
 
     return 0;

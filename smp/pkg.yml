@@ -24,17 +24,10 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
-    - '@apache-mynewt-core/encoding/cborattr'
+    - '@apache-mynewt-mcumgr/cborattr'
     - '@apache-mynewt-core/kernel/os'
     - '@apache-mynewt-core/util/mem'
-    - '@mynewt-mcumgr/mgmt'
-    - '@mynewt-mcumgr/smp'
-
-pkg.deps.NEWTMGR_BLE_HOST:
-    - '@apache-mynewt-core/mgmt/newtmgr/transport/ble'
+    - '@apache-mynewt-mcumgr/mgmt'
 
 pkg.apis:
-    - newtmgr
-
-pkg.init:
-    smp_pkg_init: 500
+    - smp

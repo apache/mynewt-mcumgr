@@ -26,4 +26,3 @@ pkg.keywords:
 pkg.deps:
     - '@apache-mynewt-core/encoding/tinycbor'
     - '@apache-mynewt-core/kernel/os'
-    - '@mynewt-mcumgr/mgmt'

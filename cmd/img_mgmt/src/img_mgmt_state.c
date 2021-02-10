@@ -18,7 +18,8 @@
  */
 
 #include <assert.h>
-#include "cbor.h"
+
+#include "tinycbor/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "img_mgmt/img_mgmt.h"
@@ -26,17 +27,10 @@
 #include "img_mgmt_priv.h"
 #include "img_mgmt/img_mgmt_impl.h"
 
-#define IMG_MGMT_STATE_F_PENDING    0x01
-#define IMG_MGMT_STATE_F_CONFIRMED  0x02
-#define IMG_MGMT_STATE_F_ACTIVE     0x04
-#define IMG_MGMT_STATE_F_PERMANENT  0x08
-
-#define IMG_MGMT_VER_MAX_STR_LEN    25  /* 255.255.65535.4294967295\0 */
-
 /**
  * Collects information about the specified image slot.
  */
-static uint8_t
+uint8_t
 img_mgmt_state_flags(int query_slot)
 {
     uint8_t flags;
@@ -96,7 +90,7 @@ img_mgmt_state_flags(int query_slot)
  * Indicates whether any image slot is pending (i.e., whether a test swap will
  * happen on the next reboot.
  */
-static int
+int
 img_mgmt_state_any_pending(void)
 {
     return img_mgmt_state_flags(0) & IMG_MGMT_STATE_F_PENDING ||
@@ -127,7 +121,9 @@ img_mgmt_slot_in_use(int slot)
 int
 img_mgmt_state_set_pending(int slot, int permanent)
 {
+    uint8_t hash[IMAGE_HASH_LEN];
     uint8_t state_flags;
+    const uint8_t *hashp;
     int rc;
 
     state_flags = img_mgmt_state_flags(slot);
@@ -136,15 +132,29 @@ img_mgmt_state_set_pending(int slot, int permanent)
      * run if it is a loader in a split image setup.
      */
     if (state_flags & IMG_MGMT_STATE_F_CONFIRMED && slot != 0) {
-        return MGMT_ERR_EBADSTATE;
+        rc = MGMT_ERR_EBADSTATE;
+        goto done;
     }
 
     rc = img_mgmt_impl_write_pending(slot, permanent);
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        rc = MGMT_ERR_EUNKNOWN;
     }
 
-    return 0;
+done:
+    /* Log the image hash if we know it. */
+    rc = img_mgmt_read_info(slot, NULL, hash, NULL);
+    if (rc != 0) {
+        hashp = NULL;
+    } else {
+        hashp = hash;
+    }
+
+    if (permanent) {
+        return img_mgmt_impl_log_confirm(rc, hashp);
+    } else {
+        return img_mgmt_impl_log_pending(rc, hashp);
+    }
 }
 
 /**
@@ -158,15 +168,18 @@ img_mgmt_state_confirm(void)
 
     /* Confirm disallowed if a test is pending. */
     if (img_mgmt_state_any_pending()) {
-        return MGMT_ERR_EBADSTATE;
+        rc = MGMT_ERR_EBADSTATE;
+        goto err;
     }
 
     rc = img_mgmt_impl_write_confirmed();
     if (rc != 0) {
-        return MGMT_ERR_EUNKNOWN;
+        rc = MGMT_ERR_EUNKNOWN;
     }
 
-    return 0;
+     img_mgmt_dfu_confirmed();
+err:
+    return img_mgmt_impl_log_confirm(rc, NULL);
 }
 
 /**

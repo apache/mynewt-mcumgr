@@ -16,8 +16,8 @@ To use *mcumgr*, your Mynewt app needs to be configured to use:
 This is done by adding the necessary dependencies to your app or target.  The following list of dependencies adds support for the SMP transfer encoding, the Bluetooth and shell transports, and all the built-in command handlers:
 
 ```
-    - '@apache-mynewt-core/mgmt/newtmgr/transport/ble'
-    - '@apache-mynewt-core/mgmt/newtmgr/transport/nmgr_shell'
+    - '@apache-mynewt-core/mgmt/smp/transport/ble'
+    - '@apache-mynewt-core/mgmt/smp/transport/smp_shell'
     - '@mynewt-mcumgr/cmd/fs_mgmt'
     - '@mynewt-mcumgr/cmd/img_mgmt'
     - '@mynewt-mcumgr/cmd/os_mgmt'

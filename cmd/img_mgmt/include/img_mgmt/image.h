@@ -28,11 +28,13 @@ extern "C" {
 
 #define IMAGE_MAGIC                 0x96f3b83d
 #define IMAGE_TLV_INFO_MAGIC        0x6907
+#define IMAGE_TLV_PROT_INFO_MAGIC   0x6908
 
 #define IMAGE_HEADER_SIZE           32
 
 /** Image header flags. */
 #define IMAGE_F_NON_BOOTABLE        0x00000010 /* Split image app. */
+#define IMAGE_F_ROM_FIXED_ADDR      0x00000100
 
 /** Image trailer TLV types. */
 #define IMAGE_TLV_SHA256            0x10   /* SHA256 of image hdr and body */

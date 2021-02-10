@@ -17,29 +17,25 @@
  * under the License.
  */
 
-#ifndef H_LOG_MGMT_CONFIG_
-#define H_LOG_MGMT_CONFIG_
+#include <sys/util.h>
+#include <shell/shell.h>
+#include <mgmt/mgmt.h>
+#include <shell_mgmt/shell_mgmt.h>
+#include <shell/shell_dummy.h>
 
-#if defined MYNEWT
+int
+shell_mgmt_impl_exec(const char *line)
+{
+    const struct shell * shell = shell_backend_dummy_get_ptr();
+    shell_backend_dummy_clear_output(shell);
+    return shell_execute_cmd(shell, line);
+}
 
-#include "syscfg/syscfg.h"
-
-#define LOG_MGMT_CHUNK_SIZE MYNEWT_VAL(LOG_MGMT_CHUNK_SIZE)
-#define LOG_MGMT_NAME_LEN   MYNEWT_VAL(LOG_MGMT_NAME_LEN)
-#define LOG_MGMT_BODY_LEN   MYNEWT_VAL(LOG_MGMT_BODY_LEN)
-
-#elif defined __ZEPHYR__
-
-#define LOG_MGMT_CHUNK_SIZE CONFIG_LOG_MGMT_CHUNK_SIZE
-#define LOG_MGMT_NAME_LEN   CONFIG_LOG_MGMT_NAME_LEN
-#define LOG_MGMT_BODY_LEN   CONFIG_LOG_MGMT_BODY_LEN
-
-#else
-
-/* No direct support for this OS.  The application needs to define the above
- * settings itself.
- */
-
-#endif
-
-#endif
+const char *
+shell_mgmt_impl_get_output(){
+    size_t len;
+    return shell_backend_dummy_get_output(
+        shell_backend_dummy_get_ptr(),
+        &len
+    );
+}

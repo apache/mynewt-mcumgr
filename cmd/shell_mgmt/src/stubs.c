@@ -4,7 +4,7 @@
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
+ * "License") you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
  *  http://www.apache.org/licenses/LICENSE-2.0
@@ -17,25 +17,22 @@
  * under the License.
  */
 
-#ifndef H_IMG_MGMT_CONFIG_
-#define H_IMG_MGMT_CONFIG_
-
-#if defined MYNEWT
-
-#include "syscfg/syscfg.h"
-
-#define IMG_MGMT_UL_CHUNK_SIZE  MYNEWT_VAL(IMG_MGMT_UL_CHUNK_SIZE)
-
-#elif defined __ZEPHYR__
-
-#define IMG_MGMT_UL_CHUNK_SIZE  CONFIG_IMG_MGMT_UL_CHUNK_SIZE
-
-#else
-
-/* No direct support for this OS.  The application needs to define the above
- * settings itself.
+/**
+ * These stubs get linked in when there is no equivalent OS-specific
+ * implementation.
  */
 
-#endif
+#include "mgmt/mgmt.h"
+#include "shell_mgmt/shell_mgmt_impl.h"
 
-#endif
+int __attribute__((weak))
+shell_mgmt_impl_exec(const char *line)
+{
+    return MGMT_ERR_ENOTSUP;
+}
+
+const char * __attribute__((weak))
+shell_mgmt_impl_get_output()
+{
+    return "";
+}

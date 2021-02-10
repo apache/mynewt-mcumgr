@@ -63,3 +63,9 @@ log_mgmt_impl_clear(const char *log_name)
 {
     return MGMT_ERR_ENOTSUP;
 }
+
+int __attribute__((weak))
+log_mgmt_impl_set_watermark(const struct log_mgmt_log *log, int index)
+{
+    return MGMT_ERR_ENOTSUP;
+}

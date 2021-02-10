@@ -24,7 +24,10 @@ pkg.homepage: "http://mynewt.apache.org/"
 pkg.keywords:
 
 pkg.deps:
+    - '@apache-mynewt-mcumgr/cmd/img_mgmt/port/mynewt'
     - '@apache-mynewt-core/boot/split'
     - '@apache-mynewt-core/encoding/base64'
     - '@apache-mynewt-core/sys/flash_map'
-    - '@mynewt-mcumgr/mgmt'
+    - '@apache-mynewt-mcumgr/mgmt'
+    - '@apache-mynewt-mcumgr/cborattr'
+    - '@apache-mynewt-mcumgr/util'

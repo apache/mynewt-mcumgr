@@ -26,11 +26,6 @@
 extern "C" {
 #endif
 
-#define IMG_MGMT_SWAP_TYPE_NONE     0
-#define IMG_MGMT_SWAP_TYPE_TEST     1
-#define IMG_MGMT_SWAP_TYPE_PERM     2
-#define IMG_MGMT_SWAP_TYPE_REVERT   3
-
 /*
  * Response to list:
  * {
@@ -82,9 +77,6 @@ int img_mgmt_core_list(struct mgmt_ctxt *);
 int img_mgmt_core_load(struct mgmt_ctxt *);
 int img_mgmt_find_by_hash(uint8_t *find, struct image_version *ver);
 int img_mgmt_find_by_ver(struct image_version *find, uint8_t *hash);
-int img_mgmt_read_info(int image_slot, struct image_version *ver,
-                       uint8_t *hash, uint32_t *flags);
-int img_mgmt_slot_in_use(int slot);
 int img_mgmt_state_read(struct mgmt_ctxt *ctxt);
 int img_mgmt_state_write(struct mgmt_ctxt *njb);
 int img_mgmt_ver_str(const struct image_version *ver, char *dst);

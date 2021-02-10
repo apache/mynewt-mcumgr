@@ -19,30 +19,31 @@
 
 #include <assert.h>
 #include <string.h>
-#include "cbor.h"
+
+#include "tinycbor/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "os_mgmt/os_mgmt.h"
 #include "os_mgmt/os_mgmt_impl.h"
-#include "os_mgmt_config.h"
+#include "os_mgmt/os_mgmt_config.h"
 
-#ifdef OS_MGMT_ECHO
+#if OS_MGMT_ECHO
 static mgmt_handler_fn os_mgmt_echo;
 #endif
 
 static mgmt_handler_fn os_mgmt_reset;
 
-#ifdef OS_MGMT_TASKSTAT
+#if OS_MGMT_TASKSTAT
 static mgmt_handler_fn os_mgmt_taskstat_read;
 #endif
 
 static const struct mgmt_handler os_mgmt_group_handlers[] = {
-#ifdef OS_MGMT_ECHO
+#if OS_MGMT_ECHO
     [OS_MGMT_ID_ECHO] = {
         os_mgmt_echo, os_mgmt_echo
     },
 #endif
-#ifdef OS_MGMT_TASKSTAT
+#if OS_MGMT_TASKSTAT
     [OS_MGMT_ID_TASKSTAT] = {
         os_mgmt_taskstat_read, NULL
     },
@@ -64,7 +65,7 @@ static struct mgmt_group os_mgmt_group = {
 /**
  * Command handler: os echo
  */
-#ifdef OS_MGMT_ECHO
+#if OS_MGMT_ECHO
 static int
 os_mgmt_echo(struct mgmt_ctxt *ctxt)
 {
@@ -102,7 +103,7 @@ os_mgmt_echo(struct mgmt_ctxt *ctxt)
 }
 #endif
 
-#ifdef OS_MGMT_TASKSTAT
+#if OS_MGMT_TASKSTAT
 /**
  * Encodes a single taskstat entry.
  */
@@ -175,6 +176,7 @@ os_mgmt_taskstat_read(struct mgmt_ctxt *ctxt)
 
         rc = os_mgmt_taskstat_encode_one(&tasks_map, &task_info);
         if (rc != 0) {
+            cbor_encoder_close_container(&ctxt->encoder, &tasks_map);
             return rc;
         }
     }
@@ -201,4 +203,10 @@ void
 os_mgmt_register_group(void)
 {
     mgmt_register_group(&os_mgmt_group);
+}
+
+void
+os_mgmt_module_init(void)
+{
+    os_mgmt_register_group();
 }

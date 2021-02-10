@@ -24,6 +24,24 @@
 extern "C" {
 #endif
 
+#include "log_mgmt_config.h"
+
+/**
+ * LOG MGMT specific error codes, 0 -> 6, 8 are same as mcumgr,
+ * 7 and 9 are different for backwards compatibility with newtmgr.
+ */
+#define LOG_MGMT_ERR_EOK        (0)                                  
+#define LOG_MGMT_ERR_EUNKNOWN   (1)                                  
+#define LOG_MGMT_ERR_ENOMEM     (2)                                  
+#define LOG_MGMT_ERR_EINVAL     (3)                                  
+#define LOG_MGMT_ERR_ETIMEOUT   (4)
+#define LOG_MGMT_ERR_ENOENT     (5)
+#define LOG_MGMT_ERR_EBADSTATE  (6)     /* Current state disallows command. */
+#define LOG_MGMT_ERR_ECORRUPT   (7)
+#define LOG_MGMT_ERR_ENOTSUP    (8)
+#define LOG_MGMT_ERR_EMSGSIZE   (9)
+#define LOG_MGMT_ERR_EPERUSER   (256)
+
 /**
  * Command IDs for log management group.
  */
@@ -43,10 +61,22 @@ extern "C" {
 /** @brief Log entries are persisted across reboots. */
 #define LOG_MGMT_TYPE_STORAGE    2
 
+/* @brief Flags used to indicate type of data in reserved payload. */
+#define LOG_MGMT_FLAGS_IMG_HASH  (1 << 0)
+
+/* @brief Log entry types. */
+#define LOG_MGMT_ETYPE_STRING         0
+#define LOG_MGMT_ETYPE_CBOR           1
+#define LOG_MGMT_ETYPE_BINARY         2
+
+
 /** @brief Generic descriptor for an OS-specific log. */
 struct log_mgmt_log {
     const char *name;
     int type;
+#if !LOG_MGMT_GLOBAL_IDX
+    uint32_t index;
+#endif
 };
 
 /** @brief Generic descriptor for an OS-specific log entry. */
@@ -57,6 +87,12 @@ struct log_mgmt_entry {
     size_t len;
     uint8_t module;
     uint8_t level;
+    uint8_t type:4;
+    uint8_t flags:4;
+    const uint8_t *imghash;
+    size_t offset;
+    size_t chunklen;
+    void *ctxt;
 };
 
 /** @brief Indicates which log entries to operate on. */
@@ -73,7 +109,7 @@ struct log_mgmt_filter {
 
 /**
  * @brief Registers the log management command handler group.
- */ 
+ */
 void log_mgmt_register_group(void);
 
 #ifdef __cplusplus

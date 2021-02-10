@@ -24,6 +24,9 @@
 #include "reboot/log_reboot.h"
 #endif
 #include "os_mgmt/os_mgmt_impl.h"
+#include "os_mgmt/os_mgmt.h"
+#include "mgmt/mgmt.h"
+#include "img_mgmt/img_mgmt.h"
 
 static struct os_callout mynewt_os_mgmt_reset_callout;
 
@@ -41,19 +44,11 @@ mynewt_os_mgmt_reset_tmo(struct os_event *ev)
 static uint16_t
 mynewt_os_mgmt_stack_usage(const struct os_task *task)
 {
-    const os_stack_t *bottom;
-    const os_stack_t *top;
+    struct os_task_info oti;
 
-    top = task->t_stacktop;
-    bottom = task->t_stacktop - task->t_stacksize;
-    while (bottom < top) {
-        if (*bottom != OS_STACK_PATTERN) {
-            break;
-        }
-        ++bottom;
-    }
+    os_task_info_get(task, &oti);
 
-    return task->t_stacktop - bottom;
+    return oti.oti_stkusage;
 }
 
 static const struct os_task *
@@ -94,7 +89,8 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
     out_info->oti_last_checkin = task->t_sanity_check.sc_checkin_last;
     out_info->oti_next_checkin = task->t_sanity_check.sc_checkin_last +
                                  task->t_sanity_check.sc_checkin_itvl;
-    strncpy(out_info->oti_name, task->t_name, sizeof out_info->oti_name);
+    strncpy(out_info->oti_name, task->t_name, sizeof out_info->oti_name - 1);
+    out_info->oti_name[sizeof out_info->oti_name - 1] = '\0';
 
     return 0;
 }
@@ -102,15 +98,26 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
 int
 os_mgmt_impl_reset(unsigned int delay_ms)
 {
-    int rc;
+#if MYNEWT_VAL(LOG_SOFT_RESET)
+    struct log_reboot_info info = {
+        .reason = HAL_RESET_REQUESTED,
+        .file = NULL,
+        .line = 0,
+        .pc = 0,
+    };
 
-    os_callout_init(&mynewt_os_mgmt_reset_callout, mgmt_evq_get(),
-                    nmgr_reset_tmo, NULL);
+    if (img_mgmt_state_any_pending()) {
+        info.reason = HAL_RESET_DFU;
+    }
+#endif
+    os_callout_init(&mynewt_os_mgmt_reset_callout, os_eventq_dflt_get(),
+                    mynewt_os_mgmt_reset_tmo, NULL);
 
 #if MYNEWT_VAL(LOG_SOFT_RESET)
-    log_reboot(HAL_RESET_REQUESTED);
+    log_reboot(&info);
 #endif
-    os_callout_reset(&nmgr_reset_callout, delay_ms * OS_TICKS_PER_SEC / 1000);
+    os_callout_reset(&mynewt_os_mgmt_reset_callout,
+                     delay_ms * OS_TICKS_PER_SEC / 1000);
 
     return 0;
 }
