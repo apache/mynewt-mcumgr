@@ -608,3 +608,9 @@ img_mgmt_register_group(void)
 {
     mgmt_register_group(&img_mgmt_group);
 }
+
+void
+img_mgmt_unregister_group(void)
+{
+    mgmt_unregister_group(&img_mgmt_group);
+}

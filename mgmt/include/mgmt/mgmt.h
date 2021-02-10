@@ -367,6 +367,14 @@ void mgmt_streamer_free_buf(struct mgmt_streamer *streamer, void *buf);
 void mgmt_register_group(struct mgmt_group *group);
 
 /**
+ * @brief Unregisters a full command group.
+ *
+ * @param group                 The group to register.
+ */
+void
+mgmt_unregister_group(struct mgmt_group *group);
+
+/**
  * @brief Finds a registered command handler.
  *
  * @param group_id              The group of the command to find.
