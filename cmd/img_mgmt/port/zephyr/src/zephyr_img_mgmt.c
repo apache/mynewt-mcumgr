@@ -292,7 +292,7 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 			}
 		}
 #endif
-		rc = flash_img_init(ctx);
+		rc = flash_img_init_id(ctx, img_mgmt_find_best_area_id());
 
 		if (rc != 0) {
 			return MGMT_ERR_EUNKNOWN;
