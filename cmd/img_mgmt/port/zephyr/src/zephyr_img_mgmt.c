@@ -194,14 +194,16 @@ img_mgmt_impl_erase_slot(void)
     bool empty;
     int rc;
 
-    rc = zephyr_img_mgmt_flash_check_empty(FLASH_AREA_ID(image_1),
-                                           &empty);
+    /* Select non-active slot */
+    const int best_id = img_mgmt_find_best_area_id();
+
+    rc = zephyr_img_mgmt_flash_check_empty(best_id, &empty);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
 
     if (!empty) {
-        rc = boot_erase_img_bank(FLASH_AREA_ID(image_1));
+        rc = boot_erase_img_bank(best_id);
         if (rc != 0) {
             return MGMT_ERR_EUNKNOWN;
         }
@@ -328,7 +330,7 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
         goto end;
     }
 
-    rc = flash_area_open(FLASH_AREA_ID(image_1), &fa);
+    rc = flash_area_open(img_mgmt_find_best_area_id(), &fa);
     if (rc != 0) {
         LOG_ERR("Can't bind to the flash area (err %d)", rc);
         rc = MGMT_ERR_EUNKNOWN;
