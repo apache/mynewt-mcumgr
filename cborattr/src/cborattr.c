@@ -67,6 +67,11 @@ valid_attr_type(CborType ct, CborAttrType at)
         }
 	break;
 #if FLOAT_SUPPORT
+    case CborAttrHalfFloatType:
+        if (ct == CborHalfFloatType) {
+            return 1;
+        }
+        break;
     case CborAttrFloatType:
         if (ct == CborFloatType) {
             return 1;
@@ -120,6 +125,9 @@ cbor_target_address(const struct cbor_attr_t *cursor,
             targetaddr = (char *)&cursor->addr.uinteger[offset];
             break;
 #if FLOAT_SUPPORT
+        case CborAttrHalfFloatType:
+            targetaddr = (char *)&cursor->addr.halffloat[offset];
+            break;
         case CborAttrFloatType:
             targetaddr = (char *)&cursor->addr.fval[offset];
             break;
@@ -180,6 +188,9 @@ cbor_internal_read_object(CborValue *root_value,
                     memcpy(lptr, &cursor->dflt.boolean, sizeof(bool));
                     break;
 #if FLOAT_SUPPORT
+                case CborAttrHalfFloatType:
+                    memcpy(lptr, &cursor->dflt.halffloat, sizeof(uint16_t));
+                    break;
                 case CborAttrFloatType:
                     memcpy(lptr, &cursor->dflt.fval, sizeof(float));
                     break;
@@ -261,6 +272,9 @@ cbor_internal_read_object(CborValue *root_value,
                 err |= cbor_value_get_uint64(&cur_value, lptr);
                 break;
 #if FLOAT_SUPPORT
+            case CborAttrHalfFloatType:
+                err |= cbor_value_get_half_float(&cur_value, lptr);
+                break;
             case CborAttrFloatType:
                 err |= cbor_value_get_float(&cur_value, lptr);
                 break;
@@ -332,6 +346,10 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
             err |= cbor_value_get_uint64(&elem, lptr);
             break;
 #if FLOAT_SUPPORT
+        case CborAttrHalfFloatType:
+            lptr = &arr->arr.halffloats.store[off];
+            err |= cbor_value_get_half_float(&elem, lptr);
+            break;
         case CborAttrFloatType:
         case CborAttrDoubleType:
             lptr = &arr->arr.reals.store[off];
@@ -491,6 +509,10 @@ cbor_write_val(struct CborEncoder *enc, const struct cbor_out_val_t *val)
         break;
 
 #if FLOAT_SUPPORT
+    case CborAttrHalfFloatType:
+        rc = cbor_encode_half_float(enc, val->halffloat);
+        break;
+
     case CborAttrFloatType:
         rc = cbor_encode_float(enc, val->fval);
         break;
