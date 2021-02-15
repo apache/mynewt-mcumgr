@@ -48,6 +48,7 @@ typedef enum CborAttrType {
     CborAttrByteStringType,
     CborAttrTextStringType,
     CborAttrBooleanType,
+    CborAttrHalfFloatType,
     CborAttrFloatType,
     CborAttrDoubleType,
     CborAttrArrayType,
@@ -85,6 +86,9 @@ struct cbor_array_t {
         struct {
             double *store;
         } reals;
+        struct{
+            uint16_t *store;
+        } halffloats;
         struct {
             bool *store;
         } booleans;
@@ -99,6 +103,7 @@ struct cbor_attr_t {
     union {
         long long int *integer;
         long long unsigned int *uinteger;
+        uint16_t *halffloat;
         double *real;
         float *fval;
         char *string;
@@ -116,6 +121,7 @@ struct cbor_attr_t {
         double real;
         bool boolean;
         float fval;
+        uint16_t halffloat;
     } dflt;
     size_t len;
     bool nodefault;
@@ -139,6 +145,7 @@ struct cbor_out_val_t {
         long long unsigned int uinteger;
         double real;
         float fval;
+        uint16_t halffloat;
         const char *string;
         bool boolean;
         struct {
