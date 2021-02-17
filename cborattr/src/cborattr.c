@@ -510,7 +510,7 @@ cbor_write_val(struct CborEncoder *enc, const struct cbor_out_val_t *val)
 
 #if FLOAT_SUPPORT
     case CborAttrHalfFloatType:
-        rc = cbor_encode_half_float(enc, val->halffloat);
+        rc = cbor_encode_half_float(enc, &val->halffloat);
         break;
 
     case CborAttrFloatType:
