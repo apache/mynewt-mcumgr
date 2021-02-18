@@ -32,13 +32,41 @@
 
 #elif defined __ZEPHYR__
 
+#include <devicetree.h>
+
 #define IMG_MGMT_UL_CHUNK_SIZE  CONFIG_IMG_MGMT_UL_CHUNK_SIZE
 #define IMG_MGMT_VERBOSE_ERR    CONFIG_IMG_MGMT_VERBOSE_ERR
 #define IMG_MGMT_LAZY_ERASE     CONFIG_IMG_ERASE_PROGRESSIVELY
 #define IMG_MGMT_DUMMY_HDR      CONFIG_IMG_MGMT_DUMMY_HDR
-#define IMG_MGMT_BOOT_CURR_SLOT 0
 
+#define DT_CODE_PARTITION_NODE DT_CHOSEN(zephyr_code_partition)
+#define DT_IMAGE_0_NODE DT_NODE_BY_FIXED_PARTITION_LABEL(image_0)
+#define DT_IMAGE_1_NODE DT_NODE_BY_FIXED_PARTITION_LABEL(image_1)
+#define DT_IMAGE_0_NS_NODE DT_NODE_BY_FIXED_PARTITION_LABEL(image_0_nonsecure)
+#define DT_IMAGE_1_NS_NODE DT_NODE_BY_FIXED_PARTITION_LABEL(image_1_nonsecure)
+
+#define IS_IMAGE_CODE_PARTITION(image) \
+        DT_SAME_NODE(DT_CODE_PARTITION_NODE, image)
+
+#if IS_IMAGE_CODE_PARTITION(DT_IMAGE_0_NODE)
+#define IMG_MGMT_BOOT_CURR_SLOT 0
+#elif IS_IMAGE_CODE_PARTITION(DT_IMAGE_1_NODE)
+#define IMG_MGMT_BOOT_CURR_SLOT 1
+#elif IS_IMAGE_CODE_PARTITION(DT_IMAGE_0_NS_NODE)
+#define IMG_MGMT_BOOT_CURR_SLOT 0
+#elif IS_IMAGE_CODE_PARTITION(DT_IMAGE_1_NS_NODE)
+#define IMG_MGMT_BOOT_CURR_SLOT 1
 #else
+#error "Could not determine active slot from zephyr,code-partition"
+#endif
+
+/* Undef all macros that are not needed at this point */
+#undef DT_CODE_PARTITION_NODE
+#undef DT_IMAGE_0_NODE
+#undef DT_IMAGE_1_NODE
+#undef DT_IMAGE_0_NS_NODE
+#undef DT_IMAGE_1_NS_NODE
+#undef IS_IMAGE_CODE_PARTITION
 
 /* No direct support for this OS.  The application needs to define the above
  * settings itself.
