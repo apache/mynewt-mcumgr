@@ -46,32 +46,32 @@ img_mgmt_state_flags(int query_slot)
     swap_type = img_mgmt_impl_swap_type();
     switch (swap_type) {
     case IMG_MGMT_SWAP_TYPE_NONE:
-        if (query_slot == 0) {
+        if (query_slot == IMG_MGMT_BOOT_CURR_SLOT) {
             flags |= IMG_MGMT_STATE_F_CONFIRMED;
             flags |= IMG_MGMT_STATE_F_ACTIVE;
         }
         break;
 
     case IMG_MGMT_SWAP_TYPE_TEST:
-        if (query_slot == 0) {
+        if (query_slot == IMG_MGMT_BOOT_CURR_SLOT) {
             flags |= IMG_MGMT_STATE_F_CONFIRMED;
-        } else if (query_slot == 1) {
+        } else {
             flags |= IMG_MGMT_STATE_F_PENDING;
         }
         break;
 
     case IMG_MGMT_SWAP_TYPE_PERM:
-        if (query_slot == 0) {
+        if (query_slot == IMG_MGMT_BOOT_CURR_SLOT) {
             flags |= IMG_MGMT_STATE_F_CONFIRMED;
-        } else if (query_slot == 1) {
+        } else {
             flags |= IMG_MGMT_STATE_F_PENDING | IMG_MGMT_STATE_F_PERMANENT;
         }
         break;
 
     case IMG_MGMT_SWAP_TYPE_REVERT:
-        if (query_slot == 0) {
+        if (query_slot == IMG_MGMT_BOOT_CURR_SLOT) {
             flags |= IMG_MGMT_STATE_F_ACTIVE;
-        } else if (query_slot == 1) {
+        } else {
             flags |= IMG_MGMT_STATE_F_CONFIRMED;
         }
         break;
@@ -79,7 +79,7 @@ img_mgmt_state_flags(int query_slot)
 
     /* Slot 0 is always active. */
     /* XXX: The slot 0 assumption only holds when running from flash. */
-    if (query_slot == 0) {
+    if (query_slot == IMG_MGMT_BOOT_CURR_SLOT) {
         flags |= IMG_MGMT_STATE_F_ACTIVE;
     }
 
@@ -300,7 +300,7 @@ img_mgmt_state_write(struct mgmt_ctxt *ctxt)
     /* Determine which slot is being operated on. */
     if (hash_len == 0) {
         if (confirm) {
-            slot = 0;
+            slot = IMG_MGMT_BOOT_CURR_SLOT;
         } else {
             /* A 'test' without a hash is invalid. */
             return MGMT_ERR_EINVAL;
@@ -312,7 +312,7 @@ img_mgmt_state_write(struct mgmt_ctxt *ctxt)
         }
     }
 
-    if (slot == 0 && confirm) {
+    if (slot == IMG_MGMT_BOOT_CURR_SLOT && confirm) {
         /* Confirm current setup. */
         rc = img_mgmt_state_confirm();
     } else {
