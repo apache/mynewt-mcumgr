@@ -49,6 +49,7 @@ fs_mgmt_impl_read(const char *path, size_t offset, size_t len,
     ssize_t bytes_read;
     int rc;
 
+    fs_file_t_init(&file);
     rc = fs_open(&file, path, FS_O_READ);
     if (rc != 0) {
         return MGMT_ERR_ENOENT;
@@ -123,6 +124,7 @@ fs_mgmt_impl_write(const char *path, size_t offset, const void *data,
         }
     }
 
+    fs_file_t_init(&file);
     rc = fs_open(&file, path, FS_O_CREATE | FS_O_WRITE);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
