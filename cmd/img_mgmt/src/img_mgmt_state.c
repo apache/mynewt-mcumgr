@@ -143,18 +143,19 @@ img_mgmt_state_set_pending(int slot, int permanent)
 
 done:
     /* Log the image hash if we know it. */
-    rc = img_mgmt_read_info(slot, NULL, hash, NULL);
-    if (rc != 0) {
+    if (img_mgmt_read_info(slot, NULL, hash, NULL)) {
         hashp = NULL;
     } else {
         hashp = hash;
     }
 
     if (permanent) {
-        return img_mgmt_impl_log_confirm(rc, hashp);
+        (void) img_mgmt_impl_log_confirm(rc, hashp);
     } else {
-        return img_mgmt_impl_log_pending(rc, hashp);
+        (void) img_mgmt_impl_log_pending(rc, hashp);
     }
+
+    return rc;
 }
 
 /**
