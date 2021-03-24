@@ -21,7 +21,8 @@ repo.name: apache-mynewt-mcumgr
 repo.versions:
     "0.0.0": "master"
     "0.1.0": "mcumgr_0_1_0_tag"
+    "0.2.0": "mcumgr_0_2_0_tag"
 
 
     "0-dev": "0.0.0"       # master
-    "0-latest": "0.1.0"    # latest release
+    "0-latest": "0.2.0"    # latest release
