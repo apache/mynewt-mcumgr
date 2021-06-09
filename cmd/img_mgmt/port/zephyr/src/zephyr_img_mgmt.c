@@ -192,11 +192,13 @@ int
 img_mgmt_impl_erase_slot(void)
 {
     bool empty;
-    int rc;
+    int rc, best_id;
 
     /* Select non-active slot */
-    const int best_id = img_mgmt_find_best_area_id();
-
+    best_id = img_mgmt_find_best_area_id();
+    if (best_id < 0) {
+        return MGMT_ERR_EUNKNOWN;
+    }
     rc = zephyr_img_mgmt_flash_check_empty(best_id, &empty);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
