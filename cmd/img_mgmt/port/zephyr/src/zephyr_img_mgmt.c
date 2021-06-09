@@ -93,7 +93,7 @@ zephyr_img_mgmt_flash_check_empty(uint8_t fa_id, bool *out_empty)
 /**
  * Get flash_area ID for a image slot number.
  */
-static uint8_t
+static int
 zephyr_img_mgmt_flash_area_id(int slot)
 {
     uint8_t fa_id;
@@ -108,48 +108,46 @@ zephyr_img_mgmt_flash_area_id(int slot)
         break;
 
     default:
-        assert(0);
-        fa_id = FLASH_AREA_ID(image_1);
+        fa_id = -1;
         break;
     }
 
     return fa_id;
 }
 
+/**
+ * The function will check if given slot is available, and allowed, for DFU;
+ * providing -1 as a parameter means find any unused and non-active available;
+ * if checks area positive, then area ID is returned, -1 is returned otherwise.
+ * Note that auto-selection is performed only between two first slots.
+ */
 static int
-img_mgmt_find_best_area_id(void)
+img_mgmt_get_unused_slot_area_id(int slot)
 {
-    struct image_version ver;
-    int best = -1;
-    int i;
-    int rc;
-
-    for (i = 0; i < 2; i++) {
-        rc = img_mgmt_read_info(i, &ver, NULL, NULL);
-        if (rc < 0) {
-            continue;
-        }
-        if (rc == 0) {
-            /* Image in slot is ok. */
-            if (img_mgmt_slot_in_use(i)) {
-                /* Slot is in use; can't use this. */
-                continue;
-            } else {
-                /*
-                 * Not active slot, but image is ok. Use it if there are
-                 * no better candidates.
-                 */
-                best = i;
+    /* Auto select slot; note that this is performed only between two first
+     * slots, at this pointi, which will require fix when Direct-XIP, which may
+     * support more slots, gets support within Zephyr. */
+    if (slot < -1) {
+        return -1;
+    } else if (slot == -1) {
+        for (slot = 0; slot < 2; slot++) {
+            if (img_mgmt_slot_in_use(slot) == 0) {
+                int area_id = zephyr_img_mgmt_flash_area_id(slot);
+                if (area_id != -1) {
+                    return area_id;
+                }
             }
-            continue;
         }
-        best = i;
-        break;
+        return -1;
     }
-    if (best >= 0) {
-        best = zephyr_img_mgmt_flash_area_id(best);
+    /* Direct selection; the first two slots are checked for being available
+     * and unused; the all other slots are just checked for availability. */
+    if (slot < 2) {
+        slot = img_mgmt_slot_in_use(slot) == 0 ? slot : -1;
     }
-    return best;
+
+    /* Return area ID for the slot or -1 */
+    return slot != -1  ? zephyr_img_mgmt_flash_area_id(slot) : -1;
 }
 
 /**
@@ -194,8 +192,8 @@ img_mgmt_impl_erase_slot(void)
     bool empty;
     int rc, best_id;
 
-    /* Select non-active slot */
-    best_id = img_mgmt_find_best_area_id();
+    /* Select any non-active, unused slot */
+    best_id = img_mgmt_get_unused_slot_area_id(-1);
     if (best_id < 0) {
         return MGMT_ERR_EUNKNOWN;
     }
@@ -492,7 +490,7 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
             }
         }
 
-        action->area_id = img_mgmt_find_best_area_id();
+        action->area_id = img_mgmt_get_unused_slot_area_id(-1);
         if (action->area_id < 0) {
             /* No slot where to upload! */
             *errstr = img_mgmt_err_str_no_slot;
