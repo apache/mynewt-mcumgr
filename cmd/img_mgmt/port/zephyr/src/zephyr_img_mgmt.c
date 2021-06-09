@@ -292,7 +292,7 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 			}
 		}
 #endif
-		rc = flash_img_init_id(ctx, img_mgmt_find_best_area_id());
+		rc = flash_img_init_id(ctx, g_img_mgmt_state.area_id);
 
 		if (rc != 0) {
 			return MGMT_ERR_EUNKNOWN;
@@ -330,7 +330,7 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
         goto end;
     }
 
-    rc = flash_area_open(img_mgmt_find_best_area_id(), &fa);
+    rc = flash_area_open(g_img_mgmt_state.area_id, &fa);
     if (rc != 0) {
         LOG_ERR("Can't bind to the flash area (err %d)", rc);
         rc = MGMT_ERR_EUNKNOWN;
