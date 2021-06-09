@@ -74,6 +74,7 @@ extern struct img_mgmt_state g_img_mgmt_state;
 
 /** Represents an individual upload request. */
 struct img_mgmt_upload_req {
+    unsigned long long int image;   /* 0 by default */
     unsigned long long int off;     /* -1 if unspecified */
     unsigned long long int size;    /* -1 if unspecified */
     size_t data_len;
