@@ -314,6 +314,10 @@ img_mgmt_erase(struct mgmt_ctxt *ctxt)
     
     rc = img_mgmt_impl_erase_slot();
 
+    if (!rc) {
+        img_mgmt_dfu_stopped();
+    }
+
     err = 0;
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
     err |= cbor_encode_int(&ctxt->encoder, rc);
