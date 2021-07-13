@@ -91,7 +91,10 @@ zephyr_img_mgmt_flash_check_empty(uint8_t fa_id, bool *out_empty)
 }
 
 /**
- * Get flash_area ID for a image slot number.
+ * Get flash_area ID for a image number; actually the slots are images
+ * for Zephyr, as slot 0 of image 0 is image_0, slot 0 of image 1 is
+ * image_2 and so on. The function treats slot numbers as absolute
+ * slot number starting at 0.
  */
 static int
 zephyr_img_mgmt_flash_area_id(int slot)
@@ -106,6 +109,18 @@ zephyr_img_mgmt_flash_area_id(int slot)
     case 1:
         fa_id = FLASH_AREA_ID(image_1);
         break;
+
+#if FLASH_AREA_LABEL_EXISTS(image_2)
+    case 2:
+        fa_id = FLASH_AREA_ID(image_2);
+        break;
+#endif
+
+#if FLASH_AREA_LABEL_EXISTS(image_3)
+    case 3:
+        fa_id = FLASH_AREA_ID(image_3);
+        break;
+#endif
 
     default:
         fa_id = -1;
@@ -490,7 +505,7 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
             }
         }
 
-        action->area_id = img_mgmt_get_unused_slot_area_id(-1);
+        action->area_id = img_mgmt_get_unused_slot_area_id(req->image - 1);
         if (action->area_id < 0) {
             /* No slot where to upload! */
             *errstr = img_mgmt_err_str_no_slot;
