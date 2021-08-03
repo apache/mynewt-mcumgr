@@ -415,6 +415,7 @@ int img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
 int
 img_mgmt_impl_swap_type(void)
 {
+#if !defined(CONFIG_IMG_MGMT_DIRECT_XIP)
     switch (mcuboot_swap_type()) {
     case BOOT_SWAP_TYPE_NONE:
         return IMG_MGMT_SWAP_TYPE_NONE;
@@ -426,8 +427,9 @@ img_mgmt_impl_swap_type(void)
         return IMG_MGMT_SWAP_TYPE_REVERT;
     default:
         assert(0);
-        return IMG_MGMT_SWAP_TYPE_NONE;
     }
+#endif
+    return IMG_MGMT_SWAP_TYPE_NONE;
 }
 
 /**
