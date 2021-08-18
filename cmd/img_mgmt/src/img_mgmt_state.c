@@ -36,14 +36,19 @@ img_mgmt_state_flags(int query_slot)
     uint8_t flags;
     int swap_type;
 
-    assert(query_slot == 0 || query_slot == 1);
+    assert(query_slot == 0 || query_slot == 1 ||
+           query_slot == 2 || query_slot == 3);
 
     flags = 0;
 
     /* Determine if this is is pending or confirmed (only applicable for
      * unified images and loaders.
      */
+#if CONFIG_UPDATEABLE_IMAGE_NUMBER > 1
+    swap_type = img_mgmt_impl_swap_type_multi(query_slot);
+#else
     swap_type = img_mgmt_impl_swap_type();
+#endif
     switch (swap_type) {
     case IMG_MGMT_SWAP_TYPE_NONE:
         if (query_slot == IMG_MGMT_BOOT_CURR_SLOT) {
@@ -205,7 +210,7 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
 
     err |= cbor_encoder_create_array(&ctxt->encoder, &images,
                                        CborIndefiniteLength);
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 2*CONFIG_UPDATEABLE_IMAGE_NUMBER; i++) {
         rc = img_mgmt_read_info(i, &ver, hash, &flags);
         if (rc != 0) {
             continue;

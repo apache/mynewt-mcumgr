@@ -36,6 +36,18 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <img_mgmt/image.h>
 #include "../../../src/img_mgmt_priv.h"
 
+static int
+slot_to_image_index(int slot)
+{
+    if (slot < 2) {
+	    return 0;
+    } else if (slot < 4) {
+	    return 1;
+    else {
+	    return -1;
+    }
+}
+
 /**
  * Determines if the specified area of flash is completely unwritten.
  */
@@ -232,11 +244,15 @@ img_mgmt_impl_write_pending(int slot, bool permanent)
 {
     int rc;
 
-    if (slot != 1) {
+    if ((slot != 1) && (slot != 3)) {
         return MGMT_ERR_EINVAL;
     }
 
+#if CONFIG_UPDATEABLE_IMAGE_NUMBER > 1
+    rc = boot_request_upgrade_multi(slot_to_image_index(slot), permanent);
+#else
     rc = boot_request_upgrade(permanent);
+#endif
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
@@ -411,6 +427,24 @@ int img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
     return 0;
 }
 #endif
+
+int
+img_mgmt_impl_swap_type_multi(int slot)
+{
+    switch (mcuboot_swap_type_multi(slot_to_image_index(slot))) {
+    case BOOT_SWAP_TYPE_NONE:
+        return IMG_MGMT_SWAP_TYPE_NONE;
+    case BOOT_SWAP_TYPE_TEST:
+        return IMG_MGMT_SWAP_TYPE_TEST;
+    case BOOT_SWAP_TYPE_PERM:
+        return IMG_MGMT_SWAP_TYPE_PERM;
+    case BOOT_SWAP_TYPE_REVERT:
+        return IMG_MGMT_SWAP_TYPE_REVERT;
+    default:
+        assert(0);
+        return IMG_MGMT_SWAP_TYPE_NONE;
+    }
+}
 
 int
 img_mgmt_impl_swap_type(void)
