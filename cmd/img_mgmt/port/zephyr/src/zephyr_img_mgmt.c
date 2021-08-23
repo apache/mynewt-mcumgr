@@ -248,7 +248,7 @@ img_mgmt_impl_write_pending(int slot, bool permanent)
         return MGMT_ERR_EINVAL;
     }
 
-#if CONFIG_UPDATEABLE_IMAGE_NUMBER > 1
+#if IMG_MGMT_UPDATABLE_IMAGE_NUMBER > 1
     rc = boot_request_upgrade_multi(slot_to_image_index(slot), permanent);
 #else
     rc = boot_request_upgrade(permanent);
