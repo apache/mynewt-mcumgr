@@ -36,6 +36,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <img_mgmt/image.h>
 #include "../../../src/img_mgmt_priv.h"
 
+#if IMG_MGMT_UPDATABLE_IMAGE_NUMBER > 1
 static int
 slot_to_image_index(int slot)
 {
@@ -43,10 +44,11 @@ slot_to_image_index(int slot)
 	    return 0;
     } else if (slot < 4) {
 	    return 1;
-    else {
+    } else {
 	    return -1;
     }
 }
+#endif
 
 /**
  * Determines if the specified area of flash is completely unwritten.
@@ -428,6 +430,7 @@ int img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
 }
 #endif
 
+#if IMG_MGMT_UPDATABLE_IMAGE_NUMBER > 1
 int
 img_mgmt_impl_swap_type_multi(int slot)
 {
@@ -445,6 +448,7 @@ img_mgmt_impl_swap_type_multi(int slot)
         return IMG_MGMT_SWAP_TYPE_NONE;
     }
 }
+#endif
 
 int
 img_mgmt_impl_swap_type(void)
