@@ -20,6 +20,9 @@
 #ifndef H_IMG_MGMT_CONFIG_
 #define H_IMG_MGMT_CONFIG_
 
+/* Number of updatable images */
+#define IMG_MGMT_UPDATABLE_IMAGE_NUMBER 1
+
 #if defined MYNEWT
 
 #include "syscfg/syscfg.h"
@@ -38,7 +41,10 @@
 #define IMG_MGMT_DUMMY_HDR      CONFIG_IMG_MGMT_DUMMY_HDR
 #define IMG_MGMT_BOOT_CURR_SLOT 0
 
-#else
+#if defined(CONFIG_IMG_MGMT_UPDATABLE_IMAGE_NUMBER)
+#undef IMG_MGMT_UPDATABLE_IMAGE_NUMBER
+#define IMG_MGMT_UPDATABLE_IMAGE_NUMBER CONFIG_IMG_MGMT_UPDATABLE_IMAGE_NUMBER
+#endif
 
 /* No direct support for this OS.  The application needs to define the above
  * settings itself.

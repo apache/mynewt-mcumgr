@@ -44,7 +44,7 @@ img_mgmt_state_flags(int query_slot)
     /* Determine if this is is pending or confirmed (only applicable for
      * unified images and loaders.
      */
-#if CONFIG_UPDATEABLE_IMAGE_NUMBER > 1
+#if IMG_MGMT_UPDATABLE_IMAGE_NUMBER > 1
     swap_type = img_mgmt_impl_swap_type_multi(query_slot);
 #else
     swap_type = img_mgmt_impl_swap_type();
@@ -210,7 +210,7 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
 
     err |= cbor_encoder_create_array(&ctxt->encoder, &images,
                                        CborIndefiniteLength);
-    for (i = 0; i < 2*CONFIG_UPDATEABLE_IMAGE_NUMBER; i++) {
+    for (i = 0; i < 2 * IMG_MGMT_UPDATABLE_IMAGE_NUMBER; i++) {
         rc = img_mgmt_read_info(i, &ver, hash, &flags);
         if (rc != 0) {
             continue;
