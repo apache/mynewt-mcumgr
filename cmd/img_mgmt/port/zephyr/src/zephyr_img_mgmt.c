@@ -131,20 +131,29 @@ zephyr_img_mgmt_flash_area_id(int slot)
 }
 
 /**
- * The function will check if given slot is available, and allowed, for DFU;
- * providing -1 as a parameter means find any unused and non-active available;
- * if checks area positive, then area ID is returned, -1 is returned otherwise.
- * Note that auto-selection is performed only between two first slots.
+ * In normal operation this function will select between first two slot
+ * (in reality it just checks whether second slot can be used), ignoring the
+ * slot parameter.
+ * When CONFIG_IMG_MGMT_DIRECT_IMAGE_UPLOAD is defined it will check if given
+ * slot is available, and allowed, for DFU; providing 0 as a parameter means
+ * find any unused and non-active available (auto-select); any other positive
+ * value is direct (slot + 1) to be used; if checks are positive, then area
+ * ID is returned, -1 is returned otherwise.
+ * Note that auto-selection is performed only between two two first slots.
  */
 static int
 img_mgmt_get_unused_slot_area_id(int slot)
 {
-    /* Auto select slot; note that this is performed only between two first
-     * slots, at this pointi, which will require fix when Direct-XIP, which may
-     * support more slots, gets support within Zephyr. */
+#if defined(CONFIG_IMG_MGMT_DIRECT_IMAGE_UPLOAD)
+    slot--;
     if (slot < -1) {
         return -1;
     } else if (slot == -1) {
+#endif
+       /* Auto select slot; note that this is performed only between two first
+        * slots, at this point, which will require fix when Direct-XIP, which
+        * may support more slots, gets support within Zephyr.
+        */
         for (slot = 0; slot < 2; slot++) {
             if (img_mgmt_slot_in_use(slot) == 0) {
                 int area_id = zephyr_img_mgmt_flash_area_id(slot);
@@ -154,6 +163,7 @@ img_mgmt_get_unused_slot_area_id(int slot)
             }
         }
         return -1;
+#if defined(CONFIG_IMG_MGMT_DIRECT_IMAGE_UPLOAD)
     }
     /* Direct selection; the first two slots are checked for being available
      * and unused; the all other slots are just checked for availability. */
@@ -163,6 +173,7 @@ img_mgmt_get_unused_slot_area_id(int slot)
 
     /* Return area ID for the slot or -1 */
     return slot != -1  ? zephyr_img_mgmt_flash_area_id(slot) : -1;
+#endif
 }
 
 /**
@@ -505,7 +516,7 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
             }
         }
 
-        action->area_id = img_mgmt_get_unused_slot_area_id(req->image - 1);
+        action->area_id = img_mgmt_get_unused_slot_area_id(req->image);
         if (action->area_id < 0) {
             /* No slot where to upload! */
             *errstr = img_mgmt_err_str_no_slot;
