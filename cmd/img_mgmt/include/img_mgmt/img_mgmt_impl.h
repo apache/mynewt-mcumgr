@@ -98,11 +98,13 @@ int img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
 
 /**
  * @brief Indicates the type of swap operation that will occur on the next
- * reboot, if any.
+ * reboot, if any, between provided slot and it's pair.
+ * Quering any slots of the same pair will give the same result.
  *
+ * @param image                 An slot number;
  * @return                      An IMG_MGMT_SWAP_TYPE_[...] code.
  */
-int img_mgmt_impl_swap_type(void);
+int img_mgmt_impl_swap_type(int slot);
 
 /**
  * Collects information about the specified image slot.

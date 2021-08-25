@@ -36,14 +36,12 @@ img_mgmt_state_flags(int query_slot)
     uint8_t flags;
     int swap_type;
 
-    assert(query_slot == 0 || query_slot == 1);
-
     flags = 0;
 
     /* Determine if this is is pending or confirmed (only applicable for
      * unified images and loaders.
      */
-    swap_type = img_mgmt_impl_swap_type();
+    swap_type = img_mgmt_impl_swap_type(query_slot);
     switch (swap_type) {
     case IMG_MGMT_SWAP_TYPE_NONE:
         if (query_slot == IMG_MGMT_BOOT_CURR_SLOT) {
