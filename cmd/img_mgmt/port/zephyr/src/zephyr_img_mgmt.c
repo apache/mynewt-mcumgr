@@ -413,7 +413,7 @@ int img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
 #endif
 
 int
-img_mgmt_impl_swap_type(void)
+img_mgmt_impl_swap_type(int slot)
 {
     switch (mcuboot_swap_type()) {
     case BOOT_SWAP_TYPE_NONE:

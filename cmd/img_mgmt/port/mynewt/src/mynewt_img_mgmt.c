@@ -510,8 +510,10 @@ done:
 #endif
 
 int
-img_mgmt_impl_swap_type(void)
+img_mgmt_impl_swap_type(int slot)
 {
+    assert(slot == 0 || slot == 1);
+
     switch (boot_swap_type()) {
     case BOOT_SWAP_TYPE_NONE:
         return IMG_MGMT_SWAP_TYPE_NONE;
