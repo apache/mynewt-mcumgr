@@ -241,7 +241,7 @@ img_mgmt_find_by_ver(struct image_version *find, uint8_t *hash)
     int i;
     struct image_version ver;
 
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 2 * IMG_MGMT_UPDATABLE_IMAGE_NUMBER; i++) {
         if (img_mgmt_read_info(i, &ver, hash, NULL) != 0) {
             continue;
         }
@@ -262,7 +262,7 @@ img_mgmt_find_by_hash(uint8_t *find, struct image_version *ver)
     int i;
     uint8_t hash[IMAGE_HASH_LEN];
 
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 2 * IMG_MGMT_UPDATABLE_IMAGE_NUMBER; i++) {
         if (img_mgmt_read_info(i, ver, hash, NULL) != 0) {
             continue;
         }
