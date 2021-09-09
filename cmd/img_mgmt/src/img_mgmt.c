@@ -515,6 +515,8 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
             }
         }
 #endif
+    } else {
+        cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_ONGOING;
     }
 
     /* Write the image data to flash. */
@@ -542,7 +544,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
             if (g_img_mgmt_state.off == g_img_mgmt_state.size) {
                 /* Done */
                 img_mgmt_dfu_pending();
-                cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_ONGOING;
+                cmd_status_arg.status = IMG_MGMT_ID_UPLOAD_STATUS_COMPLETE;
                 g_img_mgmt_state.area_id = -1;
             }
         }
