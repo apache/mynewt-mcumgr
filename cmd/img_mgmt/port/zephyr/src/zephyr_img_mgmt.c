@@ -337,59 +337,83 @@ img_mgmt_impl_read(int slot, unsigned int offset, void *dst,
     return 0;
 }
 
+/*
+ * The alloc_ctx and free_ctx are specifically provided for
+ * the img_mgmt_impl_write_image_data to allocate/free single flash_img_context
+ * type buffer.
+ * When heap is enabled these functions will operate on heap; when  heap is not
+ * allocated the alloc_ctx just returns pointer to static, global life-time
+ * variable, and free_ctx does nothing.
+ * CONFIG_HEAP_MEM_POOL_SIZE is C preprocessor literal.
+ */
+static inline struct flash_img_context *alloc_ctx(void)
+{
+    struct flash_img_context *ctx = NULL;
+
+    if (CONFIG_HEAP_MEM_POOL_SIZE > 0) {
+        ctx = k_malloc(sizeof(*ctx));
+    } else {
+        static struct flash_img_context stcx;
+        ctx = &stcx;
+    }
+    return ctx;
+}
+
+static inline void free_ctx(struct flash_img_context *ctx)
+{
+    if (CONFIG_HEAP_MEM_POOL_SIZE > 0) {
+        k_free(ctx);
+    }
+}
+
 int
 img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
                                unsigned int num_bytes, bool last)
 {
-	int rc;
-#if (CONFIG_HEAP_MEM_POOL_SIZE > 0)
+	int rc = 0;
 	static struct flash_img_context *ctx = NULL;
-#else
-	static struct flash_img_context ctx_data;
-#define ctx (&ctx_data)
-#endif
 
-#if (CONFIG_HEAP_MEM_POOL_SIZE > 0)
-	if (offset != 0 && ctx == NULL) {
+	if (CONFIG_HEAP_MEM_POOL_SIZE > 0 && offset != 0 && ctx == NULL) {
 		return MGMT_ERR_EUNKNOWN;
 	}
-#endif
 
 	if (offset == 0) {
-#if (CONFIG_HEAP_MEM_POOL_SIZE > 0)
 		if (ctx == NULL) {
-			ctx = k_malloc(sizeof(*ctx));
+			ctx = alloc_ctx();
 
 			if (ctx == NULL) {
-				return MGMT_ERR_ENOMEM;
+				rc = MGMT_ERR_ENOMEM;
+				goto out;
 			}
 		}
-#endif
+
 		rc = flash_img_init_id(ctx, g_img_mgmt_state.area_id);
 
 		if (rc != 0) {
-			return MGMT_ERR_EUNKNOWN;
+			rc = MGMT_ERR_EUNKNOWN;
+			goto out;
 		}
 	}
 
 	if (offset != ctx->stream.bytes_written + ctx->stream.buf_bytes) {
-		return MGMT_ERR_EUNKNOWN;
+		rc = MGMT_ERR_EUNKNOWN;
+		goto out;
 	}
 
 	/* Cast away const. */
 	rc = flash_img_buffered_write(ctx, (void *)data, num_bytes, last);
 	if (rc != 0) {
-		return MGMT_ERR_EUNKNOWN;
+		rc = MGMT_ERR_EUNKNOWN;
+		goto out;
 	}
 
-#if (CONFIG_HEAP_MEM_POOL_SIZE > 0)
-	if (last) {
+out:
+	if (CONFIG_HEAP_MEM_POOL_SIZE > 0 && (last || rc != 0)) {
 		k_free(ctx);
 		ctx = NULL;
 	}
-#endif
 
-	return 0;
+	return rc;
 }
 
 int
