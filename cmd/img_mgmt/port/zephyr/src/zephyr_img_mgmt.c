@@ -205,7 +205,7 @@ img_mgmt_get_unused_slot_area_id(int image)
 {
     int area_id = -1;
 
-    if (image == 0) {
+    if (image == 0 || image == -1) {
         if (img_mgmt_slot_in_use(1) == 0) {
             area_id = zephyr_img_mgmt_flash_area_id(1);
         }
