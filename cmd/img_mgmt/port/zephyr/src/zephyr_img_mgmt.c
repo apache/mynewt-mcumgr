@@ -211,8 +211,6 @@ img_mgmt_get_unused_slot_area_id(int image)
         }
     } else if (image == 1) {
         area_id = zephyr_img_mgmt_flash_area_id(3);
-    } else {
-        assert(0);
     }
 
     return area_id;
@@ -266,7 +264,7 @@ img_mgmt_impl_erase_slot(void)
     /* Select any non-active, unused slot */
     best_id = img_mgmt_get_unused_slot_area_id(-1);
     if (best_id < 0) {
-        return MGMT_ERR_EUNKNOWN;
+        return MGMT_ERR_ENOENT;
     }
     rc = zephyr_img_mgmt_flash_check_empty(best_id, &empty);
     if (rc != 0) {
@@ -593,7 +591,7 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
         if (action->area_id < 0) {
             /* No slot where to upload! */
             *errstr = img_mgmt_err_str_no_slot;
-            return MGMT_ERR_ENOMEM;
+            return MGMT_ERR_ENOENT;
         }
 
 
