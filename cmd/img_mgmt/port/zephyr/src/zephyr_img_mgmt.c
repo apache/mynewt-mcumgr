@@ -36,8 +36,8 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #include <img_mgmt/image.h>
 #include "../../../src/img_mgmt_priv.h"
 
-BUILD_ASSERT(CONFIG_IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 1 ||
-             (CONFIG_IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 2 &&
+BUILD_ASSERT(IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 1 ||
+             (IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 2 &&
               FLASH_AREA_LABEL_EXISTS(image_2) &&
               FLASH_AREA_LABEL_EXISTS(image_3)),
               "Missing partitions?");
@@ -153,7 +153,7 @@ zephyr_img_mgmt_flash_area_id(int slot)
     return fa_id;
 }
 
-#if CONFIG_IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 1
+#if IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 1
 /**
  * In normal operation this function will select between first two slot
  * (in reality it just checks whether second slot can be used), ignoring the
@@ -199,7 +199,7 @@ img_mgmt_get_unused_slot_area_id(int slot)
     return slot != -1  ? zephyr_img_mgmt_flash_area_id(slot) : -1;
 #endif
 }
-#elif CONFIG_IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 2
+#elif IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 2
 static int
 img_mgmt_get_unused_slot_area_id(int image)
 {
@@ -289,7 +289,7 @@ img_mgmt_impl_write_pending(int slot, bool permanent)
     int rc;
 
     if (slot != 1 &&
-        !(CONFIG_IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 2 && slot == 3)) {
+        !(IMG_MGMT_UPDATABLE_IMAGE_NUMBER == 2 && slot == 3)) {
         return MGMT_ERR_EINVAL;
     }
 
