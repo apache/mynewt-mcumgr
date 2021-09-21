@@ -370,50 +370,50 @@ int
 img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
                                unsigned int num_bytes, bool last)
 {
-	int rc = 0;
-	static struct flash_img_context *ctx = NULL;
+    int rc = 0;
+    static struct flash_img_context *ctx = NULL;
 
-	if (CONFIG_HEAP_MEM_POOL_SIZE > 0 && offset != 0 && ctx == NULL) {
-		return MGMT_ERR_EUNKNOWN;
-	}
+    if (CONFIG_HEAP_MEM_POOL_SIZE > 0 && offset != 0 && ctx == NULL) {
+        return MGMT_ERR_EUNKNOWN;
+    }
 
-	if (offset == 0) {
-		if (ctx == NULL) {
-			ctx = alloc_ctx();
+    if (offset == 0) {
+        if (ctx == NULL) {
+            ctx = alloc_ctx();
 
-			if (ctx == NULL) {
-				rc = MGMT_ERR_ENOMEM;
-				goto out;
-			}
-		}
+            if (ctx == NULL) {
+                rc = MGMT_ERR_ENOMEM;
+                goto out;
+            }
+        }
 
-		rc = flash_img_init_id(ctx, g_img_mgmt_state.area_id);
+        rc = flash_img_init_id(ctx, g_img_mgmt_state.area_id);
 
-		if (rc != 0) {
-			rc = MGMT_ERR_EUNKNOWN;
-			goto out;
-		}
-	}
+        if (rc != 0) {
+            rc = MGMT_ERR_EUNKNOWN;
+            goto out;
+        }
+    }
 
-	if (offset != ctx->stream.bytes_written + ctx->stream.buf_bytes) {
-		rc = MGMT_ERR_EUNKNOWN;
-		goto out;
-	}
+    if (offset != ctx->stream.bytes_written + ctx->stream.buf_bytes) {
+        rc = MGMT_ERR_EUNKNOWN;
+        goto out;
+    }
 
-	/* Cast away const. */
-	rc = flash_img_buffered_write(ctx, (void *)data, num_bytes, last);
-	if (rc != 0) {
-		rc = MGMT_ERR_EUNKNOWN;
-		goto out;
-	}
+    /* Cast away const. */
+    rc = flash_img_buffered_write(ctx, (void *)data, num_bytes, last);
+    if (rc != 0) {
+        rc = MGMT_ERR_EUNKNOWN;
+        goto out;
+    }
 
 out:
-	if (CONFIG_HEAP_MEM_POOL_SIZE > 0 && (last || rc != 0)) {
-		k_free(ctx);
-		ctx = NULL;
-	}
+    if (CONFIG_HEAP_MEM_POOL_SIZE > 0 && (last || rc != 0)) {
+        k_free(ctx);
+        ctx = NULL;
+    }
 
-	return rc;
+    return rc;
 }
 
 int
