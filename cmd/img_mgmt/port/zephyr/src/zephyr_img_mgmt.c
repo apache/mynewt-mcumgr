@@ -181,7 +181,7 @@ img_mgmt_get_unused_slot_area_id(int slot)
         for (slot = 0; slot < 2; slot++) {
             if (img_mgmt_slot_in_use(slot) == 0) {
                 int area_id = zephyr_img_mgmt_flash_area_id(slot);
-                if (area_id != -1) {
+                if (area_id >= 0) {
                     return area_id;
                 }
             }
@@ -319,8 +319,13 @@ img_mgmt_impl_read(int slot, unsigned int offset, void *dst,
 {
     const struct flash_area *fa;
     int rc;
+    int area_id = zephyr_img_mgmt_flash_area_id(slot);
 
-    rc = flash_area_open(zephyr_img_mgmt_flash_area_id(slot), &fa);
+    if (area_id < 0) {
+       return MGMT_ERR_EUNKNOWN;
+    }
+
+    rc = flash_area_open(area_id, &fa);
     if (rc != 0) {
       return MGMT_ERR_EUNKNOWN;
     }
@@ -682,8 +687,13 @@ img_mgmt_impl_erased_val(int slot, uint8_t *erased_val)
 {
     const struct flash_area *fa;
     int rc;
+    int area_id = zephyr_img_mgmt_flash_area_id(slot);
 
-    rc = flash_area_open(zephyr_img_mgmt_flash_area_id(slot), &fa);
+    if (area_id < 0) {
+      return MGMT_ERR_EUNKNOWN;
+    }
+
+    rc = flash_area_open(area_id, &fa);
     if (rc != 0) {
       return MGMT_ERR_EUNKNOWN;
     }
