@@ -22,6 +22,8 @@
 
 /* Number of updatable images */
 #define IMG_MGMT_UPDATABLE_IMAGE_NUMBER 1
+/* Image status list will only contain image attributes that are true/non-zero */
+#define IMG_MGMT_FRUGAL_LIST    0
 
 #if defined MYNEWT
 
@@ -44,6 +46,10 @@
 /* Up to two images are supported */
 #undef IMG_MGMT_UPDATABLE_IMAGE_NUMBER
 #define IMG_MGMT_UPDATABLE_IMAGE_NUMBER CONFIG_IMG_MGMT_UPDATABLE_IMAGE_NUMBER
+#endif
+#ifdef CONFIG_IMG_MGMT_FRUGAL_LIST
+#undef IMG_MGMT_FRUGAL_LIST
+#define IMG_MGMT_FRUGAL_LIST    CONFIG_IMG_MGMT_FRUGAL_LIST
 #endif
 
 #else

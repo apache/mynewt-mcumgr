@@ -229,32 +229,47 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
         err |= cbor_encode_text_stringz(&image, "hash");
         err |= cbor_encode_byte_string(&image, hash, IMAGE_HASH_LEN);
 
-        err |= cbor_encode_text_stringz(&image, "bootable");
-        err |= cbor_encode_boolean(&image, !(flags & IMAGE_F_NON_BOOTABLE));
+        if (!IMG_MGMT_FRUGAL_LIST || !(flags & IMAGE_F_NON_BOOTABLE)) {
+            err |= cbor_encode_text_stringz(&image, "bootable");
+            err |= cbor_encode_boolean(&image, !(flags & IMAGE_F_NON_BOOTABLE));
+        }
 
-        err |= cbor_encode_text_stringz(&image, "pending");
-        err |= cbor_encode_boolean(&image,
-                                     state_flags & IMG_MGMT_STATE_F_PENDING);
+        if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_PENDING)) {
+            err |= cbor_encode_text_stringz(&image, "pending");
+            err |= cbor_encode_boolean(&image,
+                                    state_flags & IMG_MGMT_STATE_F_PENDING);
+        }
 
-        err |= cbor_encode_text_stringz(&image, "confirmed");
-        err |= cbor_encode_boolean(&image,
-                                     state_flags & IMG_MGMT_STATE_F_CONFIRMED);
+        if (!IMG_MGMT_FRUGAL_LIST ||
+            (state_flags & IMG_MGMT_STATE_F_CONFIRMED)) {
+            err |= cbor_encode_text_stringz(&image, "confirmed");
+            err |= cbor_encode_boolean(&image,
+                                    state_flags & IMG_MGMT_STATE_F_CONFIRMED);
+        }
 
-        err |= cbor_encode_text_stringz(&image, "active");
-        err |= cbor_encode_boolean(&image,
-                                     state_flags & IMG_MGMT_STATE_F_ACTIVE);
+        if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_ACTIVE)) {
+            err |= cbor_encode_text_stringz(&image, "active");
+            err |= cbor_encode_boolean(&image,
+                                    state_flags & IMG_MGMT_STATE_F_ACTIVE);
+        }
 
-        err |= cbor_encode_text_stringz(&image, "permanent");
-        err |= cbor_encode_boolean(&image,
-                                     state_flags & IMG_MGMT_STATE_F_PERMANENT);
+        if (!IMG_MGMT_FRUGAL_LIST ||
+            (state_flags & IMG_MGMT_STATE_F_PERMANENT)) {
+            err |= cbor_encode_text_stringz(&image, "permanent");
+            err |= cbor_encode_boolean(&image,
+                                    state_flags & IMG_MGMT_STATE_F_PERMANENT);
+        }
 
         err |= cbor_encoder_close_container(&images, &image);
     }
 
     err |= cbor_encoder_close_container(&ctxt->encoder, &images);
 
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "splitStatus");
-    err |= cbor_encode_int(&ctxt->encoder, 0);
+    /* splitStatus is always 0 so in frugal list it is not present at all */
+    if (!IMG_MGMT_FRUGAL_LIST) {
+        err |= cbor_encode_text_stringz(&ctxt->encoder, "splitStatus");
+        err |= cbor_encode_int(&ctxt->encoder, 0);
+    }
 
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
