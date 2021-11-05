@@ -22,11 +22,11 @@
 #include "os/os.h"
 #if MYNEWT_VAL(LOG_SOFT_RESET)
 #include "reboot/log_reboot.h"
+#include "img_mgmt/img_mgmt.h"
 #endif
 #include "os_mgmt/os_mgmt_impl.h"
 #include "os_mgmt/os_mgmt.h"
 #include "mgmt/mgmt.h"
-#include "img_mgmt/img_mgmt.h"
 
 static struct os_callout mynewt_os_mgmt_reset_callout;
 
