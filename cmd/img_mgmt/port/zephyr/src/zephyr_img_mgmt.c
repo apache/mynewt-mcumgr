@@ -19,17 +19,17 @@
 
 #define LOG_MODULE_NAME mcumgr_flash_mgmt
 #define LOG_LEVEL CONFIG_IMG_MANAGER_LOG_LEVEL
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 
 #include <assert.h>
-#include <drivers/flash.h>
-#include <storage/flash_map.h>
-#include <zephyr.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/storage/flash_map.h>
+#include <zephyr/zephyr.h>
 #include <soc.h>
-#include <init.h>
-#include <dfu/mcuboot.h>
-#include <dfu/flash_img.h>
+#include <zephyr/init.h>
+#include <zephyr/dfu/mcuboot.h>
+#include <zephyr/dfu/flash_img.h>
 #include <mgmt/mgmt.h>
 #include <img_mgmt/img_mgmt_impl.h>
 #include <img_mgmt/img_mgmt.h>

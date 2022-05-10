@@ -17,11 +17,11 @@
  * under the License.
  */
 
-#include <sys/util.h>
-#include <shell/shell.h>
+#include <zephyr/sys/util.h>
+#include <zephyr/shell/shell.h>
 #include <mgmt/mgmt.h>
 #include <shell_mgmt/shell_mgmt.h>
-#include <shell/shell_dummy.h>
+#include <zephyr/shell/shell_dummy.h>
 
 int
 shell_mgmt_impl_exec(const char *line)

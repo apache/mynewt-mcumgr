@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <img_mgmt/img_mgmt.h>
 /**
  * Log event types (all events are CBOR-encoded):
