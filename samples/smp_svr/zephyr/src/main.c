@@ -18,7 +18,7 @@
  */
 
 #include <assert.h>
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <string.h>
 #include <stdlib.h>
 #include <zephyr/stats/stats.h>

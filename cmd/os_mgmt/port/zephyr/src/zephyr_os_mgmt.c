@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #include <power/reboot.h>
 #include <zephyr/debug/object_tracing.h>
 #include <zephyr/kernel_structs.h>

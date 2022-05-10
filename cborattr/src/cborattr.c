@@ -22,7 +22,7 @@
 #include "tinycbor/cbor_buf_reader.h"
 
 #ifdef __ZEPHYR__
-#include <zephyr/zephyr.h>
+#include <zephyr/kernel.h>
 #ifdef CONFIG_MGMT_CBORATTR_MAX_SIZE
 #define CBORATTR_MAX_SIZE CONFIG_MGMT_CBORATTR_MAX_SIZE
 #else
