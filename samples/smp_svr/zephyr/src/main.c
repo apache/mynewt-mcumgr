@@ -18,17 +18,17 @@
  */
 
 #include <assert.h>
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stats/stats.h>
+#include <zephyr/stats/stats.h>
 #include <mgmt/buf.h>
 
 #ifdef CONFIG_MCUMGR_CMD_FS_MGMT
-#include <device.h>
-#include <fs/fs.h>
+#include <zephyr/device.h>
+#include <zephyr/fs/fs.h>
 #include "fs_mgmt/fs_mgmt.h"
-#include <fs/littlefs.h>
+#include <zephyr/fs/littlefs.h>
 #endif
 #ifdef CONFIG_MCUMGR_CMD_OS_MGMT
 #include "os_mgmt/os_mgmt.h"
@@ -41,9 +41,9 @@
 #endif
 
 #ifdef CONFIG_MCUMGR_SMP_BT
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/conn.h>
-#include <bluetooth/gatt.h>
+#include <zephyr/bluetooth/bluetooth.h>
+#include <zephyr/bluetooth/conn.h>
+#include <zephyr/bluetooth/gatt.h>
 #include <mgmt/smp_bt.h>
 #endif
 

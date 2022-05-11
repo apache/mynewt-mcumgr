@@ -17,10 +17,10 @@
  * under the License.
  */
 
-#include <zephyr.h>
+#include <zephyr/kernel.h>
 #include <power/reboot.h>
-#include <debug/object_tracing.h>
-#include <kernel_structs.h>
+#include <zephyr/debug/object_tracing.h>
+#include <zephyr/kernel_structs.h>
 #include <mgmt/mgmt.h>
 #include <util/mcumgr_util.h>
 #include <os_mgmt/os_mgmt.h>

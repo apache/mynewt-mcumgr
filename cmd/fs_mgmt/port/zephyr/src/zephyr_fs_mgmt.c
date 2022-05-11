@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <fs/fs.h>
+#include <zephyr/fs/fs.h>
 #include <mgmt/mgmt.h>
 #include <fs_mgmt/fs_mgmt_impl.h>
 
