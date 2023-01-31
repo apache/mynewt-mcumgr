@@ -34,3 +34,8 @@ syscfg.defs:
         description: >
             Enable support for echo command.
         value: 1
+
+    OS_MGMT_SYSINIT_STAGE:
+        description: >
+            System Initialization stage for OS_MGMT package
+        value: 501
