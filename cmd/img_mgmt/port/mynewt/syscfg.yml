@@ -23,6 +23,9 @@ syscfg.defs:
     IMG_MGMT_LOG_LVL:
         description: 'Minimum level for the image management structured log.'
         value: 15  # Log disabled by default.
+    IMG_MGMT_SYSINIT_STAGE:
+        description: System initalization stage for IMG_MGMT package
+        value: 501
 
 syscfg.logs:
     IMG_MGMT_LOG:

@@ -29,4 +29,4 @@ pkg.deps:
     - '@apache-mynewt-core/sys/log/modlog'
 
 pkg.init:
-    img_mgmt_module_init: 501
+    img_mgmt_module_init: 'MYNEWT_VAL(IMG_MGMT_SYSINIT_STAGE)'

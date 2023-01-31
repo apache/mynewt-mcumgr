@@ -17,15 +17,8 @@
 # under the License.
 #
 
-pkg.name: cmd/log_mgmt/port/mynewt
-pkg.description: 'Log management command handlers for mcumgr.'
-pkg.author: "Apache Mynewt <dev@mynewt.apache.org>"
-pkg.homepage: "http://mynewt.apache.org/"
-pkg.keywords:
-
-pkg.deps:
-    - '@apache-mynewt-mcumgr/cmd/log_mgmt'
-    - '@apache-mynewt-mcumgr/mgmt'
-
-pkg.init:
-    log_mgmt_module_init: 'MYNEWT_VAL(LOG_MGMT_SYSINIT_STAGE)'
+syscfg.defs:
+    STAT_MGMT_SYSINIT_STAGE:
+        description: >
+            System Initialization stage for STAT_MGMT package
+        value: 501
