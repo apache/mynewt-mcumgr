@@ -31,11 +31,16 @@ not require MCUboot.
 The `mcumgr` command line tool is available at:
 https://github.com/apache/mynewt-mcumgr-cli.  The command line tool requires [Go
 1.12 or later](https://golang.org/dl/).  Once Go is installed and set up on your
-system, you can install the mcumgr CLI tool by issuing the following `go get`
-command:
+system, you can install the mcumgr CLI tool by issuing the following `go get` or
+`go install` command, depending on your Go version:
 
+Go version < 1.18
 ```
 $ go get github.com/apache/mynewt-mcumgr-cli/mcumgr
+```
+Go version >= 1.18
+```
+$ go install github.com/apache/mynewt-mcumgr-cli/mcumgr@latest
 ```
 
 The `mcumgr` tool allows you to manage devices running an mcumgr server.
