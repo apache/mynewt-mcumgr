@@ -91,13 +91,13 @@ TEST_CASE(test_cborattr_decode_simple)
         [0] = {
             .attribute = "a",
             .type = CborAttrIntegerType,
-            .addr.uinteger = &a_val,
+            .addr.uinteger = (long long unsigned int *) &a_val,
             .nodefault = true
         },
         [1] = {
             .attribute = "b",
             .type = CborAttrIntegerType,
-            .addr.integer = &b_val,
+            .addr.integer = (long long int *) &b_val,
             .nodefault = true
         },
         [2] = {

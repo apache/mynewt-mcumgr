@@ -115,7 +115,7 @@ TEST_CASE(test_cborattr_decode_object)
         [0] = {
             .attribute = "bm",
             .type = CborAttrIntegerType,
-            .addr.integer = &bm_val,
+            .addr.integer = (long long int *) &bm_val,
             .nodefault = true
         },
         [1] = {
@@ -139,7 +139,7 @@ TEST_CASE(test_cborattr_decode_object)
         [0] = {
             .attribute = "i",
             .type = CborAttrIntegerType,
-            .addr.integer = &i_val,
+            .addr.integer = (long long int *) &i_val,
             .nodefault = true
         },
         [1] = {
@@ -167,7 +167,7 @@ TEST_CASE(test_cborattr_decode_object)
         [1] = {
             .attribute = "a",
             .type = CborAttrIntegerType,
-            .addr.integer = &a_val,
+            .addr.integer = (long long int *) &a_val,
             .nodefault = true
         },
         [2] = {

@@ -83,7 +83,7 @@ TEST_CASE(test_cborattr_decode_int_array)
             .attribute = "a",
             .type = CborAttrArrayType,
             .addr.array.element_type = CborAttrIntegerType,
-            .addr.array.arr.integers.store = arr_data,
+            .addr.array.arr.integers.store = (long long int *) arr_data,
             .addr.array.count = &arr_cnt,
             .addr.array.maxlen = sizeof(arr_data) / sizeof(arr_data[0]),
             .nodefault = true
@@ -91,7 +91,7 @@ TEST_CASE(test_cborattr_decode_int_array)
         [1] = {
             .attribute = "b",
             .type = CborAttrIntegerType,
-            .addr.integer = &b_int,
+            .addr.integer = (long long int *) &b_int,
             .dflt.integer = 1
         },
         [2] = {
@@ -103,7 +103,7 @@ TEST_CASE(test_cborattr_decode_int_array)
             .attribute = "a",
             .type = CborAttrArrayType,
             .addr.array.element_type = CborAttrIntegerType,
-            .addr.array.arr.integers.store = arr_data,
+            .addr.array.arr.integers.store = (long long int *) arr_data,
             .addr.array.count = &arr_cnt,
             .addr.array.maxlen = 1,
             .nodefault = true
@@ -111,7 +111,7 @@ TEST_CASE(test_cborattr_decode_int_array)
         [1] = {
             .attribute = "b",
             .type = CborAttrIntegerType,
-            .addr.integer = &b_int,
+            .addr.integer = (long long int *) &b_int,
             .dflt.integer = 1
         },
         [2] = {
