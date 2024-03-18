@@ -57,6 +57,7 @@ static mgmt_handler_fn log_mgmt_clear;
 static mgmt_handler_fn log_mgmt_module_list;
 static mgmt_handler_fn log_mgmt_level_list;
 static mgmt_handler_fn log_mgmt_logs_list;
+static mgmt_handler_fn log_mgmt_num_entries;
 
 static struct mgmt_handler log_mgmt_handlers[] = {
     [LOG_MGMT_ID_SHOW] =        { log_mgmt_show, NULL },
@@ -64,6 +65,7 @@ static struct mgmt_handler log_mgmt_handlers[] = {
     [LOG_MGMT_ID_MODULE_LIST] = { log_mgmt_module_list, NULL },
     [LOG_MGMT_ID_LEVEL_LIST] =  { log_mgmt_level_list, NULL },
     [LOG_MGMT_ID_LOGS_LIST] =   { log_mgmt_logs_list, NULL },
+    [LOG_MGMT_ID_NUM_ENTRIES] = { log_mgmt_num_entries, NULL },
 };
 
 #define LOG_MGMT_HANDLER_CNT \
@@ -123,6 +125,11 @@ log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
             err |= cbor_encode_text_stringz(&lmec->mapenc, "imghash");
             err |= cbor_encode_byte_string(&lmec->mapenc, entry->imghash,
                                            LOG_MGMT_IMG_HASHLEN);
+        }
+
+        if (entry->flags & LOG_MGMT_FLAGS_NUM_ENTRIES) {
+            err |= cbor_encode_text_stringz(&lmec->mapenc, "num_entries");
+            err |= cbor_encode_uint(&lmec->mapenc, entry->num_entries);
         }
 
         err |= cbor_encode_text_stringz(&lmec->mapenc, "msg");
@@ -444,6 +451,94 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
 
 err:
     err |= cbor_encoder_close_container(&ctxt->encoder, &logs);
+    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
+    err |= cbor_encode_int(&ctxt->encoder, rc);
+
+    if (err != 0) {
+        return LOG_MGMT_ERR_ENOMEM;
+    }
+
+    return 0;
+}
+
+/**
+ * Command handler: log mgmt number of entries since index
+ */
+static int
+log_mgmt_num_entries(struct mgmt_ctxt *ctxt)
+{
+    char name[LOG_MGMT_NAME_LEN];
+    struct log_mgmt_log log;
+    CborError err;
+    uint64_t index;
+    int name_len;
+    int log_idx;
+    int rc;
+    uint32_t entries = 0;
+
+    const struct cbor_attr_t attr[] = {
+        {
+            .attribute = "log_name",
+            .type = CborAttrTextStringType,
+            .addr.string = name,
+            .len = sizeof(name),
+        },
+        {
+            .attribute = "index",
+            .type = CborAttrUnsignedIntegerType,
+            .addr.uinteger = &index,
+        },
+        {
+            .attribute = NULL,
+        },
+    };
+
+    name[0] = '\0';
+    rc = cbor_read_object(&ctxt->it, attr);
+    if (rc != 0) {
+        return LOG_MGMT_ERR_EINVAL;
+    }
+    name_len = strlen(name);
+
+    (void)err;
+    err = 0;
+
+    /* Iterate list of logs, encoding number of entries for the one that matches
+     * the client request
+     */
+    for (log_idx = 0; ; log_idx++) {
+        rc = log_mgmt_impl_get_log(log_idx, &log);
+        if (rc == LOG_MGMT_ERR_ENOENT) {
+            /* Log list fully iterated. */
+            if (name_len != 0) {
+                /* Client specified log name, but the log wasn't found. */
+                rc = LOG_MGMT_ERR_ENOENT;
+                goto err;
+            } else {
+                break;
+            }
+        } else if (rc != 0) {
+            goto err;
+        }
+
+        /* Stream logs cannot be read. */
+        if (log.type != LOG_MGMT_TYPE_STREAM) {
+            if (name_len == 0 || strcmp(name, log.name) == 0) {
+#if LOG_MGMT_NUM_ENTRIES
+                /* Get the number of entries since a specific log index */
+                rc = log_mgmt_impl_get_num_entries(&log, index, &entries);
+                err |= cbor_encode_text_stringz(&ctxt->encoder, "num_entries");
+                err |= cbor_encode_uint(&ctxt->encoder, entries);
+#else
+                (void)entries;
+                rc = LOG_MGMT_ERR_ENOTSUP;
+#endif
+                goto err;
+            }
+        }
+    }
+
+err:
     err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
     err |= cbor_encode_int(&ctxt->encoder, rc);
 
