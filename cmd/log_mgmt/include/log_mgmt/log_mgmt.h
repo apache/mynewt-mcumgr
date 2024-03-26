@@ -30,10 +30,10 @@ extern "C" {
  * LOG MGMT specific error codes, 0 -> 6, 8 are same as mcumgr,
  * 7 and 9 are different for backwards compatibility with newtmgr.
  */
-#define LOG_MGMT_ERR_EOK        (0)                                  
-#define LOG_MGMT_ERR_EUNKNOWN   (1)                                  
-#define LOG_MGMT_ERR_ENOMEM     (2)                                  
-#define LOG_MGMT_ERR_EINVAL     (3)                                  
+#define LOG_MGMT_ERR_EOK        (0)
+#define LOG_MGMT_ERR_EUNKNOWN   (1)
+#define LOG_MGMT_ERR_ENOMEM     (2)
+#define LOG_MGMT_ERR_EINVAL     (3)
 #define LOG_MGMT_ERR_ETIMEOUT   (4)
 #define LOG_MGMT_ERR_ENOENT     (5)
 #define LOG_MGMT_ERR_EBADSTATE  (6)     /* Current state disallows command. */
@@ -45,12 +45,13 @@ extern "C" {
 /**
  * Command IDs for log management group.
  */
-#define LOG_MGMT_ID_SHOW        0
-#define LOG_MGMT_ID_CLEAR       1
-#define LOG_MGMT_ID_APPEND      2
-#define LOG_MGMT_ID_MODULE_LIST 3
-#define LOG_MGMT_ID_LEVEL_LIST  4
-#define LOG_MGMT_ID_LOGS_LIST   5
+#define LOG_MGMT_ID_SHOW           0
+#define LOG_MGMT_ID_CLEAR          1
+#define LOG_MGMT_ID_APPEND         2
+#define LOG_MGMT_ID_MODULE_LIST    3
+#define LOG_MGMT_ID_LEVEL_LIST     4
+#define LOG_MGMT_ID_LOGS_LIST      5
+#define LOG_MGMT_ID_NUM_ENTRIES    6
 
 /** @brief Log output is streamed without retention (e.g., console). */
 #define LOG_MGMT_TYPE_STREAM     0
@@ -62,7 +63,8 @@ extern "C" {
 #define LOG_MGMT_TYPE_STORAGE    2
 
 /* @brief Flags used to indicate type of data in reserved payload. */
-#define LOG_MGMT_FLAGS_IMG_HASH  (1 << 0)
+#define LOG_MGMT_FLAGS_IMG_HASH     (1 << 0)
+#define LOG_MGMT_FLAGS_NUM_ENTRIES  (1 << 1)
 
 /* @brief Log entry types. */
 #define LOG_MGMT_ETYPE_STRING         0
@@ -90,6 +92,7 @@ struct log_mgmt_entry {
     uint8_t type:4;
     uint8_t flags:4;
     const uint8_t *imghash;
+    uint32_t num_entries;
     size_t offset;
     size_t chunklen;
     void *ctxt;
