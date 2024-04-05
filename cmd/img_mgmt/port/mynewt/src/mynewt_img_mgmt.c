@@ -254,6 +254,9 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
 int
 img_mgmt_impl_erase_slot(void)
 {
+#ifndef FLASH_AREA_IMAGE_1
+    return MGMT_ERR_ENOTSUP;
+#else
     const struct flash_area *fa;
     bool empty;
     int rc;
@@ -276,6 +279,7 @@ img_mgmt_impl_erase_slot(void)
     }
 
     return 0;
+#endif
 }
 
 int
@@ -392,6 +396,9 @@ int
 img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
                                unsigned int num_bytes, bool last)
 {
+#ifndef FLASH_AREA_IMAGE_1
+    return MGMT_ERR_ENOTSUP;
+#else
     const struct flash_area *fa;
     struct flash_area sector;
     int rc;
@@ -432,6 +439,7 @@ err:
     g_img_mgmt_state.sector_id = -1;
     g_img_mgmt_state.sector_end = 0;
     return MGMT_ERR_EUNKNOWN;
+#endif
 }
 
 #else
@@ -439,6 +447,9 @@ int
 img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
                                unsigned int num_bytes, bool last)
 {
+#ifndef FLASH_AREA_IMAGE_1
+    return MGMT_ERR_ENOTSUP;
+#else
     const struct flash_area *fa;
     int rc;
 
@@ -454,12 +465,16 @@ img_mgmt_impl_write_image_data(unsigned int offset, const void *data,
     }
 
     return 0;
+#endif
 }
 #endif
 
 int
 img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
 {
+#ifndef FLASH_AREA_IMAGE_1
+    return MGMT_ERR_ENOTSUP;
+#else
     const struct flash_area *fa;
     int rc;
 
@@ -475,12 +490,16 @@ img_mgmt_impl_erase_image_data(unsigned int off, unsigned int num_bytes)
     }
 
     return 0;
+#endif
 }
 
 #if MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
 int
 img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
 {
+#ifndef FLASH_AREA_IMAGE_1
+    return MGMT_ERR_ENOTSUP;
+#else
     int rc = 0;
     struct flash_area sector;
     const struct flash_area *cfa;
@@ -506,6 +525,7 @@ img_mgmt_impl_erase_if_needed(uint32_t off, uint32_t len)
 done:
     flash_area_close(cfa);
     return rc;
+#endif
 }
 #endif
 
