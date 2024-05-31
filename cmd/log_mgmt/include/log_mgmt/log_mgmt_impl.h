@@ -124,6 +124,17 @@ int log_mgmt_impl_clear(const char *log_name);
 int
 log_mgmt_impl_set_watermark(const struct log_mgmt_log *log, int index);
 
+/**
+ * @brief Get number of log entries since a specified log index
+ *
+ * @param log                   Log pointer
+ * @param index                 Log ndex
+ *
+ * @return                      0 on success, non-zero on failure
+ */
+int
+log_mgmt_impl_get_num_entries(const struct log_mgmt_log *log, int index, uint32_t *entries);
+
 #ifdef __cplusplus
 }
 #endif
