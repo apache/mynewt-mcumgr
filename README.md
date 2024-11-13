@@ -1,6 +1,6 @@
 # mcumgr
 
-This is mcumgr, version 0.4.0
+This is mcumgr, version 0.5.0
 
 mcumgr is a management library for 32-bit MCUs.   The goal of mcumgr is to
 define a common management infrastructure with pluggable transport and encoding
