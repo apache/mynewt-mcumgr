@@ -228,7 +228,7 @@ log_mgmt_impl_foreach_entry(const char *log_name,
                             log_mgmt_foreach_entry_fn *cb, void *arg)
 {
     struct mynewt_log_mgmt_walk_arg walk_arg;
-    struct log_offset offset;
+    struct log_offset offset = {};
     struct log *log;
 
     walk_arg = (struct mynewt_log_mgmt_walk_arg) {
