@@ -75,6 +75,32 @@ log_mgmt_mynewt_err_map(int mynewt_os_err)
 }
 
 int
+log_mgmt_impl_get_num_entries(const struct log_mgmt_log *log, int index, uint32_t *entries)
+{
+#if MYNEWT_VAL(LOG_FLAGS_TLV_SUPPORT)
+    struct log *tmplog;
+    uint32_t tmp_entries = 0;
+    int rc = 0;
+
+    tmplog = mynewt_log_mgmt_find_log(log->name);
+    if (tmplog) {
+        rc = log_mgmt_mynewt_err_map(log_get_entries(tmplog, index, &tmp_entries));
+    } else {
+        *entries = tmp_entries;
+        rc = LOG_MGMT_ERR_ENOENT;
+    }
+
+    if (!rc) {
+        *entries = tmp_entries;
+    }
+
+    return rc;
+#else
+    return LOG_MGMT_ERR_ENOTSUP;
+#endif
+}
+
+int
 log_mgmt_impl_set_watermark(const struct log_mgmt_log *log, int index)
 {
 #if MYNEWT_VAL(LOG_STORAGE_WATERMARK)
@@ -196,6 +222,8 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
     entry.flags = leh->ue_flags;
     entry.imghash = (leh->ue_flags & LOG_FLAGS_IMG_HASH) ?
         leh->ue_imghash : NULL;
+    entry.num_entries = (leh->ue_flags & LOG_FLAGS_TLV_SUPPORT) ?
+        leh->ue_num_entries : 0;
     entry.len = len;
     entry.data = mynewt_log_mgmt_walk_arg->chunk;
 
