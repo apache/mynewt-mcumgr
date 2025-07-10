@@ -25,6 +25,7 @@ int
 fs_mgmt_impl_filelen(const char *path, size_t *out_len)
 {
     struct fs_file *file;
+    uint32_t file_size;
     int rc;
 
     rc = fs_open(path, FS_ACCESS_READ, &file);
@@ -32,11 +33,13 @@ fs_mgmt_impl_filelen(const char *path, size_t *out_len)
         return MGMT_ERR_EUNKNOWN;
     }
 
-    rc = fs_filelen(file, &out_len);
+    rc = fs_filelen(file, &file_size);
     fs_close(file);
     if (rc != 0) {
         return MGMT_ERR_EUNKNOWN;
     }
+
+    *out_len = file_size;
 
     return 0;
 }
@@ -59,7 +62,7 @@ fs_mgmt_impl_read(const char *path, size_t offset, size_t len,
         goto done;
     }
 
-    rc = fs_read(file, len, file_data, &bytes_read);
+    rc = fs_read(file, len, out_data, &bytes_read);
     if (rc != 0) {
         goto done;
     }
