@@ -25,3 +25,5 @@ pkg.keywords:
 
 pkg.deps:
     - '@apache-mynewt-mcumgr/cmd/fs_mgmt'
+
+pkg.whole_archive: true
