@@ -161,12 +161,15 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
 {
     struct mynewt_log_mgmt_walk_arg *mynewt_log_mgmt_walk_arg;
     struct log_mgmt_entry entry;
+    uint16_t trailer_len = 0;
     int read_len;
     int offset;
     int rc;
 
     rc = 0;
     mynewt_log_mgmt_walk_arg = log_offset->lo_arg;
+
+    (void)trailer_len;
 
     /* If specified timestamp is nonzero, it is the primary criterion, and the
      * specified index is the secondary criterion.  If specified timetsamp is
@@ -186,6 +189,16 @@ mynewt_log_mgmt_walk_cb(struct log *log, struct log_offset *log_offset,
                 leh->ue_index < log_offset->lo_index)) {
         return 0;
     }
+
+#if MYNEWT_VAL(LOG_FLAGS_TRAILER)
+    trailer_len = log_read_trailer_len(log, dptr);
+    if (trailer_len) {
+        /* If trailer is present, so is the length of the trailer */
+        trailer_len += LOG_TRAILER_LEN_SIZE;
+    }
+
+    len -= trailer_len;
+#endif
 
     entry.ts = leh->ue_ts;
     entry.index = leh->ue_index;
