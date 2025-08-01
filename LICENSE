@@ -1,0 +1,650 @@
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "{}"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright {yyyy} {name of copyright owner}
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+This product bundles crc16, which is available under the "3-clause BSD"
+license.  For details, see:
+    * util/crc/include/crc/crc16.h
+    * util/crc/src/crc16.c
+
+This product bundles queue.h 8.5, which is available under the "3-clause BSD"
+license.  For details, see kernel/os/include/os/queue.h
+
+This product partly derives from FreeBSD, which is available under the
+"3-clause BSD" license.  For details, see:
+    * kernel/os/include/os/os_time.h
+    * kernel/os/src/os_mbuf.c
+    * encoding/base64/src/base64.c
+    * time/datetime/src/datetime.c
+
+This product bundles baselibc, which is available under the "3-clause BSD"
+license. Baselibc bundles tinyprintf and is based on klibc for details see:
+libc/baselibc/LICENSE
+
+This product bundles tinyprintf, which is available under the "3-clause BSD"
+license.  For details, see libc/baselibc/src/tinyprintf.c
+
+This product contains code based on klibc, which is available under the MIT
+license.  For details, see libc/baselibc/LICENSE
+
+This product bundles microjson, which is available under the "3-clause BSD"
+license.  For details, see encoding/json/
+
+This product bundles and partly derives from parts of the Nordic nRF52 SDK,
+which are available under a BSD style license.  Relevant files are:
+    * hw/mcu/nordic/nrf51xxx/src/system_nrf51.c
+    * hw/mcu/nordic/nrf52xxx/src/system_nrf52.c
+    * hw/mcu/nordic/nrf5340/include/nrfx_config_nrf5340_application.h
+    * hw/mcu/nordic/nrf5340_net/include/nrfx_config_nrf5340_network.h
+    * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0.s
+    * hw/mcu/nordic/nrf51xxx/src/arch/cortex_m0/gcc_startup_cm0_split.s
+    * hw/mcu/nordic/nrf52xxx/src/arch/cortex_m4/gcc_startup_cm4_split.s
+    * hw/mcu/nordic/nrf91xx/src/arch/cortex_m33/gcc_startup_cm33_split.s
+    * hw/mcu/nordic/nrf91xx/src/arch/cortex_m33/gcc_startup_cm33.s
+
+
+This product bundles Gary S. Brown's CRC32 implementation, which is available
+under the following license:
+COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
+code or tables extracted from it, as desired without restriction.
+
+This product bundles parts of CMSIS-CORE, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * kernel/os/src/arch/cortex_m0/m0/HAL_CM0.s
+    * kernel/os/src/arch/cortex_m0/m0/SVC_Table.s
+    * kernel/os/src/arch/cortex_m3/m3/HAL_CM3.s
+    * kernel/os/src/arch/cortex_m3/m3/SVC_Table.s
+    * kernel/os/src/arch/cortex_m4/m4/HAL_CM4.s
+    * kernel/os/src/arch/cortex_m4/m4/SVC_Table.s
+    * kernel/os/src/arch/cortex_m7/m7/SVC_Table.s
+    * kernel/os/src/arch/cortex_m7/m7/HAL_CM7.s
+    * kernel/os/src/arch/cortex_m7/m7/SVC_Table.s
+    * kernel/os/src/arch/cortex_m33/m33/HAL_CM33.s
+    * kernel/os/src/arch/cortex_m33/m33/SVC_Table.s
+
+This product bundles additional files from CMSIS-CORE, but these files are
+missing licensing information.  The BSD license was subsequently added to
+these files in later releases.  These files are:
+    * hw/cmsis-core/src/cmsis_nvic.c
+    * hw/mcu/ambiq/apollo2/include/mcu/cmsis_nvic.h
+    * hw/mcu/dialog/da1469x/include/mcu/cmsis_nvic.h
+    * hw/mcu/nordic/nrf51xxx/include/mcu/cmsis_nvic.h
+    * hw/mcu/nordic/nrf52xxx/include/mcu/cmsis_nvic.h
+    * hw/mcu/nxp/mkw41z/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32l1xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f0xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f3xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32l0xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f4xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32l4xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32wbxx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f1xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32f7xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32h7xx/include/mcu/cmsis_nvic.h
+    * hw/mcu/stm/stm32u5xx/include/mcu/cmsis_nvic.h
+
+This product bundles parts of STM32 SDK by STMicroelectronics, which is
+available under the "3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32_common/src/stm32_driver_mod_i2c_v1.c
+    * hw/mcu/stm/stm32_common/src/stm32_driver_mod_i2c_v2.c
+    * hw/mcu/stm/stm32_common/src/stm32_driver_mod_spi.c
+    * hw/mcu/stm/stm32_common/src/stm32_driver_mod_timer.c
+    
+This product bundles parts of STM32CubeF4 1.5, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32f4xx/src/clock_stm32f4xx.c
+    * hw/mcu/stm/stm32f4xx/src/system_stm32f4xx.c
+    * hw/bsp/ada_feather_stm32f405/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/black_vet6/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/nucleo-f401re/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/olimex_stm32-e407_devboard/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/stm32f4discovery/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/nucleo-f411re/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/nucleo-f413zh/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/nucleo-f439zi/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/stm32f411discovery/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/stm32f429discovery/include/bsp/stm32f4xx_hal_conf.h
+    * hw/bsp/weact_g431cb/include/bsp/stm32g4xx_hal_conf.h
+
+This product bundles parts of STM32CubeF7, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32f7xx/src/clock_stm32f7xx.c
+    * hw/mcu/stm/stm32f7xx/src/system_stm32f7xx.c
+    * hw/bsp/nucleo-f767zi/include/bsp/stm32f7xx_hal_conf.h
+    * hw/bsp/stm32f7discovery/include/bsp/stm32f7xx_hal_conf.h
+    * hw/bsp/nucleo-f746zg/include/bsp/stm32f7xx_hal_conf.h
+
+This product bundles parts of STM32CubeF3, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32f3xx/src/clock_stm32f3xx.c
+    * hw/mcu/stm/stm32f3xx/src/system_stm32f3xx.c
+    * hw/bsp/stm32f3discovery/include/bsp/stm32f3xx_hal_conf.h
+    * hw/bsp/nucleo-f303k8/include/bsp/stm32f3xx_hal_conf.h
+    * hw/bsp/nucleo-f303re/include/bsp/stm32f3xx_hal_conf.h
+
+This product bundles parts of STM32CubeH7, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32h7xx/src/clock_stm32h7xx.c
+    * hw/mcu/stm/stm32h7xx/src/system_stm32h7xx.c
+    * hw/bsp/nucleo-h723zg/include/bsp/stm32h7xx_hal_conf.h
+
+This product bundles parts of stm32l1xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32l1xx/src/clock_stm32l1xx.c
+    * hw/mcu/stm/stm32l1xx/src/system_stm32l1xx.c
+    * hw/bsp/stm32l152discovery/include/bsp/stm32l1xx_hal_conf.h
+    * hw/bsp/stm32l152discovery/src/arch/cortex_m3/startup_stm32l152xc.s
+
+This product bundles parts of stm32f1xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32f1xx/src/clock_stm32f1xx.c
+    * hw/mcu/stm/stm32f1xx/src/system_stm32f1xx.c
+    * hw/bsp/bluepill/include/bsp/stm32f1xx_hal_conf.h
+    * hw/bsp/nucleo-f103rb/include/bsp/stm32f1xx_hal_conf.h
+    * hw/bsp/olimex-p103/include/bsp/stm32f1xx_hal_conf.h
+    
+This product bundles parts of stm32f0xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32f0xx/src/clock_stm32f0xx.c
+    * hw/mcu/stm/stm32f0xx/src/system_stm32f0xx.c
+    * hw/bsp/nucleo-f030r8/include/bsp/stm32f0xx_hal_conf.h
+    * hw/bsp/nucleo-f072rb/include/bsp/stm32f0xx_hal_conf.h
+
+This product bundles parts of stm32l0xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32l0xx/src/clock_stm32l0xx.c
+    * hw/mcu/stm/stm32l0xx/src/system_stm32l0xx.c
+    * hw/bsp/b-l072z-lrwan1/include/bsp/stm32l0xx_hal_conf.h
+    * hw/bsp/nucleo-l073rz/include/bsp/stm32l0xx_hal_conf.h
+
+This product bundles parts of stm32l4xx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32l4xx/src/clock_stm32l4xx.c
+    * hw/mcu/stm/stm32l4xx/src/system_stm32l4xx.c
+    * hw/bsp/b-l475e-iot01a/include/bsp/stm32l4xx_hal_conf.h
+    * hw/bsp/nucleo-l476rg/include/bsp/stm32l4xx_hal_conf.h
+
+This product bundles parts of stm32wbxx, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32wbxx/src/clock_stm32wbxx.c
+    * hw/mcu/stm/stm32wbxx/src/system_stm32wbxx.c
+    * hw/bsp/p-nucleo-wb55/include/bsp/stm32wbxx_hal_conf.h
+    * hw/bsp/p-nucleo-wb55-usbdongle/include/bsp/stm32wbxx_hal_conf.h
+
+This product bundles parts of STM32CubeU5, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/stm/stm32u5xx/src/clock_stm32u5xx.c
+    * hw/mcu/stm/stm32u5xx/src/system_stm32u5xx.c
+    * hw/bsp/nucleo-u575zi-q/include/bsp/stm32u5xx_hal_conf.h
+
+This product bundles parts of nrfx, which is available under the
+"3-clause BSD" license.  For detalils see:
+    * hw/mcu/nordic/include/nrfx_glue.h
+
+This product bundles FATFS, which is available under a
+"1-clause BSD" style license.  Bundled files are:
+    * fs/fatfs/include/fatfs/diskio.h
+    * fs/fatfs/include/fatfs/ff.h
+    * fs/fatfs/include/fatfs/ffconf.h
+    * fs/fatfs/include/fatfs/integer.h
+    * fs/fatfs/src/ff.c
+
+This product bundles part of linker scripts from Nordic Semiconductor,
+which is available under the "modified Tcl/Tk" license.  Bundled files are:
+    * hw/mcu/ambiq/apollo2/apollo2.ld
+    * hw/mcu/dialog/cmac/cmac.ld
+    * hw/mcu/dialog/da1469x/da1469x.ld
+    * hw/mcu/dialog/da1469x/da1469x_ram_resident.ld
+    * hw/mcu/nordic/nrf51xxx/nrf51.ld
+    * hw/mcu/nordic/nrf52xxx/nrf52.ld
+    * hw/mcu/nordic/nrf52xxx/nrf52_ram_resident.ld
+    * hw/bsp/ada_feather_nrf52/ada_feather_nrf52_no_boot.ld
+    * hw/bsp/ada_feather_nrf52/boot-nrf52xxaa.ld
+    * hw/bsp/ada_feather_nrf52/nrf52xxaa.ld
+    * hw/bsp/ada_feather_nrf52/split_ada_feather_nrf52.ld
+    * hw/bsp/apollo2_evb/apollo2.ld
+    * hw/bsp/apollo2_evb/boot-apollo2.ld
+    * hw/bsp/arduino_primo_nrf52/boot-nrf52xxaa.ld
+    * hw/bsp/arduino_primo_nrf52/nrf52xxaa.ld
+    * hw/bsp/arduino_primo_nrf52/primo_no_boot.ld
+    * hw/bsp/arduino_primo_nrf52/split-primo.ld
+    * hw/bsp/bbc_microbit/boot-nrf51xxac.ld
+    * hw/bsp/bbc_microbit/split-microbit.ld
+    * hw/bsp/ble400/ble400_no_boot.ld
+    * hw/bsp/ble400/boot-nrf51xxac.ld
+    * hw/bsp/ble400/nrf51xxac.ld
+    * hw/bsp/ble400/split-ble400.ld
+    * hw/bsp/bluepill/boot-bluepill.ld
+    * hw/bsp/bmd200/boot-nrf51xxac.ld
+    * hw/bsp/bmd200/nrf51dk_no_boot.ld
+    * hw/bsp/bmd200/nrf51xxac.ld
+    * hw/bsp/bmd200/split-nrf51dk.ld
+    * hw/bsp/bmd300eval/bmd300eval_no_boot.ld
+    * hw/bsp/bmd300eval/boot-nrf52xxaa.ld
+    * hw/bsp/bmd300eval/nrf52xxaa.ld
+    * hw/bsp/bmd300eval/split-bmd300eval.ld
+    * hw/bsp/calliope_mini/boot-nrf51xxac.ld
+    * hw/bsp/calliope_mini/split-calliope_mini.ld
+    * hw/bsp/dwm1001-dev/boot-nrf52xxaa.ld
+    * hw/bsp/dwm1001-dev/dwm1001-dev_no_boot.ld
+    * hw/bsp/dwm1001-dev/nrf52xxaa.ld
+    * hw/bsp/dwm1001-dev/split-dwm1001-dev.ld
+    * hw/bsp/fanstel-ev-bt840/fanstel-ev-bt840_no_boot.ld
+    * hw/bsp/fanstel-ev-bt840/split-fanstel-ev-bt840.ld
+    * hw/bsp/nina-b1/boot-nrf52xxaa.ld
+    * hw/bsp/nina-b1/nrf52dk_no_boot.ld
+    * hw/bsp/nina-b1/nrf52xxaa.ld
+    * hw/bsp/nina-b1/split-nrf52dk.ld
+    * hw/bsp/nordic_pca10028-16k/boot-nrf51xxaa.ld
+    * hw/bsp/nordic_pca10028-16k/nordic_pca10028-16k_no_boot.ld
+    * hw/bsp/nordic_pca10028-16k/nrf51xxaa.ld
+    * hw/bsp/nordic_pca10028-16k/split-nordic_pca10028-16k.ld
+    * hw/bsp/nordic_pca10028/boot-nrf51xxac.ld
+    * hw/bsp/nordic_pca10028/nordic_pca10028_no_boot.ld
+    * hw/bsp/nordic_pca10028/nrf51xxac.ld
+    * hw/bsp/nordic_pca10028/split-nordic_pca10028.ld
+    * hw/bsp/nordic_pca10040/boot-nrf52xxaa.ld
+    * hw/bsp/nordic_pca10040/nordic_pca10040_no_boot.ld
+    * hw/bsp/nordic_pca10040/nrf52xxaa.ld
+    * hw/bsp/nordic_pca10040/split-nordic_pca10040.ld
+    * hw/bsp/nordic_pca10056/nordic_pca10056_no_boot.ld
+    * hw/bsp/nordic_pca10056/split-nordic_pca10056.ld
+    * hw/mcu/nordic/nrf5340/nrf5340.ld
+    * hw/mcu/nordic/nrf5340/nrf5340_ram_resident.ld
+    * hw/bsp/nordic_pca10095/nordic_pca10095_no_boot.ld
+    * hw/mcu/nordic/nrf5340_net/nrf5340_net.ld
+    * hw/mcu/nordic/nrf5340_net/nrf5340_net_ram_resident.ld
+    * hw/bsp/nordic_pca10095_net/nordic_pca10095_net_no_boot.ld
+    * hw/bsp/nordic_pca20020/boot-nrf52xxaa.ld
+    * hw/bsp/nordic_pca20020/nordic_pca20020_no_boot.ld
+    * hw/bsp/nordic_pca20020/nrf52xxaa.ld
+    * hw/bsp/nordic_pca20020/split-nordic_pca20020.ld
+    * hw/bsp/nrf51-arduino_101/boot-nrf51xxaa.ld
+    * hw/bsp/nrf51-arduino_101/nrf51dk-16kbram_no_boot.ld
+    * hw/bsp/nrf51-arduino_101/nrf51xxaa.ld
+    * hw/bsp/nrf51-blenano/boot-nrf51xxac.ld
+    * hw/bsp/nrf51-blenano/nrf51dk_no_boot.ld
+    * hw/bsp/nrf51-blenano/nrf51xxac.ld
+    * hw/bsp/nrf51-blenano/split-nrf51dk.ld
+    * hw/bsp/puckjs/boot-nrf52xxaa.ld
+    * hw/bsp/puckjs/nrf52xxaa.ld
+    * hw/bsp/puckjs/puckjs_no_boot.ld
+    * hw/bsp/puckjs/split_puckjs.ld
+    * hw/bsp/rb-blend2/boot-nrf52xxaa.ld
+    * hw/bsp/rb-blend2/nrf52xxaa.ld
+    * hw/bsp/rb-blend2/rb-blend2_no_boot.ld
+    * hw/bsp/rb-blend2/split-rb-blend2.ld
+    * hw/bsp/rb-nano2/boot-nrf52xxaa.ld
+    * hw/bsp/rb-nano2/nrf52xxaa.ld
+    * hw/bsp/rb-nano2/rb-nano2_no_boot.ld
+    * hw/bsp/rb-nano2/split-rb-nano2.ld
+    * hw/bsp/reel_board/reel_board_no_boot.ld
+    * hw/bsp/reel_board/split-reel_board.ld
+    * hw/bsp/ruuvitag_rev_b/boot-nrf52xxaa.ld
+    * hw/bsp/ruuvitag_rev_b/nrf52xxaa.ld
+    * hw/bsp/ruuvitag_rev_b/ruuvitag_rev_b_no_boot.ld
+    * hw/bsp/ruuvitag_rev_b/split-ruuvitag_rev_b.ld
+    * hw/bsp/telee02/boot-nrf52xxaa.ld
+    * hw/bsp/telee02/nrf52xxaa.ld
+    * hw/bsp/telee02/split-telee02.ld
+    * hw/bsp/telee02/telee02_no_boot.ld
+    * hw/bsp/vbluno51/boot-nrf51xxac.ld
+    * hw/bsp/vbluno51/nrf51xxac.ld
+    * hw/bsp/vbluno51/split-vbluno51.ld
+    * hw/bsp/vbluno51/vbluno51_no_boot.ld
+    * hw/bsp/vbluno52/boot-nrf52xxaa.ld
+    * hw/bsp/vbluno52/nrf52xxaa.ld
+    * hw/bsp/vbluno52/split-vbluno52.ld
+    * hw/bsp/vbluno52/vbluno52_no_boot.ld
+    * hw/bsp/pinetime/boot-pinetime.ld
+    * hw/bsp/apollo3_evb/apollo3.ld
+    * hw/bsp/apollo3_evb/boot-apollo3.ld
+    * hw/bsp/apollo3_evb/src/system_apollo3.c
+    * hw/bsp/nordic_pca10059/nordic_pca10059_no_boot.ld
+    * hw/bsp/nordic_pca10059/split-nordic_pca10059.ld
+    * hw/bsp/ublox_bmd_345/split-ublox_bmd_345.ld
+    * hw/bsp/ublox_bmd_345/ublox_bmd_345_no_boot.ld
+
+This product bundles part of NXP mkw41z, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/mcu/nxp/mkw41z/include/mcu/MKW41Z4.h
+    * hw/mcu/nxp/mkw41z/include/mcu/MKW41Z4_features.h
+    * hw/mcu/nxp/mkw41z/include/mcu/fsl_device_registers.h
+    * hw/mcu/nxp/mkw41z/include/mcu/system_MKW41Z4.h
+    * hw/mcu/nxp/mkw41z/src/system_MKW41Z4.c
+    * hw/bsp/usbmkw41z/boot-mkw41z512.ld
+    * hw/bsp/usbmkw41z/mkw41z512.ld
+    * hw/bsp/usbmkw41z/no-boot-mkw41z512.ld
+    * hw/bsp/usbmkw41z/src/arch/cortex_m0/gcc_startup_mkw41z.s
+
+This product bundles part of NXP frdm-k64f, which is available under the
+"3-clause BSD" license.  Bundled files are:
+    * hw/bsp/frdm-k64f/MK64FN1M0xxx12_flash.ld
+    * hw/bsp/frdm-k64f/boot-MK64FN1M0xxx12_flash.ld
+    * hw/bsp/frdm-k64f/src/clock_config.c
+    * hw/bsp/frdm-k64f/src/clock_config.h
+    * hw/bsp/frdm-k64f/src/arch/cortex_m4/startup_MK64F12.S
+
+This product bundles part of mips architecture and ci40, which is available
+under the "3-clause BSD" license.  Bundled files are:
+    * kernel/os/src/arch/mips/asm/ctx.S
+    * kernel/os/src/arch/mips/asm/excpt_isr.S
+    * hw/bsp/ci40/uhi32.ld
+    * hw/bsp/ci40/src/arch/mips/abiflags.S
+    * hw/bsp/ci40/src/arch/mips/gcc_startup_mips.S
+
+This product bundles LwIP, which is available under the "3-clause BSD"
+license. For details, and bundled files see:
+    * net/ip/lwip_base/COPYING
+    * net/ip/lwip_base
+
+This product bundles tinycrypt, which is available under the "3-clause BSD"
+license. For details, and bundled files see:
+    * crypto/tinycrypt/LICENSE
+    * crypto/tinycrypt
+
+This product bundles parts of the Generic SX1276 driver from Semtech, which
+is available under the "3-clause BSD" license. For details, see:
+    * apps/loraping/src/main.c
+    * hw/drivers/lora/sx1276/LICENSE.txt
+    * hw/drivers/lora/sx1276
+
+This product bundles parts of the Generic SX1272 driver from Semtech, which
+is available under the "3-clause BSD" license. For details, see:
+    * hw/drivers/lora/sx1272/LICENSE.txt
+    * hw/drivers/lora/sx1272
+
+This product bundles parts of SEGGER RTT, which is available under the
+"3-clause BSD" license. For details, see:
+    * hw/drivers/rtt
+
+This products bundle Adafruit's tsl2561 driver, which is available under the
+"3-clause BSD" license. For details, see:
+    * hw/drivers/sensors/tsl2561
+
+This products bundles Amiq Micro Apollo 2, which is available under the
+"3-clause BSD" license. Bundled files are:
+    * hw/mcu/ambiq/apollo2/src/ext/AmbiqSuite
+    * hw/mcu/ambiq/apollo2/include/mcu/apollo2.h
+    * hw/mcu/ambiq/apollo2/include/mcu/system_apollo2.h
+    * hw/bsp/apollo2_evb/include/bsp/apollo_nvic.h
+    * hw/bsp/apollo2_evb/src/system_apollo2.c
+    * hw/bsp/apollo2_evb/src/arch/cortex_m4/gcc_startup.s
+
+This products bundles Amiq Micro Apollo 3, which is available under the
+"3-clause BSD" license. Bundled files are:
+    * hw/mcu/ambiq/apollo3/src/ext/AmbiqSuite
+    * hw/mcu/ambiq/apollo3/include/mcu/apollo3.h
+    * hw/mcu/ambiq/apollo3/include/mcu/cmsis_nvic.h
+    * hw/mcu/ambiq/apollo3/include/mcu/system_apollo3.h
+    * hw/bsp/apollo3_evb/src/system_apollo3.c
+
+This product bundles processor headers for PIC32 by Microchip Technology
+Inc., which is available under the "3-clause BSD" license. Bundled files are:
+    * hw/mcu/microchip/pic32mx470f512h/include/mcu/p32mx470f512h.h
+    * hw/mcu/microchip/pic32mx470f512h/include/mcu/ppic32mx.h
+    * hw/bsp/pic32mx470_6lp_clicker/src/sbrk.c
+    * kernel/os/include/os/arch/pic32/os/cp0defs.h
+    * kernel/os/src/arch/pic32/startup/cache-err-exception.S
+    * kernel/os/src/arch/pic32/startup/crt0.S
+    * kernel/os/src/arch/pic32/startup/simple-tlb-refill-exception.S
+    * kernel/os/src/arch/pic32/stubs/pic32_init_cache.S
+    * kernel/os/src/arch/pic32/stubs/pic32_init_tlb_ebi_sqi.S
+    * hw/mcu/microchip/pic32mz/p32mz_app.ld
+    * hw/mcu/microchip/pic32mz/p32mz_boot.ld
+
+This product bundles MIPS processor low-level macros by Imagination
+Technologies Limited, which is available under the "3-clause BSD" license.
+Bundled files are included inside:
+    * hw/mips-hal/src/arch/mips
+    
+This product bundles parts of LoRaWAN endpoint stack by Semtech, which is
+available under the "3-clause BSD" license. For details, see:
+    * net/lora/node/
+    * net/lora/node/LICENSE.txt
+
+This product bundles Eclipse Paho's MQTT by IBM Corp. which is available
+under the Eclipse Public License 1.0. For details see:
+    * net/mqtt/eclipse/
+    * net/mqtt/eclipse/LICENSE.txt
+
+This product bundles SEGGER SystemView, which is available under the
+"3-clause BSD" license. For details, see:
+    * sys/sysview/vendor
+
+This product bundles tinycbor by Intel Corporation, which is available under
+the MIT license. For details see:
+    * encoding/tinycbor
+
+This product bundles part of embARC BSP SDK by Synopsys, which is available
+under the "3-clause BSD" license. Bundled files are:
+    * hw/mcu/arc/src/ext/sdk
+    * hw/mcu/arc/snps/src/arch/arc/arc_startup.S
+    * hw/bsp/embarc_emsk/arc_core.ld
+    * hw/bsp/embarc_emsk/include/bsp/arc_core_config.h
+    * hw/bsp/embarc_emsk/include/bsp/embARC_BSP_config.h
+    * hw/bsp/embarc_emsk/src/board.c
+
+This product bundles part of IoTivity-Constrained, which is partially available
+under the "3-clause BSD" license. Bundled files are:
+    * net/oic/include/oic/messaging/coap/
+    * net/oic/src/messaging/coap/
+    * net/oic/include/oic/port/oc_random.h
+    * net/oic/src/port/oc_clock.h
+
+This products bundles BMP388 driver by Bosch Sensortec GmbH , which is available
+under the "3-clause BSD" license. For details, see:
+    * hw/drivers/sensors/bmp388
+
+This product bundles part of DA1469 SDK by Dialog Semiconductor which is
+available under the "3-clause BSD" license. Bundled files are:
+    * hw/mcu/dialog/include/DA1469xAB.h
+    * hw/mcu/dialog/include/CMAC.h
+    * hw/mcu/dialog/include/system_CMAC.h
+
+This product bundles part of tinyusb which is available under the MIT license.
+Bundled files are:
+    * hw/usb/tinyusb/std_descriptors/include/tusb_config.h
+    * hw/usb/tinyusb/std_descriptors/src/std_descriptors.c
+
+This product bundles part of lvgl, which is available under the MIT license.
+Bundled files are:
+    * hw/drivers/display/lvgl/default/lv_conf.h
