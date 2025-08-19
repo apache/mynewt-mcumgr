@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <string.h>
 
 #include "tinycbor/cbor.h"
@@ -26,6 +25,9 @@
 #include "os_mgmt/os_mgmt.h"
 #include "os_mgmt/os_mgmt_impl.h"
 #include "os_mgmt/os_mgmt_config.h"
+#if MYNEWT_VAL(OS_MGMT_DATETIME)
+#include "datetime/datetime.h"
+#endif
 
 #if OS_MGMT_ECHO
 static mgmt_handler_fn os_mgmt_echo;
@@ -37,6 +39,11 @@ static mgmt_handler_fn os_mgmt_reset;
 static mgmt_handler_fn os_mgmt_taskstat_read;
 #endif
 
+#if OS_MGMT_DATETIME
+static mgmt_handler_fn os_mgmt_datetime_read;
+static mgmt_handler_fn os_mgmt_datetime_write;
+#endif
+
 static const struct mgmt_handler os_mgmt_group_handlers[] = {
 #if OS_MGMT_ECHO
     [OS_MGMT_ID_ECHO] = {
@@ -46,6 +53,11 @@ static const struct mgmt_handler os_mgmt_group_handlers[] = {
 #if OS_MGMT_TASKSTAT
     [OS_MGMT_ID_TASKSTAT] = {
         os_mgmt_taskstat_read, NULL
+    },
+#endif
+#if OS_MGMT_DATETIME
+    [OS_MGMT_ID_DATETIME_STR] = {
+        os_mgmt_datetime_read, os_mgmt_datetime_write
     },
 #endif
     [OS_MGMT_ID_RESET] = {
@@ -189,6 +201,66 @@ os_mgmt_taskstat_read(struct mgmt_ctxt *ctxt)
     return 0;
 }
 #endif
+
+/**
+ * Command handler: os datetime
+ */
+static int
+os_mgmt_datetime_read(struct mgmt_ctxt *ctxt)
+{
+    char buf[DATETIME_BUFSIZE];
+    CborError err = 0;
+
+    err = cbor_encode_text_stringz(&ctxt->encoder, "datetime");
+    if (err != 0) {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    err = os_mgmt_impl_datetime_info(buf, sizeof(buf));
+    if (err != 0) {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    err = cbor_encode_text_stringz(&ctxt->encoder, buf);
+    if (err != 0) {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    return MGMT_ERR_EOK;
+}
+
+/**
+ * Command handler: os datetime
+ */
+static int
+os_mgmt_datetime_write(struct mgmt_ctxt *ctxt)
+{
+    char datetime_buf[DATETIME_BUFSIZE];
+    CborError err;
+
+    const struct cbor_attr_t attrs[2] = {
+        [0] = {
+               .attribute = "datetime",
+               .type = CborAttrTextStringType,
+               .addr.string = datetime_buf,
+               .nodefault = 1,
+               .len = sizeof datetime_buf,
+               },
+        [1] = { .attribute = NULL }
+    };
+
+    err = cbor_read_object(&ctxt->it, attrs);
+    if (err != 0) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    err = os_mgmt_impl_datetime_set(datetime_buf);
+    if (err != 0) {
+        return MGMT_ERR_ECORRUPT;
+    }
+
+    return MGMT_ERR_EOK;
+}
 
 /**
  * Command handler: os reset
