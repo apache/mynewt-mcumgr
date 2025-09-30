@@ -47,6 +47,28 @@ struct os_mgmt_task_info;
 int os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info);
 
 /**
+ * @brief Retrieves the current system date and time in textual form.
+ *
+ * @param datetime              Buffer where the formatted datetime string
+ *                              will be written.
+ * @param datetime_size         Size of the buffer in bytes. Must be at least
+ *                              DATETIME_BUFSIZE.
+ *
+ * @return                      0 on success;
+ *                              MGMT_ERR_[...] code on failure.
+ */
+int os_mgmt_impl_datetime_info(char *datetime, size_t datetime_size);
+/**
+ * @brief Sets the current system date and time.
+ *
+ * @param datetime              The datetime string to parse and apply.
+ *
+ * @return                      0 on success;
+ *                              MGMT_ERR_[...] code on failure.
+ */
+int os_mgmt_impl_datetime_set(char *datetime);
+
+/**
  * @brief Schedules a near-immediate system reset.  There must be a slight
  * delay before the reset occurs to allow time for the mgmt response to be
  * delivered.

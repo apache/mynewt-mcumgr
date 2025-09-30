@@ -27,6 +27,9 @@
 #include "os_mgmt/os_mgmt_impl.h"
 #include "os_mgmt/os_mgmt.h"
 #include "mgmt/mgmt.h"
+#if MYNEWT_VAL(OS_MGMT_DATETIME)
+#include "datetime/datetime.h"
+#endif
 
 static struct os_callout mynewt_os_mgmt_reset_callout;
 
@@ -93,6 +96,48 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
     out_info->oti_name[sizeof out_info->oti_name - 1] = '\0';
 
     return 0;
+}
+
+int
+os_mgmt_impl_datetime_info(char *datetime, size_t size)
+{
+    if (size < DATETIME_BUFSIZE) {
+        return MGMT_ERR_ENOMEM;
+    }
+
+    struct os_timeval tv;
+    struct os_timezone tz;
+    char buf[size];
+    int rc = 0;
+
+    rc = os_gettimeofday(&tv, &tz);
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    rc = datetime_format(&tv, &tz, buf, sizeof(buf));
+    if (rc != 0) {
+        return MGMT_ERR_EINVAL;
+    }
+
+    snprintf(datetime, size, "%s", buf);
+
+    return MGMT_ERR_EOK;
+}
+
+int
+os_mgmt_impl_datetime_set(char *datetime)
+{
+    struct os_timeval tv;
+    struct os_timezone tz;
+    int rc = 0;
+
+    rc = datetime_parse(datetime, &tv, &tz);
+    if (rc != 0) {
+        return MGMT_ERR_ECORRUPT;
+    }
+
+    return os_settimeofday(&tv, &tz);
 }
 
 int
