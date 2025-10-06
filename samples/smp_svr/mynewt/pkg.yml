@@ -42,7 +42,6 @@ pkg.deps.!BSP_SIMULATED:
     - '@apache-mynewt-nimble/nimble/host/services/gap'
     - '@apache-mynewt-nimble/nimble/host/services/gatt'
     - '@apache-mynewt-nimble/nimble/host/store/config'
-    - '@apache-mynewt-nimble/nimble/transport/ram'
 
 pkg.deps.BSP_SIMULATED:
     - '@apache-mynewt-core/boot/stub'
