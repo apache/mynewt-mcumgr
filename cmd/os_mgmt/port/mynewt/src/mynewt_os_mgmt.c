@@ -101,26 +101,23 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
 int
 os_mgmt_impl_datetime_info(char *datetime, size_t size)
 {
+    struct os_timeval tv;
+    struct os_timezone tz;
+    int rc;
+
     if (size < DATETIME_BUFSIZE) {
         return MGMT_ERR_ENOMEM;
     }
-
-    struct os_timeval tv;
-    struct os_timezone tz;
-    char buf[size];
-    int rc = 0;
 
     rc = os_gettimeofday(&tv, &tz);
     if (rc != 0) {
         return MGMT_ERR_EINVAL;
     }
 
-    rc = datetime_format(&tv, &tz, buf, sizeof(buf));
+    rc = datetime_format(&tv, &tz, datetime, size);
     if (rc != 0) {
         return MGMT_ERR_EINVAL;
     }
-
-    snprintf(datetime, size, "%s", buf);
 
     return MGMT_ERR_EOK;
 }
