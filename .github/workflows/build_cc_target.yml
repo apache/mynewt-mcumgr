@@ -1,0 +1,67 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+name: Build check
+
+on: [push, pull_request]
+
+jobs:
+  targets:
+    name: Build GCC test target
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        gcc: ['14.2.Rel1', '13.2.Rel1', '12.2.Rel1', '11.3.Rel1', '10.3-2021.10', '9-2020-q2', '8-2019-q3']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 'stable'
+      - uses: carlosperate/arm-none-eabi-gcc-action@v1.10.1
+        with:
+          release: ${{ matrix.gcc }}
+      - name: Install newt
+        shell: bash
+        run: |
+             go version
+             go install mynewt.apache.org/newt/newt@latest
+      - name: Setup project
+        shell: bash
+        run: |
+             newt new build
+             cp -f .github/project.yml build/project.yml
+             cd build
+             newt upgrade --shallow=1
+             rm -rf repos/apache-mynewt-mcumgr
+             git clone .. repos/apache-mynewt-mcumgr
+             cd ..
+      - name: Build test target
+        shell: bash
+        run: |
+             cd build
+             newt target create cc_test1
+             newt target set cc_test1 bsp="@apache-mynewt-core/hw/bsp/nordic_pca10056"
+             newt target set cc_test1 app="@apache-mynewt-mcumgr/samples/omp_svr/mynewt"
+             newt build -j 1 cc_test1
+             newt target create cc_test2
+             newt target set cc_test2 bsp="@apache-mynewt-core/hw/bsp/nordic_pca10056"
+             newt target set cc_test2 app="@apache-mynewt-mcumgr/samples/smp_svr/mynewt"
+             newt build -j 1 cc_test2
