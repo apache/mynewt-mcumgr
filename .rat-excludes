@@ -7,8 +7,10 @@ README-zephyr.md
 README.md
 README.rst
 protocol.md
-smp-bluetooth.md
-smp-console.md
-prj.conf
-prj_tiny.conf
-sample.yaml
+samples/smp_svr/README.md
+samples/smp_svr/zephyr/README.rst
+samples/smp_svr/zephyr/prj.conf
+samples/smp_svr/zephyr/prj_tiny.conf
+samples/smp_svr/zephyr/sample.yaml
+transport/smp-bluetooth.md
+transport/smp-console.md
