@@ -25,7 +25,8 @@ repo.versions:
     "0.3.0": "mcumgr_0_3_0_tag"
     "0.4.0": "mcumgr_0_4_0_tag"
     "0.5.0": "mcumgr_0_5_0_tag"
+    "0.6.0": "mcumgr_0_6_0_tag"
 
 
     "0-dev": "0.0.0"       # master
-    "0-latest": "0.5.0"    # latest release
+    "0-latest": "0.6.0"    # latest release
