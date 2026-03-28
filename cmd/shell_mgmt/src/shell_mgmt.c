@@ -47,8 +47,7 @@ static int
 shell_mgmt_exec(struct mgmt_ctxt *cb)
 {
     static char line[SHELL_MGMT_MAX_LINE_LEN + 1] = {0};
-    CborEncoder str_encoder;
-    CborError err;
+    int err;
     int rc;
     char *argv[SHELL_MGMT_MAX_ARGC];
     int argc;
@@ -69,25 +68,20 @@ shell_mgmt_exec(struct mgmt_ctxt *cb)
         { 0 },
     };
 
-    err = cbor_read_object(&cb->it, attrs);
+    err = cbor_read_object(&cb->decoder, attrs);
     if (err != 0) {
         return MGMT_ERR_EINVAL;
     }
 
-    /* Key="o"; value=<command-output> */
-    err |= cbor_encode_text_stringz(&cb->encoder, "o");
-    err |= cbor_encoder_create_indef_text_string(&cb->encoder, &str_encoder);
-
     rc = shell_mgmt_impl_exec(line);
 
-    err |= cbor_encode_text_stringz(&str_encoder,
-        shell_mgmt_impl_get_output());
-
-    err |= cbor_encoder_close_container(&cb->encoder, &str_encoder);
+    /* Key="o"; value=<command-output> */
+    err  = mgmt_cbor_encode_text_z(&cb->encoder, "o");
+    err |= mgmt_cbor_encode_text_z(&cb->encoder, shell_mgmt_impl_get_output());
 
     /* Key="rc"; value=<status> */
-    err |= cbor_encode_text_stringz(&cb->encoder, "rc");
-    err |= cbor_encode_int(&cb->encoder, rc);
+    err |= mgmt_cbor_encode_text_z(&cb->encoder, "rc");
+    err |= mgmt_cbor_encode_int(&cb->encoder, rc);
 
     if (err != 0) {
         return MGMT_ERR_ENOMEM;

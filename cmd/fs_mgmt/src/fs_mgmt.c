@@ -64,7 +64,7 @@ fs_mgmt_file_download(struct mgmt_ctxt *ctxt)
     uint8_t file_data[FS_MGMT_DL_CHUNK_SIZE];
     char path[FS_MGMT_PATH_SIZE + 1];
     unsigned long long off;
-    CborError err;
+    int err;
     size_t bytes_read;
     size_t file_len;
     int rc;
@@ -85,7 +85,7 @@ fs_mgmt_file_download(struct mgmt_ctxt *ctxt)
     };
 
     off = ULLONG_MAX;
-    rc = cbor_read_object(&ctxt->it, dload_attr);
+    rc = cbor_read_object(&ctxt->decoder, dload_attr);
     if (rc != 0 || off == ULLONG_MAX) {
         return MGMT_ERR_EINVAL;
     }
@@ -109,15 +109,15 @@ fs_mgmt_file_download(struct mgmt_ctxt *ctxt)
 
     /* Encode the response. */
     err = 0;
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "off");
-    err |= cbor_encode_uint(&ctxt->encoder, off);
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "data");
-    err |= cbor_encode_byte_string(&ctxt->encoder, file_data, bytes_read);
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "off");
+    err |= mgmt_cbor_encode_uint(&ctxt->encoder, off);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "data");
+    err |= mgmt_cbor_encode_bytes(&ctxt->encoder, file_data, bytes_read);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "rc");
+    err |= mgmt_cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
     if (off == 0) {
-        err |= cbor_encode_text_stringz(&ctxt->encoder, "len");
-        err |= cbor_encode_uint(&ctxt->encoder, file_len);
+        err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "len");
+        err |= mgmt_cbor_encode_uint(&ctxt->encoder, file_len);
     }
 
     if (err != 0) {
@@ -133,13 +133,13 @@ fs_mgmt_file_download(struct mgmt_ctxt *ctxt)
 static int
 fs_mgmt_file_upload_rsp(struct mgmt_ctxt *ctxt, int rc, unsigned long long off)
 {
-    CborError err;
+    int err;
 
     err = 0;
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, rc);
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "off");
-    err |= cbor_encode_uint(&ctxt->encoder, off);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "rc");
+    err |= mgmt_cbor_encode_int(&ctxt->encoder, rc);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "off");
+    err |= mgmt_cbor_encode_uint(&ctxt->encoder, off);
 
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
@@ -193,7 +193,7 @@ fs_mgmt_file_upload(struct mgmt_ctxt *ctxt)
 
     len = ULLONG_MAX;
     off = ULLONG_MAX;
-    rc = cbor_read_object(&ctxt->it, uload_attr);
+    rc = cbor_read_object(&ctxt->decoder, uload_attr);
     if (rc != 0 || off == ULLONG_MAX || file_name[0] == '\0') {
         return MGMT_ERR_EINVAL;
     }

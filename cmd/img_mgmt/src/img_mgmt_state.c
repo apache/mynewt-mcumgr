@@ -19,7 +19,6 @@
 
 #include <assert.h>
 
-#include "tinycbor/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "img_mgmt/img_mgmt.h"
@@ -190,19 +189,15 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
     char vers_str[IMG_MGMT_VER_MAX_STR_LEN];
     uint8_t hash[IMAGE_HASH_LEN]; /* SHA256 hash */
     struct image_version ver;
-    CborEncoder images;
-    CborEncoder image;
-    CborError err;
+    int err;
     uint32_t flags;
     uint8_t state_flags;
     int rc;
     int i;
 
     err = 0;
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "images");
-
-    err |= cbor_encoder_create_array(&ctxt->encoder, &images,
-                                       CborIndefiniteLength);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "images");
+    err |= mgmt_cbor_array_begin(&ctxt->encoder);
 
     for (i = 0; i < 2 * IMG_MGMT_UPDATABLE_IMAGE_NUMBER; i++) {
         rc = img_mgmt_read_info(i, &ver, hash, &flags);
@@ -212,63 +207,63 @@ img_mgmt_state_read(struct mgmt_ctxt *ctxt)
 
         state_flags = img_mgmt_state_flags(i);
 
-        err |= cbor_encoder_create_map(&images, &image,
-                                         CborIndefiniteLength);
+        err |= mgmt_cbor_map_begin(&ctxt->encoder);
 
 #if IMG_MGMT_UPDATABLE_IMAGE_NUMBER > 1
-        err |= cbor_encode_text_stringz(&image, "image");
-        err |= cbor_encode_int(&image, i >> 1);
+        err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "image");
+        err |= mgmt_cbor_encode_int(&ctxt->encoder, i >> 1);
 #endif
-        err |= cbor_encode_text_stringz(&image, "slot");
-        err |= cbor_encode_int(&image, i % 2);
+        err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "slot");
+        err |= mgmt_cbor_encode_int(&ctxt->encoder, i % 2);
 
-        err |= cbor_encode_text_stringz(&image, "version");
+        err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "version");
         img_mgmt_ver_str(&ver, vers_str);
-        err |= cbor_encode_text_stringz(&image, vers_str);
+        err |= mgmt_cbor_encode_text_z(&ctxt->encoder, vers_str);
 
-        err |= cbor_encode_text_stringz(&image, "hash");
-        err |= cbor_encode_byte_string(&image, hash, IMAGE_HASH_LEN);
+        err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "hash");
+        err |= mgmt_cbor_encode_bytes(&ctxt->encoder, hash, IMAGE_HASH_LEN);
 
         if (!IMG_MGMT_FRUGAL_LIST || !(flags & IMAGE_F_NON_BOOTABLE)) {
-            err |= cbor_encode_text_stringz(&image, "bootable");
-            err |= cbor_encode_boolean(&image, !(flags & IMAGE_F_NON_BOOTABLE));
+            err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "bootable");
+            err |= mgmt_cbor_encode_bool(&ctxt->encoder,
+                                         !(flags & IMAGE_F_NON_BOOTABLE));
         }
 
         if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_PENDING)) {
-            err |= cbor_encode_text_stringz(&image, "pending");
-            err |= cbor_encode_boolean(&image,
-                                    state_flags & IMG_MGMT_STATE_F_PENDING);
+            err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "pending");
+            err |= mgmt_cbor_encode_bool(&ctxt->encoder,
+                                         state_flags & IMG_MGMT_STATE_F_PENDING);
         }
 
         if (!IMG_MGMT_FRUGAL_LIST ||
             (state_flags & IMG_MGMT_STATE_F_CONFIRMED)) {
-            err |= cbor_encode_text_stringz(&image, "confirmed");
-            err |= cbor_encode_boolean(&image,
-                                    state_flags & IMG_MGMT_STATE_F_CONFIRMED);
+            err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "confirmed");
+            err |= mgmt_cbor_encode_bool(&ctxt->encoder,
+                                         state_flags & IMG_MGMT_STATE_F_CONFIRMED);
         }
 
         if (!IMG_MGMT_FRUGAL_LIST || (state_flags & IMG_MGMT_STATE_F_ACTIVE)) {
-            err |= cbor_encode_text_stringz(&image, "active");
-            err |= cbor_encode_boolean(&image,
-                                    state_flags & IMG_MGMT_STATE_F_ACTIVE);
+            err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "active");
+            err |= mgmt_cbor_encode_bool(&ctxt->encoder,
+                                         state_flags & IMG_MGMT_STATE_F_ACTIVE);
         }
 
         if (!IMG_MGMT_FRUGAL_LIST ||
             (state_flags & IMG_MGMT_STATE_F_PERMANENT)) {
-            err |= cbor_encode_text_stringz(&image, "permanent");
-            err |= cbor_encode_boolean(&image,
-                                    state_flags & IMG_MGMT_STATE_F_PERMANENT);
+            err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "permanent");
+            err |= mgmt_cbor_encode_bool(&ctxt->encoder,
+                                         state_flags & IMG_MGMT_STATE_F_PERMANENT);
         }
 
-        err |= cbor_encoder_close_container(&images, &image);
+        err |= mgmt_cbor_map_end(&ctxt->encoder);
     }
 
-    err |= cbor_encoder_close_container(&ctxt->encoder, &images);
+    err |= mgmt_cbor_array_end(&ctxt->encoder);
 
     /* splitStatus is always 0 so in frugal list it is not present at all */
     if (!IMG_MGMT_FRUGAL_LIST) {
-        err |= cbor_encode_text_stringz(&ctxt->encoder, "splitStatus");
-        err |= cbor_encode_int(&ctxt->encoder, 0);
+        err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "splitStatus");
+        err |= mgmt_cbor_encode_int(&ctxt->encoder, 0);
     }
 
     if (err != 0) {
@@ -312,7 +307,7 @@ img_mgmt_state_write(struct mgmt_ctxt *ctxt)
     };
 
     hash_len = 0;
-    rc = cbor_read_object(&ctxt->it, write_attr);
+    rc = cbor_read_object(&ctxt->decoder, write_attr);
     if (rc != 0) {
         return MGMT_ERR_EINVAL;
     }

@@ -24,16 +24,15 @@
 
 #include <mgmt/mgmt.h>
 #include <cborattr/cborattr.h>
-#include <tinycbor/cbor.h>
 
 #include "omp/omp_priv.h"
 
 int
-omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr)
+omp_encode_mgmt_hdr(mgmt_cbor_encoder_t *enc, struct mgmt_hdr hdr)
 {
     int rc;
 
-    rc = cbor_encode_text_string(enc, "_h", 2);
+    rc = mgmt_cbor_encode_text(enc, "_h", 2);
     if (rc != 0) {
         return MGMT_ERR_ENOMEM;
     }
@@ -41,8 +40,7 @@ omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr)
     hdr.nh_len = htons(hdr.nh_len);
     hdr.nh_group = htons(hdr.nh_group);
 
-    /* Encode the MGMT header in the response. */
-    rc = cbor_encode_byte_string(enc, (void *)&hdr, sizeof hdr);
+    rc = mgmt_cbor_encode_bytes(enc, (const void *)&hdr, sizeof hdr);
     if (rc != 0) {
         return MGMT_ERR_ENOMEM;
     }
@@ -51,7 +49,7 @@ omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr)
 }
 
 int
-omp_send_err_rsp(struct CborEncoder *enc,
+omp_send_err_rsp(mgmt_cbor_encoder_t *enc,
                  const struct mgmt_hdr *hdr,
                  int mgmt_status)
 {
@@ -62,12 +60,12 @@ omp_send_err_rsp(struct CborEncoder *enc,
         return rc;
     }
 
-    rc = cbor_encode_text_stringz(enc, "rc");
+    rc = mgmt_cbor_encode_text_z(enc, "rc");
     if (rc != 0) {
         return MGMT_ERR_ENOMEM;
     }
 
-    rc = cbor_encode_int(enc, mgmt_status);
+    rc = mgmt_cbor_encode_int(enc, mgmt_status);
     if (rc != 0) {
         return MGMT_ERR_ENOMEM;
     }
@@ -76,7 +74,7 @@ omp_send_err_rsp(struct CborEncoder *enc,
 }
 
 int
-omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr)
+omp_read_hdr(mgmt_cbor_decoder_t *dec, struct mgmt_hdr *out_hdr)
 {
     size_t hlen;
     int rc;
@@ -93,7 +91,7 @@ omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr)
         [1] = { 0 }
     };
 
-    rc = cbor_read_object(cv, attrs);
+    rc = cbor_read_object(dec, attrs);
     if (rc != 0 || hlen != sizeof *out_hdr) {
         return MGMT_ERR_EINVAL;
     }

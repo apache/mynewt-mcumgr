@@ -26,7 +26,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include "tinycbor/cbor.h"
+#include "mgmt/cbor_port.h"
 
 #ifdef MYNEWT
 #include <os/os_mbuf.h>
@@ -187,8 +187,8 @@ struct cbor_out_attr_t {
 
 #define CBORATTR_ATTR_UNNAMED (char *)(-1)
 
-int cbor_read_object(struct CborValue *, const struct cbor_attr_t *);
-int cbor_read_array(struct CborValue *, const struct cbor_array_t *);
+int cbor_read_object(mgmt_cbor_decoder_t *, const struct cbor_attr_t *);
+int cbor_read_array(mgmt_cbor_decoder_t *, const struct cbor_array_t *);
 
 int cbor_read_flat_attrs(const uint8_t *data, int len,
                          const struct cbor_attr_t *attrs);
@@ -204,7 +204,7 @@ int cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
  *
  * @return                      0 on success; SYS_E[...] error on failure.
  */
-int cbor_write_object(struct CborEncoder *enc,
+int cbor_write_object(mgmt_cbor_encoder_t *enc,
                       const struct cbor_out_attr_t *attrs);
 
 /**

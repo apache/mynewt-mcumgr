@@ -19,7 +19,6 @@
 
 #include <string.h>
 
-#include "tinycbor/cbor.h"
 #include "mgmt/endian.h"
 #include "mgmt/mgmt.h"
 
@@ -49,20 +48,22 @@ int
 mgmt_streamer_write_at(struct mgmt_streamer *streamer, size_t offset,
                        const void *data, int len)
 {
-    return streamer->cfg->write_at(streamer->writer, offset, data, len,
+    return streamer->cfg->write_at(streamer->tx_buf, offset, data, len,
                                    streamer->cb_arg);
 }
 
 int
 mgmt_streamer_init_reader(struct mgmt_streamer *streamer, void *buf)
 {
-    return streamer->cfg->init_reader(streamer->reader, buf, streamer->cb_arg);
+    return streamer->cfg->init_reader(buf, streamer->cb_arg,
+                                      &streamer->rx_buf, &streamer->rx_len);
 }
 
 int
 mgmt_streamer_init_writer(struct mgmt_streamer *streamer, void *buf)
 {
-    return streamer->cfg->init_writer(streamer->writer, buf, streamer->cb_arg);
+    return streamer->cfg->init_writer(buf, streamer->cb_arg,
+                                      &streamer->tx_buf, &streamer->tx_size);
 }
 
 void
@@ -158,13 +159,13 @@ mgmt_write_rsp_status(struct mgmt_ctxt *ctxt, int errcode)
 {
     int rc;
 
-    rc = cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    if (rc != 0) {
+    rc = mgmt_cbor_encode_text_z(&ctxt->encoder, "rc");
+    if (rc != MGMT_CBOR_OK) {
         return rc;
     }
 
-    rc = cbor_encode_int(&ctxt->encoder, errcode);
-    if (rc != 0) {
+    rc = mgmt_cbor_encode_int(&ctxt->encoder, errcode);
+    if (rc != MGMT_CBOR_OK) {
         return rc;
     }
 
@@ -175,9 +176,9 @@ int
 mgmt_err_from_cbor(int cbor_status)
 {
     switch (cbor_status) {
-        case CborNoError:           return MGMT_ERR_EOK;
-        case CborErrorOutOfMemory:  return MGMT_ERR_ENOMEM;
-        default:                    return MGMT_ERR_EUNKNOWN;
+    case MGMT_CBOR_OK:         return MGMT_ERR_EOK;
+    case MGMT_CBOR_ERR_NOMEM:  return MGMT_ERR_ENOMEM;
+    default:                   return MGMT_ERR_EUNKNOWN;
     }
 }
 
@@ -186,12 +187,35 @@ mgmt_ctxt_init(struct mgmt_ctxt *ctxt, struct mgmt_streamer *streamer)
 {
     int rc;
 
-    rc = cbor_parser_init(streamer->reader, 0, &ctxt->parser, &ctxt->it);
-    if (rc != CborNoError) {
-        return mgmt_err_from_cbor(rc);
+    /*
+     * trim_front() shifts the CBOR payload to offset 0 of the RX buffer
+     * before mgmt_ctxt_init() is called, so rx_buf already points to the
+     * start of the CBOR payload.  rx_len still holds the original full
+     * packet length (set by init_reader before trim_front), so we subtract
+     * MGMT_HDR_SIZE to obtain the payload length.
+     */
+    const uint8_t *rx = (const uint8_t *)streamer->rx_buf;
+    size_t rx_payload_len = (streamer->rx_len > MGMT_HDR_SIZE)
+                            ? streamer->rx_len - MGMT_HDR_SIZE : 0;
+
+    rc = mgmt_cbor_decoder_init(&ctxt->decoder, rx, rx_payload_len);
+    if (rc != MGMT_CBOR_OK) {
+        return MGMT_ERR_EINVAL;
     }
 
-    cbor_encoder_init(&ctxt->encoder, streamer->writer, 0);
+    /*
+     * The TX buffer also starts with an 8-byte header slot, followed by the
+     * CBOR payload area.
+     */
+    uint8_t *tx = (uint8_t *)streamer->tx_buf;
+    size_t tx_payload_size = (streamer->tx_size > MGMT_HDR_SIZE)
+                             ? streamer->tx_size - MGMT_HDR_SIZE : 0;
+
+    rc = mgmt_cbor_encoder_init_buf(&ctxt->encoder,
+                                     tx + MGMT_HDR_SIZE, tx_payload_size);
+    if (rc != MGMT_CBOR_OK) {
+        return MGMT_ERR_ENOMEM;
+    }
 
     return 0;
 }

@@ -284,8 +284,8 @@ img_mgmt_error_rsp(struct mgmt_ctxt *ctxt, int rc, const char *rsn)
      * encode other error probably does not make much sense - just ignore errors
      * here.
      */
-    cbor_encode_text_stringz(&ctxt->encoder, "rsn");
-    cbor_encode_text_stringz(&ctxt->encoder, rsn);
+    mgmt_cbor_encode_text_z(&ctxt->encoder, "rsn");
+    mgmt_cbor_encode_text_z(&ctxt->encoder, rsn);
     return rc;
 }
 #endif
@@ -297,7 +297,7 @@ static int
 img_mgmt_erase(struct mgmt_ctxt *ctxt)
 {
     struct image_version ver;
-    CborError err;
+    int err;
     int rc;
 
     /*
@@ -321,8 +321,8 @@ img_mgmt_erase(struct mgmt_ctxt *ctxt)
     }
 
     err = 0;
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, rc);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "rc");
+    err |= mgmt_cbor_encode_int(&ctxt->encoder, rc);
 
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
@@ -334,12 +334,12 @@ img_mgmt_erase(struct mgmt_ctxt *ctxt)
 static int
 img_mgmt_upload_good_rsp(struct mgmt_ctxt *ctxt)
 {
-    CborError err = CborNoError;
+    int err = 0;
 
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "off");
-    err |= cbor_encode_int(&ctxt->encoder, g_img_mgmt_state.off);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "rc");
+    err |= mgmt_cbor_encode_int(&ctxt->encoder, MGMT_ERR_EOK);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "off");
+    err |= mgmt_cbor_encode_int(&ctxt->encoder, g_img_mgmt_state.off);
 
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
@@ -449,7 +449,7 @@ img_mgmt_upload(struct mgmt_ctxt *ctxt)
     struct img_mgmt_upload_action action;
     bool last = false;
 
-    rc = cbor_read_object(&ctxt->it, off_attr);
+    rc = cbor_read_object(&ctxt->decoder, off_attr);
     if (rc != 0) {
         return MGMT_ERR_EINVAL;
     }

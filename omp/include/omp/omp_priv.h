@@ -26,8 +26,8 @@
 extern "C" {
 #endif
 
-int omp_encode_mgmt_hdr(struct CborEncoder *enc, struct mgmt_hdr hdr);
-int omp_send_err_rsp(struct CborEncoder *enc,
+int omp_encode_mgmt_hdr(mgmt_cbor_encoder_t *enc, struct mgmt_hdr hdr);
+int omp_send_err_rsp(mgmt_cbor_encoder_t *enc,
                      const struct mgmt_hdr *hdr,
                      int mgmt_status);
 int omp_process_mgmt_hdr(struct mgmt_hdr *req_hdr,

@@ -63,7 +63,7 @@ typedef void omp_tx_rsp_fn(struct omp_streamer *stmr, int retval, void* arg);
  */
 struct omp_streamer {
     struct mgmt_streamer mgmt_stmr;
-    struct CborEncoder *rsp_encoder;
+    mgmt_cbor_encoder_t *rsp_encoder;
     omp_tx_rsp_fn *tx_rsp_cb;
 };
 
@@ -100,7 +100,7 @@ int omp_impl_process_request_packet(struct omp_state *omgr_st, void *req);
  * @param cv      Ptr to CoberValue
  * @param out_hdr Ptr to management header to be filled in
  */ 
-int omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr);
+int omp_read_hdr(mgmt_cbor_decoder_t *dec, struct mgmt_hdr *out_hdr);
 
 #ifdef __cplusplus
 }

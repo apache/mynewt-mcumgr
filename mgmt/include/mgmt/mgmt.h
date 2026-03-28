@@ -21,7 +21,7 @@
 #define H_MGMT_MGMT_
 
 #include <inttypes.h>
-#include "tinycbor/cbor.h"
+#include "mgmt/cbor_port.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -158,45 +158,48 @@ typedef void mgmt_trim_front_fn(void *buf, size_t len, void *arg);
 typedef void mgmt_reset_buf_fn(void *buf, void *arg);
 
 /** @typedef mgmt_write_at_fn
- * @brief Writes data to a CBOR encoder.
+ * @brief Writes data into the TX buffer at the given byte offset.
  *
  * Any existing data at the specified offset is overwritten by the new data.
  * Any new data that extends past the buffer's current length is appended.
  *
- * @param writer                The encoder to write to.
- * @param offset                The byte offset to write to,
+ * @param tx_buf                The TX buffer pointer (set by init_writer).
+ * @param offset                The byte offset to write to.
  * @param data                  The data to write.
  * @param len                   The number of bytes to write.
  * @param arg                   Optional streamer argument.
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-typedef int mgmt_write_at_fn(struct cbor_encoder_writer *writer, size_t offset,
+typedef int mgmt_write_at_fn(void *tx_buf, size_t offset,
                              const void *data, size_t len, void *arg);
 
 /** @typedef mgmt_init_reader_fn
- * @brief Initializes a CBOR reader with the specified buffer.
+ * @brief Extracts the RX data pointer and length from the given buffer object.
  *
- * @param reader                The reader to initialize.
- * @param buf                   The buffer to configure the reader with.
+ * @param buf                   The buffer object holding received data.
  * @param arg                   Optional streamer argument.
+ * @param out_rx_buf            Set to the raw CBOR (+ header) data start.
+ * @param out_rx_len            Set to the number of available bytes.
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-typedef int mgmt_init_reader_fn(struct cbor_decoder_reader *reader, void *buf,
-                                void *arg);
+typedef int mgmt_init_reader_fn(void *buf, void *arg,
+                                const void **out_rx_buf, size_t *out_rx_len);
 
 /** @typedef mgmt_init_writer_fn
- * @brief Initializes a CBOR writer with the specified buffer.
+ * @brief Extracts the TX buffer pointer and capacity from the given buffer
+ *        object.
  *
- * @param writer                The writer to initialize.
- * @param buf                   The buffer to configure the writer with.
+ * @param buf                   The buffer object to write into.
  * @param arg                   Optional streamer argument.
+ * @param out_tx_buf            Set to the raw memory start for TX output.
+ * @param out_tx_size           Set to the capacity of the TX buffer.
  *
  * @return                      0 on success, MGMT_ERR_[...] code on failure.
  */
-typedef int mgmt_init_writer_fn(struct cbor_encoder_writer *writer, void *buf,
-                                void *arg);
+typedef int mgmt_init_writer_fn(void *buf, void *arg,
+                                void **out_tx_buf, size_t *out_tx_size);
 
 /** @typedef mgmt_init_writer_fn
  * @brief Frees the specified buffer.
@@ -221,12 +224,19 @@ struct mgmt_streamer_cfg {
 
 /**
  * @brief Decodes requests and encodes responses for any mcumgr protocol.
+ *
+ * rx_buf / rx_len are populated by init_reader; they point to the full
+ * received packet (header + CBOR payload).
+ * tx_buf / tx_size are populated by init_writer; they point to the TX
+ * memory region (header space + CBOR payload space).
  */
 struct mgmt_streamer {
     const struct mgmt_streamer_cfg *cfg;
     void *cb_arg;
-    struct cbor_decoder_reader *reader;
-    struct cbor_encoder_writer *writer;
+    const void *rx_buf;
+    size_t      rx_len;
+    void       *tx_buf;
+    size_t      tx_size;
 };
 
 /**
@@ -234,9 +244,8 @@ struct mgmt_streamer {
  *        responses.
  */
 struct mgmt_ctxt {
-    struct CborEncoder encoder;
-    struct CborParser parser;
-    struct CborValue it;
+    mgmt_cbor_encoder_t encoder;
+    mgmt_cbor_decoder_t decoder;
 };
 
 /** @typedef mgmt_handler_fn

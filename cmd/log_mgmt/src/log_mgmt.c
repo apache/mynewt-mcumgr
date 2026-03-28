@@ -22,21 +22,10 @@
 
 #include "mgmt/mgmt.h"
 #include "cborattr/cborattr.h"
-#include "tinycbor/cbor_cnt_writer.h"
 #include "log_mgmt/log_mgmt.h"
 #include "log_mgmt/log_mgmt_impl.h"
 #include "log_mgmt/log_mgmt_config.h"
 #include "log/log.h"
-
-/* Log mgmt encoder context used for multiple calls of the
- * entry encode function since the function gets called twice,
- * once for counter encoder and the second time for the actual
- * encoding
- */
-struct log_mgmt_enc_ctxt {
-    CborEncoder mapenc;
-    CborEncoder msgenc;
-};
 
 /** Context used during walks. */
 struct log_walk_ctxt {
@@ -45,11 +34,9 @@ struct log_walk_ctxt {
     /* The number of bytes encoded to the response so far. */
     size_t rsp_len;
     /* The encoder to use to write the current log entry. */
-    struct CborEncoder *enc;
+    mgmt_cbor_encoder_t *enc;
     /* Counter per encoder to understand if we are encoding the first chunk */
     uint32_t counter;
-    /* Log management encode context containing map and msg encoder */
-    struct log_mgmt_enc_ctxt lmec;
 };
 
 static mgmt_handler_fn log_mgmt_show;
@@ -76,168 +63,110 @@ static struct mgmt_group log_mgmt_group = {
 };
 
 static int
-log_mgmt_encode_entry(CborEncoder *enc, const struct log_mgmt_entry *entry,
-                      size_t *out_len, struct log_mgmt_enc_ctxt *lmec)
+log_mgmt_encode_entry(mgmt_cbor_encoder_t *enc,
+                      const struct log_mgmt_entry *entry,
+                      size_t *out_len)
 {
-    CborError err = CborNoError;
-    uint16_t chunklen;
-    uint16_t len;
-    int off;
-    uint16_t bytes_encoded;
+    size_t len_before;
+    int err;
 
-    len = cbor_encode_bytes_written(enc);
+    len_before = mgmt_cbor_encoder_bytes_written(enc);
 
-    bytes_encoded = 0;
-    /* If offset is 0, we encode the keys for maps and other fields which are
-     * necessary per entry since only the keys need to be encoded only in the
-     * for the first offset
-     */
-    if (entry->offset == 0) {
-        err |= cbor_encoder_create_map(enc, &lmec->mapenc, CborIndefiniteLength);
-
-        switch (entry->type) {
-        case LOG_MGMT_ETYPE_CBOR:
-            err |= cbor_encode_text_stringz(&lmec->mapenc, "type");
-            err |= cbor_encode_text_stringz(&lmec->mapenc, "cbor");
-            break;
-        case LOG_MGMT_ETYPE_BINARY:
-            err |= cbor_encode_text_stringz(&lmec->mapenc, "type");
-            err |= cbor_encode_text_stringz(&lmec->mapenc, "bin");
-            break;
-        case LOG_MGMT_ETYPE_STRING:
-            err |= cbor_encode_text_stringz(&lmec->mapenc, "type");
-            err |= cbor_encode_text_stringz(&lmec->mapenc, "str");
-            break;
-        default:
-            return LOG_MGMT_ERR_ECORRUPT;
+    /* Only encode complete entries (offset == 0 means start of entry). */
+    if (entry->offset != 0) {
+        if (out_len) {
+            *out_len = 0;
         }
-        err |= cbor_encode_text_stringz(&lmec->mapenc, "ts");
-        err |= cbor_encode_int(&lmec->mapenc, entry->ts);
-        err |= cbor_encode_text_stringz(&lmec->mapenc, "level");
-        err |= cbor_encode_uint(&lmec->mapenc, entry->level);
-        err |= cbor_encode_text_stringz(&lmec->mapenc, "index");
-        err |= cbor_encode_uint(&lmec->mapenc, entry->index);
-        err |= cbor_encode_text_stringz(&lmec->mapenc, "module");
-        err |= cbor_encode_uint(&lmec->mapenc, entry->module);
-        if (entry->flags & LOG_MGMT_FLAGS_IMG_HASH) {
-            err |= cbor_encode_text_stringz(&lmec->mapenc, "imghash");
-            err |= cbor_encode_byte_string(&lmec->mapenc, entry->imghash,
-                                           LOG_MGMT_IMG_HASHLEN);
-        }
+        return LOG_MGMT_ERR_EOK;
+    }
 
-        err |= cbor_encode_text_stringz(&lmec->mapenc, "msg");
+    err = mgmt_cbor_map_begin(enc);
 
-        /*
-         * Write entry data as byte string. Since this may not fit into single
-         * chunk of data we will write as indefinite-length byte string which is
-         * basically a indefinite-length container with definite-length strings
-         * inside.
-         */
-        err |= cbor_encoder_create_indef_byte_string(&lmec->mapenc, &lmec->msgenc);
-        if (out_len != NULL) {
-            for (off = 0; off < entry->len; off += entry->chunklen) {
-                chunklen = entry->chunklen;
-                if (entry->chunklen > entry->len - off) {
-                    chunklen = entry->len - off;
-                }
-                err |= cbor_encode_byte_string(&lmec->msgenc, entry->data, chunklen);
-                bytes_encoded += chunklen;
-            }
-        } else {
-            err |= cbor_encode_byte_string(&lmec->msgenc, entry->data, entry->chunklen);
-            bytes_encoded = entry->chunklen;
-        }
-    } else {
-        /*
-         * The else case is executed for non-first chunks of data to be encoded
-         *
-         * Write entry data as byte string. Since this may not fit into single
-         * chunk of data we will write as indefinite-length byte string which is
-         * basically a indefinite-length container with definite-length strings
-         * inside.
-         */
-        err |= cbor_encode_byte_string(&lmec->msgenc, entry->data, entry->chunklen);
-        bytes_encoded = entry->chunklen;
-   }
+    switch (entry->type) {
+    case LOG_MGMT_ETYPE_CBOR:
+        err |= mgmt_cbor_encode_text_z(enc, "type");
+        err |= mgmt_cbor_encode_text_z(enc, "cbor");
+        break;
+    case LOG_MGMT_ETYPE_BINARY:
+        err |= mgmt_cbor_encode_text_z(enc, "type");
+        err |= mgmt_cbor_encode_text_z(enc, "bin");
+        break;
+    case LOG_MGMT_ETYPE_STRING:
+        err |= mgmt_cbor_encode_text_z(enc, "type");
+        err |= mgmt_cbor_encode_text_z(enc, "str");
+        break;
+    default:
+        mgmt_cbor_map_end(enc);
+        return LOG_MGMT_ERR_ECORRUPT;
+    }
 
-   /*
-    * Containers need to get closed when encoding is done, the only way to know at
-    * this point in the code that encoding is done is using the number of bytes
-    * that got encoded and comparing it to the length of the entry
-    */
-   if (entry->offset + bytes_encoded >= entry->len) {
-       err |= cbor_encoder_close_container(&lmec->mapenc, &lmec->msgenc);
-       err |= cbor_encoder_close_container(enc, &lmec->mapenc);
-   }
+    err |= mgmt_cbor_encode_text_z(enc, "ts");
+    err |= mgmt_cbor_encode_int(enc, entry->ts);
+    err |= mgmt_cbor_encode_text_z(enc, "level");
+    err |= mgmt_cbor_encode_uint(enc, entry->level);
+    err |= mgmt_cbor_encode_text_z(enc, "index");
+    err |= mgmt_cbor_encode_uint(enc, entry->index);
+    err |= mgmt_cbor_encode_text_z(enc, "module");
+    err |= mgmt_cbor_encode_uint(enc, entry->module);
 
-   if (out_len) {
-       *out_len = cbor_encode_bytes_written(enc) - len;
-   }
+    if (entry->flags & LOG_MGMT_FLAGS_IMG_HASH) {
+        err |= mgmt_cbor_encode_text_z(enc, "imghash");
+        err |= mgmt_cbor_encode_bytes(enc, entry->imghash,
+                                      LOG_MGMT_IMG_HASHLEN);
+    }
 
-   if (err != 0) {
-       return LOG_MGMT_ERR_ENOMEM;
-   }
+    err |= mgmt_cbor_encode_text_z(enc, "msg");
+    err |= mgmt_cbor_encode_bytes(enc, entry->data, entry->chunklen);
 
-   return LOG_MGMT_ERR_EOK;
+    err |= mgmt_cbor_map_end(enc);
+
+    if (out_len) {
+        *out_len = mgmt_cbor_encoder_bytes_written(enc) - len_before;
+    }
+
+    if (err != 0) {
+        return LOG_MGMT_ERR_ENOMEM;
+    }
+
+    return LOG_MGMT_ERR_EOK;
 }
 
 static int
 log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
 {
-    struct CborCntWriter cnt_writer;
-    struct log_mgmt_enc_ctxt *lmec;
     struct log_walk_ctxt *ctxt;
-    CborEncoder cnt_encoder;
     size_t entry_len;
     int rc;
 
     ctxt = arg;
-    lmec = &ctxt->lmec;
 
     if (entry->offset == 0) {
         /*
-         * First, determine if this entry would fit using
-         * a counter encoder
+         * Estimate entry size by encoding into a scratch buffer.
+         * We record the encoder position before and after a dry-run on the
+         * real encoder.  If the entry is too large we abort and report the
+         * error without having written a partial entry (map_begin/map_end
+         * are balanced, so the encoder state is still valid after an error).
          */
-
-        cbor_cnt_writer_init(&cnt_writer);
-#ifdef __ZEPHYR__
-        cbor_encoder_cust_writer_init(&cnt_encoder, &cnt_writer.enc, 0);
-#else
-        cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
-#endif
-        rc = log_mgmt_encode_entry(&cnt_encoder, entry, &entry_len, lmec);
+        size_t before = mgmt_cbor_encoder_bytes_written(ctxt->enc);
+        rc = log_mgmt_encode_entry(ctxt->enc, entry, &entry_len);
         if (rc != 0) {
             return rc;
         }
 
-        /*
-         * Check if the response is too long. If more than one entry is in the
-         * response we will not add the current one and will return ENOMEM. If this
-         * is just a single entry we add the generic too long message text.
-         */
         /* `+ 1` to account for the CBOR array terminator. */
-        if (ctxt->rsp_len + entry_len + 1 > LOG_MGMT_MAX_RSP_LEN) {
-            /*
-             * Is this just a single entry? If so, encode the generic error
-             * message in the "msg" field of the response
-             */
+        if (before + entry_len + 1 > LOG_MGMT_MAX_RSP_LEN) {
             if (ctxt->counter == 0) {
                 entry->type = LOG_ETYPE_STRING;
                 snprintf((char *)entry->data, LOG_MGMT_MAX_RSP_LEN,
                          "error: entry too large (%zu bytes)", entry_len);
             }
-
-            /* We want a negative error code here */
             return -1 * LOG_MGMT_ERR_EUNKNOWN;
         }
         ctxt->rsp_len += entry_len;
-    }
-
-    /*** The entry fits. Now encode it. */
-    rc = log_mgmt_encode_entry(ctxt->enc, entry, NULL, lmec);
-    if (rc != 0) {
-        return rc;
+    } else {
+        /* Skip non-first chunks; full entry encoded on offset==0. */
+        return LOG_MGMT_ERR_EOK;
     }
 
     ctxt->counter++;
@@ -247,64 +176,41 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
 }
 
 static int
-log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
+log_encode_entries(const struct log_mgmt_log *log, mgmt_cbor_encoder_t *enc,
                    int64_t timestamp, uint32_t index)
 {
-    struct CborCntWriter cnt_writer;
     struct log_mgmt_filter filter;
     struct log_walk_ctxt ctxt;
-    CborEncoder cnt_encoder;
-    CborEncoder entries;
-    CborError err;
-    int rsp_len;
+    int err;
     int rc;
 
     err = 0;
-    rsp_len = 0;
-    /* this code counts how long the message would be if we encoded
-     * this outer structure using cbor. */
-    cbor_cnt_writer_init(&cnt_writer);
-    cbor_encoder_init(&cnt_encoder, &cnt_writer.enc, 0);
-    err |= cbor_encode_text_stringz(&cnt_encoder, "entries");
-    err |= cbor_encoder_create_array(&cnt_encoder, &entries,
-                                       CborIndefiniteLength);
-    err |= cbor_encoder_close_container(&cnt_encoder, &entries);
-    rsp_len = cbor_encode_bytes_written(enc) +
-              cbor_encode_bytes_written(&cnt_encoder);
-    if (rsp_len > LOG_MGMT_MAX_RSP_LEN) {
-        rc = LOG_MGMT_ERR_EUNKNOWN;
-        goto err;
+    err |= mgmt_cbor_encode_text_z(enc, "entries");
+    err |= mgmt_cbor_array_begin(enc);
+    if (err != 0) {
+        return LOG_MGMT_ERR_ENOMEM;
     }
-
-    err |= cbor_encode_text_stringz(enc, "entries");
-    err |= cbor_encoder_create_array(enc, &entries, CborIndefiniteLength);
 
     filter = (struct log_mgmt_filter) {
         .min_timestamp = timestamp,
         .min_index = index,
     };
     ctxt = (struct log_walk_ctxt) {
-        .enc = &entries,
-        .rsp_len = cbor_encode_bytes_written(enc),
+        .enc = enc,
+        .rsp_len = mgmt_cbor_encoder_bytes_written(enc),
     };
 
     rc = log_mgmt_impl_foreach_entry(log->name, &filter,
                                      log_mgmt_cb_encode, &ctxt);
     if (rc < 0) {
-        /*
-         * If we receive negative error code from the walk function,
-         * make sure it gets converted to a positive error code
-         */
         rc = -1 * rc;
     }
 
-    err |= cbor_encoder_close_container(enc, &entries);
-
+    err |= mgmt_cbor_array_end(enc);
     if (err != 0) {
         return LOG_MGMT_ERR_ENOMEM;
     }
 
-err:
 #if LOG_MGMT_READ_WATERMARK_UPDATE
     if (!rc || rc == LOG_MGMT_ERR_EUNKNOWN) {
         log_mgmt_impl_set_watermark(log, ctxt.last_enc_index);
@@ -314,28 +220,25 @@ err:
 }
 
 static int
-log_encode(const struct log_mgmt_log *log, CborEncoder *ctxt,
+log_encode(const struct log_mgmt_log *log, mgmt_cbor_encoder_t *enc,
            int64_t timestamp, uint32_t index)
 {
-    CborEncoder logs;
-    CborError err;
+    int err;
     int rc;
 
-    err = 0;
-    err |= cbor_encoder_create_map(ctxt, &logs, CborIndefiniteLength);
-    err |= cbor_encode_text_stringz(&logs, "name");
-    err |= cbor_encode_text_stringz(&logs, log->name);
-    err |= cbor_encode_text_stringz(&logs, "type");
-    err |= cbor_encode_uint(&logs, log->type);
+    err = mgmt_cbor_map_begin(enc);
+    err |= mgmt_cbor_encode_text_z(enc, "name");
+    err |= mgmt_cbor_encode_text_z(enc, log->name);
+    err |= mgmt_cbor_encode_text_z(enc, "type");
+    err |= mgmt_cbor_encode_uint(enc, log->type);
 
-    rc = log_encode_entries(log, &logs, timestamp, index);
+    rc = log_encode_entries(log, enc, timestamp, index);
     if (rc != 0) {
-        cbor_encoder_close_container(ctxt, &logs);
+        mgmt_cbor_map_end(enc);
         return rc;
     }
 
-    err |= cbor_encoder_close_container(ctxt, &logs);
-
+    err |= mgmt_cbor_map_end(enc);
     if (err != 0) {
         return LOG_MGMT_ERR_ENOMEM;
     }
@@ -351,8 +254,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
 {
     char name[LOG_MGMT_NAME_LEN];
     struct log_mgmt_log log;
-    CborEncoder logs;
-    CborError err;
+    int err;
     uint64_t index;
     uint32_t next_idx;
     int64_t timestamp;
@@ -383,7 +285,7 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     };
 
     name[0] = '\0';
-    rc = cbor_read_object(&ctxt->it, attr);
+    rc = cbor_read_object(&ctxt->decoder, attr);
     if (rc != 0) {
         return LOG_MGMT_ERR_EINVAL;
     }
@@ -391,31 +293,25 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
 
     err = 0;
 #if LOG_MGMT_GLOBAL_IDX
-    /* Determine the index that the next log entry would use. */
     rc = log_mgmt_impl_get_next_idx(&next_idx);
     if (rc != 0) {
         return LOG_MGMT_ERR_EUNKNOWN;
     }
 #else
-    /* This field is deprecated.  Set it to 0 until it gets removed. */
     next_idx = 0;
 #endif
 
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "next_index");
-    err |= cbor_encode_uint(&ctxt->encoder, next_idx);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "next_index");
+    err |= mgmt_cbor_encode_uint(&ctxt->encoder, next_idx);
 
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "logs");
-    err |= cbor_encoder_create_array(&ctxt->encoder, &logs,
-                                     CborIndefiniteLength);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "logs");
+    err |= mgmt_cbor_array_begin(&ctxt->encoder);
 
-    /* Iterate list of logs, encoding each that matches the client request. */
     for (log_idx = 0; ; log_idx++) {
         rc = log_mgmt_impl_get_log(log_idx, &log);
         if (rc == LOG_MGMT_ERR_ENOENT) {
-            /* Log list fully iterated. */
             if (name_len != 0) {
-                /* Client specified log name, but the log wasn't found. */
-                cbor_encoder_close_container(&ctxt->encoder, &logs);
+                mgmt_cbor_array_end(&ctxt->encoder);
                 return LOG_MGMT_ERR_ENOENT;
             } else {
                 break;
@@ -424,17 +320,13 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
             goto err;
         }
 
-        /* Stream logs cannot be read. */
         if (log.type != LOG_MGMT_TYPE_STREAM) {
             if (name_len == 0 || strcmp(name, log.name) == 0) {
-                rc = log_encode(&log, &logs, timestamp, index);
+                rc = log_encode(&log, &ctxt->encoder, timestamp, index);
                 if (rc) {
                     goto err;
                 }
 
-                /* If the client specified this log, he isn't interested in the
-                 * remaining ones.
-                 */
                 if (name_len > 0) {
                     break;
                 }
@@ -443,9 +335,9 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     }
 
 err:
-    err |= cbor_encoder_close_container(&ctxt->encoder, &logs);
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, rc);
+    err |= mgmt_cbor_array_end(&ctxt->encoder);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "rc");
+    err |= mgmt_cbor_encode_int(&ctxt->encoder, rc);
 
     if (err != 0) {
         return LOG_MGMT_ERR_ENOMEM;
@@ -461,17 +353,15 @@ static int
 log_mgmt_module_list(struct mgmt_ctxt *ctxt)
 {
     const char *module_name;
-    CborEncoder modules;
-    CborError err;
+    int err;
     int module;
     int rc;
 
     err = 0;
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "module_map");
-    err |= cbor_encoder_create_map(&ctxt->encoder, &modules,
-                                   CborIndefiniteLength);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "rc");
+    err |= mgmt_cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "module_map");
+    err |= mgmt_cbor_map_begin(&ctxt->encoder);
 
     for (module = 0; ; module++) {
         rc = log_mgmt_impl_get_module(module, &module_name);
@@ -479,17 +369,17 @@ log_mgmt_module_list(struct mgmt_ctxt *ctxt)
             break;
         }
         if (rc != 0) {
-            cbor_encoder_close_container(&ctxt->encoder, &modules);
+            mgmt_cbor_map_end(&ctxt->encoder);
             return rc;
         }
 
         if (module_name != NULL) {
-            err |= cbor_encode_text_stringz(&modules, module_name);
-            err |= cbor_encode_uint(&modules, module);
+            err |= mgmt_cbor_encode_text_z(&ctxt->encoder, module_name);
+            err |= mgmt_cbor_encode_uint(&ctxt->encoder, module);
         }
     }
 
-    err |= cbor_encoder_close_container(&ctxt->encoder, &modules);
+    err |= mgmt_cbor_map_end(&ctxt->encoder);
 
     if (err != 0) {
         return LOG_MGMT_ERR_ENOMEM;
@@ -505,17 +395,15 @@ static int
 log_mgmt_logs_list(struct mgmt_ctxt *ctxt)
 {
     struct log_mgmt_log log;
-    CborEncoder log_list;
-    CborError err;
+    int err;
     int log_idx;
     int rc;
 
     err = 0;
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "log_list");
-    err |= cbor_encoder_create_array(&ctxt->encoder, &log_list,
-                                     CborIndefiniteLength);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "rc");
+    err |= mgmt_cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "log_list");
+    err |= mgmt_cbor_array_begin(&ctxt->encoder);
 
     for (log_idx = 0; ; log_idx++) {
         rc = log_mgmt_impl_get_log(log_idx, &log);
@@ -523,16 +411,16 @@ log_mgmt_logs_list(struct mgmt_ctxt *ctxt)
             break;
         }
         if (rc != 0) {
-            cbor_encoder_close_container(&ctxt->encoder, &log_list);
+            mgmt_cbor_array_end(&ctxt->encoder);
             return rc;
         }
 
         if (log.type != LOG_MGMT_TYPE_STREAM) {
-            err |= cbor_encode_text_stringz(&log_list, log.name);
+            err |= mgmt_cbor_encode_text_z(&ctxt->encoder, log.name);
         }
     }
 
-    err |= cbor_encoder_close_container(&ctxt->encoder, &log_list);
+    err |= mgmt_cbor_array_end(&ctxt->encoder);
 
     if (err != 0) {
         return LOG_MGMT_ERR_ENOMEM;
@@ -548,17 +436,15 @@ static int
 log_mgmt_level_list(struct mgmt_ctxt *ctxt)
 {
     const char *level_name;
-    CborEncoder level_map;
-    CborError err;
+    int err;
     int level;
     int rc;
 
     err = 0;
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "rc");
-    err |= cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "level_map");
-    err |= cbor_encoder_create_map(&ctxt->encoder, &level_map,
-                                   CborIndefiniteLength);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "rc");
+    err |= mgmt_cbor_encode_int(&ctxt->encoder, LOG_MGMT_ERR_EOK);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "level_map");
+    err |= mgmt_cbor_map_begin(&ctxt->encoder);
 
     for (level = 0; ; level++) {
         rc = log_mgmt_impl_get_level(level, &level_name);
@@ -566,17 +452,17 @@ log_mgmt_level_list(struct mgmt_ctxt *ctxt)
             break;
         }
         if (rc != 0) {
-            cbor_encoder_close_container(&ctxt->encoder, &level_map);
+            mgmt_cbor_map_end(&ctxt->encoder);
             return rc;
         }
 
         if (level_name != NULL) {
-            err |= cbor_encode_text_stringz(&level_map, level_name);
-            err |= cbor_encode_uint(&level_map, level);
+            err |= mgmt_cbor_encode_text_z(&ctxt->encoder, level_name);
+            err |= mgmt_cbor_encode_uint(&ctxt->encoder, level);
         }
     }
 
-    err |= cbor_encoder_close_container(&ctxt->encoder, &level_map);
+    err |= mgmt_cbor_map_end(&ctxt->encoder);
 
     if (err != 0) {
         return LOG_MGMT_ERR_ENOMEM;
@@ -610,7 +496,7 @@ log_mgmt_clear(struct mgmt_ctxt *ctxt)
     };
 
     name[0] = '\0';
-    rc = cbor_read_object(&ctxt->it, attr);
+    rc = cbor_read_object(&ctxt->decoder, attr);
     if (rc != 0) {
         return LOG_MGMT_ERR_EINVAL;
     }

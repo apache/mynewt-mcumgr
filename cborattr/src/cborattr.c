@@ -17,9 +17,10 @@
  * under the License.
  */
 
+#include <string.h>
+
 #include "cborattr/cborattr.h"
-#include "tinycbor/cbor.h"
-#include "tinycbor/cbor_buf_reader.h"
+#include "mgmt/cbor_port.h"
 
 #ifdef __ZEPHYR__
 #include <zephyr/kernel.h>
@@ -32,80 +33,50 @@
 
 #ifdef MYNEWT
 #include "syscfg/syscfg.h"
-#include "tinycbor/cbor_mbuf_reader.h"
-#include "tinycbor/cbor_mbuf_writer.h"
 #include "os/os_mbuf.h"
 #define CBORATTR_MAX_SIZE MYNEWT_VAL(CBORATTR_MAX_SIZE)
 #endif
 
-/* this maps a CborType to a matching CborAtter Type. The mapping is not
- * one-to-one because of signedness of integers
- * and therefore we need a function to do this trickery */
+/* Error code alias used throughout this file — maps to non-zero on failure. */
+#define CBORATTR_ERR_ILLEGAL_TYPE  1
+#define CBORATTR_ERR_TOO_LARGE     2
+
+/* this maps a mgmt_cbor_type_t to a matching CborAttrType.  The mapping is
+ * not one-to-one because of signedness of integers, hence the function. */
 static int
-valid_attr_type(CborType ct, CborAttrType at)
+valid_attr_type(int ct, CborAttrType at)
 {
     switch (at) {
     case CborAttrIntegerType:
     case CborAttrUnsignedIntegerType:
-        if (ct == CborIntegerType) {
-            return 1;
-        }
-        break;
+        return (ct == MGMT_CBOR_TYPE_INT || ct == MGMT_CBOR_TYPE_UINT);
     case CborAttrByteStringType:
-        if (ct == CborByteStringType) {
-            return 1;
-        }
-        break;
+        return ct == MGMT_CBOR_TYPE_BYTE_STRING;
     case CborAttrTextStringType:
-        if (ct == CborTextStringType) {
-            return 1;
-        }
-        break;
+        return ct == MGMT_CBOR_TYPE_TEXT_STRING;
     case CborAttrBooleanType:
-        if (ct == CborBooleanType) {
-            return 1;
-        }
-	break;
+        return ct == MGMT_CBOR_TYPE_BOOL;
 #if FLOAT_SUPPORT
     case CborAttrHalfFloatType:
-        if (ct == CborHalfFloatType) {
-            return 1;
-        }
-        break;
+        return ct == MGMT_CBOR_TYPE_HALF_FLOAT;
     case CborAttrFloatType:
-        if (ct == CborFloatType) {
-            return 1;
-        }
-        break;
+        return ct == MGMT_CBOR_TYPE_FLOAT;
     case CborAttrDoubleType:
-        if (ct == CborDoubleType) {
-            return 1;
-        }
-        break;
+        return ct == MGMT_CBOR_TYPE_DOUBLE;
 #endif
     case CborAttrArrayType:
-        if (ct == CborArrayType) {
-            return 1;
-        }
-        break;
+        return ct == MGMT_CBOR_TYPE_ARRAY;
     case CborAttrObjectType:
-        if (ct == CborMapType) {
-            return 1;
-        }
-        break;
+        return ct == MGMT_CBOR_TYPE_MAP;
     case CborAttrNullType:
-        if (ct == CborNullType) {
-            return 1;
-        }
-        break;
+        return ct == MGMT_CBOR_TYPE_NULL;
     default:
-        break;
+        return 0;
     }
-    return 0;
 }
 
-/* this function find the pointer to the memory location to
-  * write or read and attribute from the cbor_attr_r structure */
+/* this function finds the pointer to the memory location to
+ * write or read an attribute from the cbor_attr_t structure */
 static char *
 cbor_target_address(const struct cbor_attr_t *cursor,
                     const struct cbor_array_t *parent, int offset)
@@ -158,7 +129,7 @@ cbor_target_address(const struct cbor_attr_t *cursor,
 }
 
 static int
-cbor_internal_read_object(CborValue *root_value,
+cbor_internal_read_object(mgmt_cbor_decoder_t *root_value,
                           const struct cbor_attr_t *attrs,
                           const struct cbor_array_t *parent,
                           int offset)
@@ -166,12 +137,12 @@ cbor_internal_read_object(CborValue *root_value,
     const struct cbor_attr_t *cursor, *best_match;
     char attrbuf[CBORATTR_MAX_SIZE + 1];
     void *lptr;
-    CborValue cur_value;
-    CborError err = 0;
+    mgmt_cbor_decoder_t cur_value;
+    int err = 0;
     size_t len = 0;
-    CborType type = CborInvalidType;
+    int type = MGMT_CBOR_TYPE_INVALID;
 
-    /* stuff fields with defaults in case they're omitted in the JSON input */
+    /* stuff fields with defaults in case they're omitted in the input */
     for (cursor = attrs; cursor->attribute != NULL; cursor++) {
         if (!cursor->nodefault) {
             lptr = cbor_target_address(cursor, parent, offset);
@@ -205,38 +176,40 @@ cbor_internal_read_object(CborValue *root_value,
         }
     }
 
-    if (cbor_value_is_map(root_value)) {
-        err |= cbor_value_enter_container(root_value, &cur_value);
-    } else {
-        err |= CborErrorIllegalType;
+    if (!mgmt_cbor_dec_is_map(root_value)) {
+        return CBORATTR_ERR_ILLEGAL_TYPE;
+    }
+
+    err |= mgmt_cbor_dec_enter_container(root_value, &cur_value);
+    if (err) {
         return err;
     }
 
     /* contains key value pairs */
-    while (cbor_value_is_valid(&cur_value) && !err) {
+    while (mgmt_cbor_dec_is_valid(&cur_value) && !err) {
         /* get the attribute */
-        if (cbor_value_is_text_string(&cur_value)) {
-            if (cbor_value_calculate_string_length(&cur_value, &len) == 0) {
+        if (mgmt_cbor_dec_type(&cur_value) == MGMT_CBOR_TYPE_TEXT_STRING) {
+            if (mgmt_cbor_dec_string_len(&cur_value, &len) == 0) {
                 if (len > CBORATTR_MAX_SIZE) {
-                    err |= CborErrorDataTooLarge;
+                    err |= CBORATTR_ERR_TOO_LARGE;
                     break;
                 }
-                err |= cbor_value_copy_text_string(&cur_value, attrbuf, &len,
-                                                     NULL);
+                size_t copy_len = len + 1;
+                err |= mgmt_cbor_dec_text_string_copy(&cur_value, attrbuf,
+                                                        &copy_len);
             }
 
-            /* at least get the type of the next value so we can match the
-             * attribute name and type for a perfect match */
-            err |= cbor_value_advance(&cur_value);
-            if (cbor_value_is_valid(&cur_value)) {
-                type = cbor_value_get_type(&cur_value);
+            /* advance past key to value, then get value type */
+            err |= mgmt_cbor_dec_advance(&cur_value);
+            if (mgmt_cbor_dec_is_valid(&cur_value)) {
+                type = mgmt_cbor_dec_type(&cur_value);
             } else {
-                err |= CborErrorIllegalType;
+                err |= CBORATTR_ERR_ILLEGAL_TYPE;
                 break;
             }
         } else {
             attrbuf[0] = '\0';
-            type = cbor_value_get_type(&cur_value);
+            type = mgmt_cbor_dec_type(&cur_value);
         }
 
         /* find this attribute in our list */
@@ -263,36 +236,34 @@ cbor_internal_read_object(CborValue *root_value,
                 /* nothing to do */
                 break;
             case CborAttrBooleanType:
-                err |= cbor_value_get_boolean(&cur_value, lptr);
+                err |= mgmt_cbor_dec_bool(&cur_value, lptr);
                 break;
             case CborAttrIntegerType:
-                err |= cbor_value_get_int64(&cur_value, lptr);
+                err |= mgmt_cbor_dec_int64(&cur_value, lptr);
                 break;
             case CborAttrUnsignedIntegerType:
-                err |= cbor_value_get_uint64(&cur_value, lptr);
+                err |= mgmt_cbor_dec_uint64(&cur_value, lptr);
                 break;
 #if FLOAT_SUPPORT
             case CborAttrHalfFloatType:
-                err |= cbor_value_get_half_float(&cur_value, lptr);
+                err |= mgmt_cbor_dec_half_float(&cur_value, lptr);
                 break;
             case CborAttrFloatType:
-                err |= cbor_value_get_float(&cur_value, lptr);
+                err |= mgmt_cbor_dec_float(&cur_value, lptr);
                 break;
             case CborAttrDoubleType:
-                err |= cbor_value_get_double(&cur_value, lptr);
+                err |= mgmt_cbor_dec_double(&cur_value, lptr);
                 break;
 #endif
             case CborAttrByteStringType: {
-                size_t len = cursor->len;
-                err |= cbor_value_copy_byte_string(&cur_value, lptr,
-                                                   &len, NULL);
-                *cursor->addr.bytestring.len = len;
+                size_t slen = cursor->len;
+                err |= mgmt_cbor_dec_byte_string_copy(&cur_value, lptr, &slen);
+                *cursor->addr.bytestring.len = slen;
                 break;
             }
             case CborAttrTextStringType: {
-                size_t len = cursor->len;
-                err |= cbor_value_copy_text_string(&cur_value, lptr,
-                                                   &len, NULL);
+                size_t slen = cursor->len;
+                err |= mgmt_cbor_dec_text_string_copy(&cur_value, lptr, &slen);
                 break;
             }
             case CborAttrArrayType:
@@ -303,29 +274,29 @@ cbor_internal_read_object(CborValue *root_value,
                                                  NULL, 0);
                 continue;
             default:
-                err |= CborErrorIllegalType;
+                err |= CBORATTR_ERR_ILLEGAL_TYPE;
             }
         }
-        err = cbor_value_advance(&cur_value);
+        err |= mgmt_cbor_dec_advance(&cur_value);
     }
     if (!err) {
         /* that should be it for this container */
-        err |= cbor_value_leave_container(root_value, &cur_value);
+        err |= mgmt_cbor_dec_leave_container(root_value, &cur_value);
     }
     return err;
 }
 
 int
-cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
+cbor_read_array(mgmt_cbor_decoder_t *value, const struct cbor_array_t *arr)
 {
-    CborError err = 0;
-    struct CborValue elem;
+    int err = 0;
+    mgmt_cbor_decoder_t elem;
     int off, arrcount;
     size_t len;
     void *lptr;
     char *tp;
 
-    err = cbor_value_enter_container(value, &elem);
+    err = mgmt_cbor_dec_enter_container(value, &elem);
     if (err) {
         return err;
     }
@@ -335,30 +306,30 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
         switch (arr->element_type) {
         case CborAttrBooleanType:
             lptr = &arr->arr.booleans.store[off];
-            err |= cbor_value_get_boolean(&elem, lptr);
+            err |= mgmt_cbor_dec_bool(&elem, lptr);
             break;
         case CborAttrIntegerType:
             lptr = &arr->arr.integers.store[off];
-            err |= cbor_value_get_int64(&elem, lptr);
+            err |= mgmt_cbor_dec_int64(&elem, lptr);
             break;
         case CborAttrUnsignedIntegerType:
             lptr = &arr->arr.uintegers.store[off];
-            err |= cbor_value_get_uint64(&elem, lptr);
+            err |= mgmt_cbor_dec_uint64(&elem, lptr);
             break;
 #if FLOAT_SUPPORT
         case CborAttrHalfFloatType:
             lptr = &arr->arr.halffloats.store[off];
-            err |= cbor_value_get_half_float(&elem, lptr);
+            err |= mgmt_cbor_dec_half_float(&elem, lptr);
             break;
         case CborAttrFloatType:
         case CborAttrDoubleType:
             lptr = &arr->arr.reals.store[off];
-            err |= cbor_value_get_double(&elem, lptr);
+            err |= mgmt_cbor_dec_double(&elem, lptr);
             break;
 #endif
         case CborAttrTextStringType:
-            len = arr->arr.strings.storelen - (tp - arr->arr.strings.store);
-            err |= cbor_value_copy_text_string(&elem, tp, &len, NULL);
+            len = (size_t)(arr->arr.strings.storelen - (tp - arr->arr.strings.store));
+            err |= mgmt_cbor_dec_text_string_copy(&elem, tp, &len);
             arr->arr.strings.ptrs[off] = tp;
             tp += len + 1;
             break;
@@ -367,117 +338,112 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
                                              arr, off);
             break;
         default:
-            err |= CborErrorIllegalType;
+            err |= CBORATTR_ERR_ILLEGAL_TYPE;
             break;
         }
         arrcount++;
         if (arr->element_type != CborAttrStructObjectType) {
-            err |= cbor_value_advance(&elem);
+            err |= mgmt_cbor_dec_advance(&elem);
         }
-        if (!cbor_value_is_valid(&elem)) {
+        if (!mgmt_cbor_dec_is_valid(&elem)) {
             break;
         }
     }
     if (arr->count) {
         *arr->count = arrcount;
     }
-    while (!cbor_value_at_end(&elem)) {
-        err |= CborErrorDataTooLarge;
-        cbor_value_advance(&elem);
+    while (!mgmt_cbor_dec_at_end(&elem)) {
+        err |= CBORATTR_ERR_TOO_LARGE;
+        mgmt_cbor_dec_advance(&elem);
     }
-    err |= cbor_value_leave_container(value, &elem);
+    err |= mgmt_cbor_dec_leave_container(value, &elem);
     return err;
 }
 
 int
-cbor_read_object(struct CborValue *value, const struct cbor_attr_t *attrs)
+cbor_read_object(mgmt_cbor_decoder_t *value, const struct cbor_attr_t *attrs)
 {
-    int st;
-
-    st = cbor_internal_read_object(value, attrs, NULL, 0);
-    return st;
+    return cbor_internal_read_object(value, attrs, NULL, 0);
 }
 
 /*
  * Read in cbor key/values from flat buffer pointed by data, and fill them
  * into attrs.
  *
- * @param data		Pointer to beginning of cbor encoded data
- * @param len		Number of bytes in the buffer
- * @param attrs		Array of cbor objects to look for.
+ * @param data      Pointer to beginning of cbor encoded data
+ * @param len       Number of bytes in the buffer
+ * @param attrs     Array of cbor objects to look for.
  *
- * @return		0 on success; non-zero on failure.
+ * @return          0 on success; non-zero on failure.
  */
 int
 cbor_read_flat_attrs(const uint8_t *data, int len,
                      const struct cbor_attr_t *attrs)
 {
-    struct cbor_buf_reader reader;
-    struct CborParser parser;
-    struct CborValue value;
-    CborError err;
+    mgmt_cbor_decoder_t dec;
+    int err;
 
-    cbor_buf_reader_init(&reader, data, len);
-    err = cbor_parser_init(&reader.r, 0, &parser, &value);
-    if (err != CborNoError) {
+    err = mgmt_cbor_decoder_init(&dec, data, (size_t)len);
+    if (err != MGMT_CBOR_OK) {
         return -1;
     }
-    return cbor_read_object(&value, attrs);
+    return cbor_read_object(&dec, attrs);
 }
 
 #ifdef MYNEWT
-static int cbor_write_val(struct CborEncoder *enc,
+static int cbor_write_val(mgmt_cbor_encoder_t *enc,
                           const struct cbor_out_val_t *val);
 
 /*
  * Read in cbor key/values from os_mbuf pointed by m, and fill them
  * into attrs.
  *
- * @param m		Pointer to os_mbuf containing cbor encoded data
- * @param off		Offset into mbuf where cbor data begins
- * @param len		Number of bytes to decode
- * @param attrs		Array of cbor objects to look for.
+ * @param m         Pointer to os_mbuf containing cbor encoded data
+ * @param off       Offset into mbuf where cbor data begins
+ * @param len       Number of bytes to decode
+ * @param attrs     Array of cbor objects to look for.
  *
- * @return		0 on success; non-zero on failure.
+ * @return          0 on success; non-zero on failure.
  */
 int
 cbor_read_mbuf_attrs(struct os_mbuf *m, uint16_t off, uint16_t len,
                      const struct cbor_attr_t *attrs)
 {
-    struct cbor_mbuf_reader cmr;
-    struct CborParser parser;
-    struct CborValue value;
-    CborError err;
-
-    cbor_mbuf_reader_init(&cmr, m, off);
-    err = cbor_parser_init(&cmr.r, 0, &parser, &value);
-    if (err != CborNoError) {
+    /*
+     * Copy mbuf data into a temporary buffer, then use the flat-buffer
+     * decoder.  This avoids carrying the mbuf reader abstraction into the
+     * new CBOR port layer.
+     */
+    uint8_t tmp[512];
+    if (len > sizeof(tmp)) {
         return -1;
     }
-    return cbor_read_object(&value, attrs);
+    if (os_mbuf_copydata(m, off, len, tmp) != 0) {
+        return -1;
+    }
+    return cbor_read_flat_attrs(tmp, len, attrs);
 }
 
 static int
-cbor_write_arr_val(struct CborEncoder *enc,
+cbor_write_arr_val(mgmt_cbor_encoder_t *enc,
                    const struct cbor_out_arr_val_t *arr)
 {
-    struct CborEncoder arr_enc;
     size_t i;
     int rc;
 
-    rc = cbor_encoder_create_array(enc, &arr_enc, arr->len);
+    rc = mgmt_cbor_array_begin(enc);
     if (rc != 0) {
         return SYS_ENOMEM;
     }
 
     for (i = 0; i < arr->len; i++) {
-        rc = cbor_write_val(&arr_enc, &arr->elems[i]);
+        rc = cbor_write_val(enc, &arr->elems[i]);
         if (rc != 0) {
             return SYS_ENOMEM;
         }
     }
 
-    rc = cbor_encoder_close_container(enc, &arr_enc);
+    rc = mgmt_cbor_array_end(enc);
     if (rc != 0) {
         return SYS_ENOMEM;
     }
@@ -486,50 +452,48 @@ cbor_write_arr_val(struct CborEncoder *enc,
 }
 
 static int
-cbor_write_val(struct CborEncoder *enc, const struct cbor_out_val_t *val)
+cbor_write_val(mgmt_cbor_encoder_t *enc, const struct cbor_out_val_t *val)
 {
     int len;
     int rc;
 
     switch (val->type) {
     case CborAttrNullType:
-        rc = cbor_encode_null(enc);
+        rc = mgmt_cbor_encode_null(enc);
         break;
 
     case CborAttrBooleanType:
-        rc = cbor_encode_boolean(enc, val->boolean);
+        rc = mgmt_cbor_encode_bool(enc, val->boolean);
         break;
 
     case CborAttrIntegerType:
-        rc = cbor_encode_int(enc, val->integer);
+        rc = mgmt_cbor_encode_int(enc, val->integer);
         break;
 
     case CborAttrUnsignedIntegerType:
-        rc = cbor_encode_uint(enc, val->uinteger);
+        rc = mgmt_cbor_encode_uint(enc, val->uinteger);
         break;
 
 #if FLOAT_SUPPORT
     case CborAttrHalfFloatType:
-        rc = cbor_encode_half_float(enc, &val->halffloat);
+        rc = mgmt_cbor_encode_half_float(enc, &val->halffloat);
         break;
 
     case CborAttrFloatType:
-        rc = cbor_encode_float(enc, val->fval);
+        rc = mgmt_cbor_encode_float(enc, val->fval);
         break;
 
     case CborAttrDoubleType:
-        rc = cbor_encode_double(enc, val->real);
+        rc = mgmt_cbor_encode_double(enc, val->real);
         break;
 #endif
 
     case CborAttrByteStringType:
         if (val->bytestring.data == NULL &&
             val->bytestring.len != 0) {
-
             return SYS_EINVAL;
         }
-
-        rc = cbor_encode_byte_string(enc, val->bytestring.data,
+        rc = mgmt_cbor_encode_bytes(enc, val->bytestring.data,
                                      val->bytestring.len);
         break;
 
@@ -537,9 +501,9 @@ cbor_write_val(struct CborEncoder *enc, const struct cbor_out_val_t *val)
         if (val->string == NULL) {
             len = 0;
         } else {
-            len = strlen(val->string);
+            len = (int)strlen(val->string);
         }
-        rc = cbor_encode_text_string(enc, val->string, len);
+        rc = mgmt_cbor_encode_text(enc, val->string, (size_t)len);
         break;
 
     case CborAttrObjectType:
@@ -562,9 +526,8 @@ cbor_write_val(struct CborEncoder *enc, const struct cbor_out_val_t *val)
 }
 
 static int
-cbor_write_attr(struct CborEncoder *enc, const struct cbor_out_attr_t *attr)
+cbor_write_attr(mgmt_cbor_encoder_t *enc, const struct cbor_out_attr_t *attr)
 {
-    int len;
     int rc;
 
     if (attr->omit) {
@@ -572,44 +535,37 @@ cbor_write_attr(struct CborEncoder *enc, const struct cbor_out_attr_t *attr)
     }
 
     if (!attr->attribute) {
-        rc = SYS_EINVAL;
+        return SYS_EINVAL;
+    }
+
+    rc = mgmt_cbor_encode_text_z(enc, attr->attribute);
+    if (rc != 0) {
         return rc;
     }
 
-    len = strlen(attr->attribute);
-    rc = cbor_encode_text_string(enc, attr->attribute, len);
-    if (rc != 0) {
-        return rc;
-    } 
-
     rc = cbor_write_val(enc, &attr->val);
-    if (rc != 0) {
-        return rc;
-    } 
-
-    return 0;
+    return rc;
 }
 
 int
-cbor_write_object(struct CborEncoder *enc, const struct cbor_out_attr_t *attrs)
+cbor_write_object(mgmt_cbor_encoder_t *enc, const struct cbor_out_attr_t *attrs)
 {
     const struct cbor_out_attr_t *attr;
-    struct CborEncoder map;
     int rc;
 
-    rc = cbor_encoder_create_map(enc, &map, CborIndefiniteLength);
+    rc = mgmt_cbor_map_begin(enc);
     if (rc != 0) {
         return SYS_ENOMEM;
     }
 
     for (attr = attrs; attr->val.type != 0; attr++) {
-        rc = cbor_write_attr(&map, attr);
+        rc = cbor_write_attr(enc, attr);
         if (rc != 0) {
             return rc;
         }
     }
 
-    rc = cbor_encoder_close_container(enc, &map);
+    rc = mgmt_cbor_map_end(enc);
     if (rc != 0) {
         return SYS_ENOMEM;
     }
@@ -621,8 +577,8 @@ int
 cbor_write_object_msys(const struct cbor_out_attr_t *attrs,
                        struct os_mbuf **out_om)
 {
-    struct cbor_mbuf_writer writer;
-    struct CborEncoder encoder;
+    uint8_t buf[512];
+    mgmt_cbor_encoder_t enc;
     int rc;
 
     *out_om = os_msys_get_pkthdr(0, 0);
@@ -630,14 +586,25 @@ cbor_write_object_msys(const struct cbor_out_attr_t *attrs,
         return SYS_ENOMEM;
     }
 
-    cbor_mbuf_writer_init(&writer, *out_om);
-    cbor_encoder_init(&encoder, &writer.enc, 0);
+    rc = mgmt_cbor_encoder_init_buf(&enc, buf, sizeof(buf));
+    if (rc != 0) {
+        os_mbuf_free_chain(*out_om);
+        *out_om = NULL;
+        return SYS_ENOMEM;
+    }
 
-    rc = cbor_write_object(&encoder, attrs);
+    rc = cbor_write_object(&enc, attrs);
     if (rc != 0) {
         os_mbuf_free_chain(*out_om);
         *out_om = NULL;
         return rc;
+    }
+
+    size_t written = mgmt_cbor_encoder_bytes_written(&enc);
+    if (os_mbuf_append(*out_om, buf, written) != 0) {
+        os_mbuf_free_chain(*out_om);
+        *out_om = NULL;
+        return SYS_ENOMEM;
     }
 
     return 0;

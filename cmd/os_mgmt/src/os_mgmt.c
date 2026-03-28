@@ -19,7 +19,6 @@
 
 #include <string.h>
 
-#include "tinycbor/cbor.h"
 #include "cborattr/cborattr.h"
 #include "mgmt/mgmt.h"
 #include "os_mgmt/os_mgmt.h"
@@ -82,7 +81,7 @@ static int
 os_mgmt_echo(struct mgmt_ctxt *ctxt)
 {
     char echo_buf[128];
-    CborError err;
+    int err;
 
     const struct cbor_attr_t attrs[2] = {
         [0] = {
@@ -99,13 +98,13 @@ os_mgmt_echo(struct mgmt_ctxt *ctxt)
 
     echo_buf[0] = '\0';
 
-    err = cbor_read_object(&ctxt->it, attrs);
+    err = cbor_read_object(&ctxt->decoder, attrs);
     if (err != 0) {
         return MGMT_ERR_EINVAL;
     }
 
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "r");
-    err |= cbor_encode_text_string(&ctxt->encoder, echo_buf, strlen(echo_buf));
+    err  = mgmt_cbor_encode_text_z(&ctxt->encoder, "r");
+    err |= mgmt_cbor_encode_text(&ctxt->encoder, echo_buf, strlen(echo_buf));
 
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
@@ -120,34 +119,33 @@ os_mgmt_echo(struct mgmt_ctxt *ctxt)
  * Encodes a single taskstat entry.
  */
 static int
-os_mgmt_taskstat_encode_one(struct CborEncoder *encoder,
+os_mgmt_taskstat_encode_one(mgmt_cbor_encoder_t *encoder,
                             const struct os_mgmt_task_info *task_info)
 {
-    CborEncoder task_map;
-    CborError err;
+    int err;
 
     err = 0;
-    err |= cbor_encode_text_stringz(encoder, task_info->oti_name);
-    err |= cbor_encoder_create_map(encoder, &task_map, CborIndefiniteLength);
-    err |= cbor_encode_text_stringz(&task_map, "prio");
-    err |= cbor_encode_uint(&task_map, task_info->oti_prio);
-    err |= cbor_encode_text_stringz(&task_map, "tid");
-    err |= cbor_encode_uint(&task_map, task_info->oti_taskid);
-    err |= cbor_encode_text_stringz(&task_map, "state");
-    err |= cbor_encode_uint(&task_map, task_info->oti_state);
-    err |= cbor_encode_text_stringz(&task_map, "stkuse");
-    err |= cbor_encode_uint(&task_map, task_info->oti_stkusage);
-    err |= cbor_encode_text_stringz(&task_map, "stksiz");
-    err |= cbor_encode_uint(&task_map, task_info->oti_stksize);
-    err |= cbor_encode_text_stringz(&task_map, "cswcnt");
-    err |= cbor_encode_uint(&task_map, task_info->oti_cswcnt);
-    err |= cbor_encode_text_stringz(&task_map, "runtime");
-    err |= cbor_encode_uint(&task_map, task_info->oti_runtime);
-    err |= cbor_encode_text_stringz(&task_map, "last_checkin");
-    err |= cbor_encode_uint(&task_map, task_info->oti_last_checkin);
-    err |= cbor_encode_text_stringz(&task_map, "next_checkin");
-    err |= cbor_encode_uint(&task_map, task_info->oti_next_checkin);
-    err |= cbor_encoder_close_container(encoder, &task_map);
+    err |= mgmt_cbor_encode_text_z(encoder, task_info->oti_name);
+    err |= mgmt_cbor_map_begin(encoder);
+    err |= mgmt_cbor_encode_text_z(encoder, "prio");
+    err |= mgmt_cbor_encode_uint(encoder, task_info->oti_prio);
+    err |= mgmt_cbor_encode_text_z(encoder, "tid");
+    err |= mgmt_cbor_encode_uint(encoder, task_info->oti_taskid);
+    err |= mgmt_cbor_encode_text_z(encoder, "state");
+    err |= mgmt_cbor_encode_uint(encoder, task_info->oti_state);
+    err |= mgmt_cbor_encode_text_z(encoder, "stkuse");
+    err |= mgmt_cbor_encode_uint(encoder, task_info->oti_stkusage);
+    err |= mgmt_cbor_encode_text_z(encoder, "stksiz");
+    err |= mgmt_cbor_encode_uint(encoder, task_info->oti_stksize);
+    err |= mgmt_cbor_encode_text_z(encoder, "cswcnt");
+    err |= mgmt_cbor_encode_uint(encoder, task_info->oti_cswcnt);
+    err |= mgmt_cbor_encode_text_z(encoder, "runtime");
+    err |= mgmt_cbor_encode_uint(encoder, task_info->oti_runtime);
+    err |= mgmt_cbor_encode_text_z(encoder, "last_checkin");
+    err |= mgmt_cbor_encode_uint(encoder, task_info->oti_last_checkin);
+    err |= mgmt_cbor_encode_text_z(encoder, "next_checkin");
+    err |= mgmt_cbor_encode_uint(encoder, task_info->oti_next_checkin);
+    err |= mgmt_cbor_map_end(encoder);
 
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
@@ -163,15 +161,13 @@ static int
 os_mgmt_taskstat_read(struct mgmt_ctxt *ctxt)
 {
     struct os_mgmt_task_info task_info;
-    struct CborEncoder tasks_map;
-    CborError err;
+    int err;
     int task_idx;
     int rc;
 
     err = 0;
-    err |= cbor_encode_text_stringz(&ctxt->encoder, "tasks");
-    err |= cbor_encoder_create_map(&ctxt->encoder, &tasks_map,
-                                   CborIndefiniteLength);
+    err |= mgmt_cbor_encode_text_z(&ctxt->encoder, "tasks");
+    err |= mgmt_cbor_map_begin(&ctxt->encoder);
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
     }
@@ -183,17 +179,18 @@ os_mgmt_taskstat_read(struct mgmt_ctxt *ctxt)
             /* No more tasks to encode. */
             break;
         } else if (rc != 0) {
+            mgmt_cbor_map_end(&ctxt->encoder);
             return rc;
         }
 
-        rc = os_mgmt_taskstat_encode_one(&tasks_map, &task_info);
+        rc = os_mgmt_taskstat_encode_one(&ctxt->encoder, &task_info);
         if (rc != 0) {
-            cbor_encoder_close_container(&ctxt->encoder, &tasks_map);
+            mgmt_cbor_map_end(&ctxt->encoder);
             return rc;
         }
     }
 
-    err = cbor_encoder_close_container(&ctxt->encoder, &tasks_map);
+    err = mgmt_cbor_map_end(&ctxt->encoder);
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
     }
@@ -209,19 +206,20 @@ static int
 os_mgmt_datetime_read(struct mgmt_ctxt *ctxt)
 {
     char buf[DATETIME_BUFSIZE];
-    CborError err = 0;
+    int err;
+    int rc;
 
-    err = cbor_encode_text_stringz(&ctxt->encoder, "datetime");
+    err = mgmt_cbor_encode_text_z(&ctxt->encoder, "datetime");
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
     }
 
-    err = os_mgmt_impl_datetime_info(buf, sizeof(buf));
-    if (err != 0) {
+    rc = os_mgmt_impl_datetime_info(buf, sizeof(buf));
+    if (rc != 0) {
         return MGMT_ERR_ENOMEM;
     }
 
-    err = cbor_encode_text_stringz(&ctxt->encoder, buf);
+    err = mgmt_cbor_encode_text_z(&ctxt->encoder, buf);
     if (err != 0) {
         return MGMT_ERR_ENOMEM;
     }
@@ -236,7 +234,7 @@ static int
 os_mgmt_datetime_write(struct mgmt_ctxt *ctxt)
 {
     char datetime_buf[DATETIME_BUFSIZE];
-    CborError err;
+    int err;
 
     const struct cbor_attr_t attrs[2] = {
         [0] = {
@@ -249,7 +247,7 @@ os_mgmt_datetime_write(struct mgmt_ctxt *ctxt)
         [1] = { .attribute = NULL }
     };
 
-    err = cbor_read_object(&ctxt->it, attrs);
+    err = cbor_read_object(&ctxt->decoder, attrs);
     if (err != 0) {
         return MGMT_ERR_EINVAL;
     }

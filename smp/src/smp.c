@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <string.h>
 
-#include "tinycbor/cbor.h"
 #include "mgmt/endian.h"
 #include "mgmt/mgmt.h"
 #include "smp/smp.h"
@@ -69,15 +68,14 @@ smp_init_rsp_hdr(const struct mgmt_hdr *req_hdr, struct mgmt_hdr *rsp_hdr)
 static int
 smp_read_hdr(struct smp_streamer *streamer, struct mgmt_hdr *dst_hdr)
 {
-    struct cbor_decoder_reader *reader;
+    const void *rx_buf = streamer->mgmt_stmr.rx_buf;
+    size_t      rx_len = streamer->mgmt_stmr.rx_len;
 
-    reader = streamer->mgmt_stmr.reader;
-
-    if (reader->message_size < sizeof *dst_hdr) {
+    if (rx_len < sizeof *dst_hdr) {
         return MGMT_ERR_EINVAL;
     }
 
-    reader->cpy(reader, (char *)dst_hdr, 0, sizeof *dst_hdr);
+    memcpy(dst_hdr, rx_buf, sizeof *dst_hdr);
     return 0;
 }
 
@@ -96,7 +94,6 @@ smp_build_err_rsp(struct smp_streamer *streamer,
                   const struct mgmt_hdr *req_hdr,
                   int status)
 {
-    struct CborEncoder map;
     struct mgmt_ctxt cbuf;
     struct mgmt_hdr rsp_hdr;
     int rc;
@@ -112,7 +109,7 @@ smp_build_err_rsp(struct smp_streamer *streamer,
         return rc;
     }
 
-    rc = cbor_encoder_create_map(&cbuf.encoder, &map, CborIndefiniteLength);
+    rc = mgmt_cbor_map_begin(&cbuf.encoder);
     if (rc != 0) {
         return rc;
     }
@@ -122,12 +119,12 @@ smp_build_err_rsp(struct smp_streamer *streamer,
         return rc;
     }
 
-    rc = cbor_encoder_close_container(&cbuf.encoder, &map);
+    rc = mgmt_cbor_map_end(&cbuf.encoder);
     if (rc != 0) {
         return rc;
     }
 
-    rsp_hdr.nh_len = cbor_encode_bytes_written(&cbuf.encoder) - MGMT_HDR_SIZE;
+    rsp_hdr.nh_len = (uint16_t)mgmt_cbor_encoder_bytes_written(&cbuf.encoder);
     mgmt_hton_hdr(&rsp_hdr);
     rc = smp_write_hdr(streamer, &rsp_hdr);
     if (rc != 0) {
@@ -157,7 +154,6 @@ smp_handle_single_payload(struct mgmt_ctxt *cbuf,
 {
     const struct mgmt_handler *handler;
     mgmt_handler_fn *handler_fn;
-    struct CborEncoder payload_encoder;
     int rc;
 
     handler = mgmt_find_handler(req_hdr->nh_group, req_hdr->nh_id);
@@ -168,8 +164,7 @@ smp_handle_single_payload(struct mgmt_ctxt *cbuf,
     /* Begin response payload.  Response fields are inserted into the root
      * map as key value pairs.
      */
-    rc = cbor_encoder_create_map(&cbuf->encoder, &payload_encoder,
-                                 CborIndefiniteLength);
+    rc = mgmt_cbor_map_begin(&cbuf->encoder);
     rc = mgmt_err_from_cbor(rc);
     if (rc != 0) {
         return rc;
@@ -202,7 +197,7 @@ smp_handle_single_payload(struct mgmt_ctxt *cbuf,
     }
 
     /* End response payload. */
-    rc = cbor_encoder_close_container(&cbuf->encoder, &payload_encoder);
+    rc = mgmt_cbor_map_end(&cbuf->encoder);
     return mgmt_err_from_cbor(rc);
 }
 
@@ -247,8 +242,11 @@ smp_handle_single_req(struct smp_streamer *streamer,
         return rc;
     }
 
-    /* Fix up the response header with the correct length. */
-    rsp_hdr.nh_len = cbor_encode_bytes_written(&cbuf.encoder) - MGMT_HDR_SIZE;
+    /* Fix up the response header with the correct length.
+     * The encoder was initialised at tx_buf + MGMT_HDR_SIZE, so
+     * bytes_written reflects only the CBOR payload (not the header slot).
+     */
+    rsp_hdr.nh_len = (uint16_t)mgmt_cbor_encoder_bytes_written(&cbuf.encoder);
     mgmt_hton_hdr(&rsp_hdr);
     rc = smp_write_hdr(streamer, &rsp_hdr);
     if (rc != 0) {

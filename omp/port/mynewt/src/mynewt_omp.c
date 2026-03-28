@@ -24,7 +24,6 @@
 
 #include <mgmt/mgmt.h>
 #include <cborattr/cborattr.h>
-#include <tinycbor/cbor.h>
 
 #include "omp/omp.h"
 #include "omp/omp_priv.h"
@@ -50,28 +49,28 @@ omp_impl_process_request_packet(struct omp_state *omgr_st, void *req_buf)
     if (rc != 0) {
         rc = MGMT_ERR_EINVAL;
         return rc;
-
     }
 
-    rc = omp_read_hdr(&ctxt.it, &req_hdr);
+    rc = mgmt_ctxt_init(&ctxt, &streamer->mgmt_stmr);
     if (rc != 0) {
         rc = MGMT_ERR_EINVAL;
         return rc;
+    }
 
+    rc = omp_read_hdr(&ctxt.decoder, &req_hdr);
+    if (rc != 0) {
+        rc = MGMT_ERR_EINVAL;
+        return rc;
     }
 
     memcpy(&rsp_hdr, &req_hdr, sizeof(struct mgmt_hdr));
 
-    rc = mgmt_streamer_init_reader(&streamer->mgmt_stmr, req_m);
-    if (rc != 0) {
-        rc = MGMT_ERR_EINVAL;
-        return rc;
-
-    }
-
-    rc = cbor_encoder_create_map(streamer->rsp_encoder,
-                                 &ctxt.encoder,
-                                 CborIndefiniteLength);
+    /*
+     * Open the outer map in rsp_encoder, then use ctxt.encoder (which is
+     * initialised from the same TX buffer) to write the response payload.
+     * The nesting stack in rsp_encoder tracks the open container.
+     */
+    rc = mgmt_cbor_map_begin(streamer->rsp_encoder);
     if (rc != 0) {
         rc = MGMT_ERR_EINVAL;
         return rc;
@@ -79,11 +78,10 @@ omp_impl_process_request_packet(struct omp_state *omgr_st, void *req_buf)
 
     rc = omp_process_mgmt_hdr(&req_hdr, &rsp_hdr, &ctxt);
 
-    cbor_encoder_close_container(streamer->rsp_encoder, &ctxt.encoder);
+    mgmt_cbor_map_end(streamer->rsp_encoder);
     if (rc != 0) {
         rc = MGMT_ERR_EINVAL;
         return rc;
-
     }
 
     streamer->tx_rsp_cb(streamer, rc, NULL);
