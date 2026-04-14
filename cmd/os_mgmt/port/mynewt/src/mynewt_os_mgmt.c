@@ -98,6 +98,7 @@ os_mgmt_impl_task_info(int idx, struct os_mgmt_task_info *out_info)
     return 0;
 }
 
+#if MYNEWT_VAL(OS_MGMT_DATETIME)
 int
 os_mgmt_impl_datetime_info(char *datetime, size_t size)
 {
@@ -136,6 +137,7 @@ os_mgmt_impl_datetime_set(char *datetime)
 
     return os_settimeofday(&tv, &tz);
 }
+#endif
 
 int
 os_mgmt_impl_reset(unsigned int delay_ms)

@@ -29,6 +29,9 @@ pkg.deps:
     - '@apache-mynewt-mcumgr/mgmt'
     - '@apache-mynewt-mcumgr/cborattr'
 
+pkg.deps.OS_MGMT_DATETIME:
+    - "@apache-mynewt-core/time/datetime"
+
 pkg.ign_files:
     - "stubs.c"
 

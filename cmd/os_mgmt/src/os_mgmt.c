@@ -25,7 +25,7 @@
 #include "os_mgmt/os_mgmt.h"
 #include "os_mgmt/os_mgmt_impl.h"
 #include "os_mgmt/os_mgmt_config.h"
-#if MYNEWT_VAL(OS_MGMT_DATETIME)
+#if OS_MGMT_DATETIME
 #include "datetime/datetime.h"
 #endif
 
@@ -202,6 +202,7 @@ os_mgmt_taskstat_read(struct mgmt_ctxt *ctxt)
 }
 #endif
 
+#if OS_MGMT_DATETIME
 /**
  * Command handler: os datetime
  */
@@ -261,6 +262,7 @@ os_mgmt_datetime_write(struct mgmt_ctxt *ctxt)
 
     return MGMT_ERR_EOK;
 }
+#endif
 
 /**
  * Command handler: os reset
