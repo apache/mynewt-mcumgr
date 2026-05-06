@@ -353,9 +353,9 @@ log_mgmt_show(struct mgmt_ctxt *ctxt)
     struct log_mgmt_log log;
     CborEncoder logs;
     CborError err;
-    uint64_t index;
+    long long unsigned int index;
     uint32_t next_idx;
-    int64_t timestamp;
+    long long int timestamp;
     int name_len;
     int log_idx;
     int rc;
