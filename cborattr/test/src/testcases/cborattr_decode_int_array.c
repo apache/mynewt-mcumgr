@@ -75,15 +75,15 @@ test_encode_int_array(void)
 TEST_CASE(test_cborattr_decode_int_array)
 {
     int rc;
-    int64_t arr_data[5];
-    int64_t b_int;
+    long long int arr_data[5];
+    long long int b_int;
     int arr_cnt = 0;
     struct cbor_attr_t test_attrs[] = {
         [0] = {
             .attribute = "a",
             .type = CborAttrArrayType,
             .addr.array.element_type = CborAttrIntegerType,
-            .addr.array.arr.integers.store = (long long int *) arr_data,
+            .addr.array.arr.integers.store = arr_data,
             .addr.array.count = &arr_cnt,
             .addr.array.maxlen = sizeof(arr_data) / sizeof(arr_data[0]),
             .nodefault = true
@@ -91,7 +91,7 @@ TEST_CASE(test_cborattr_decode_int_array)
         [1] = {
             .attribute = "b",
             .type = CborAttrIntegerType,
-            .addr.integer = (long long int *) &b_int,
+            .addr.integer = &b_int,
             .dflt.integer = 1
         },
         [2] = {
@@ -103,7 +103,7 @@ TEST_CASE(test_cborattr_decode_int_array)
             .attribute = "a",
             .type = CborAttrArrayType,
             .addr.array.element_type = CborAttrIntegerType,
-            .addr.array.arr.integers.store = (long long int *) arr_data,
+            .addr.array.arr.integers.store = arr_data,
             .addr.array.count = &arr_cnt,
             .addr.array.maxlen = 1,
             .nodefault = true
@@ -111,7 +111,7 @@ TEST_CASE(test_cborattr_decode_int_array)
         [1] = {
             .attribute = "b",
             .type = CborAttrIntegerType,
-            .addr.integer = (long long int *) &b_int,
+            .addr.integer = &b_int,
             .dflt.integer = 1
         },
         [2] = {

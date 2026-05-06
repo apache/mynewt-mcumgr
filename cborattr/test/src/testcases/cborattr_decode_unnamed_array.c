@@ -71,14 +71,14 @@ test_encode_unnamed_array(void)
 TEST_CASE(test_cborattr_decode_unnamed_array)
 {
     int rc;
-    int64_t arr_data[5];
+    long long int arr_data[5];
     int arr_cnt = 0;
     struct cbor_attr_t test_attrs[] = {
         [0] = {
             .attribute = CBORATTR_ATTR_UNNAMED,
             .type = CborAttrArrayType,
             .addr.array.element_type = CborAttrIntegerType,
-            .addr.array.arr.integers.store = (long long int *) arr_data,
+            .addr.array.arr.integers.store = arr_data,
             .addr.array.count = &arr_cnt,
             .addr.array.maxlen = sizeof(arr_data) / sizeof(arr_data[0]),
             .nodefault = true

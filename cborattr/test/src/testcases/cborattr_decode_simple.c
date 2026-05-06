@@ -83,21 +83,21 @@ test_encode_data(void)
 TEST_CASE(test_cborattr_decode_simple)
 {
     int rc;
-    uint64_t a_val = 0;
-    int64_t b_val = 0;
+    long long unsigned int a_val = 0;
+    long long int b_val = 0;
     uint8_t c_data[4];
     size_t c_len;
     struct cbor_attr_t test_attrs[] = {
         [0] = {
             .attribute = "a",
             .type = CborAttrIntegerType,
-            .addr.uinteger = (long long unsigned int *) &a_val,
+            .addr.uinteger = &a_val,
             .nodefault = true
         },
         [1] = {
             .attribute = "b",
             .type = CborAttrIntegerType,
-            .addr.integer = (long long int *) &b_val,
+            .addr.integer = &b_val,
             .nodefault = true
         },
         [2] = {

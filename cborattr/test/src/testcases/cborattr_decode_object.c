@@ -110,12 +110,12 @@ test_encode_data_complex(void)
 TEST_CASE(test_cborattr_decode_object)
 {
     int rc;
-    int64_t bm_val = 0;
+    long long int bm_val = 0;
     struct cbor_attr_t test_sub_attr_bm[] = {
         [0] = {
             .attribute = "bm",
             .type = CborAttrIntegerType,
-            .addr.integer = (long long int *) &bm_val,
+            .addr.integer = &bm_val,
             .nodefault = true
         },
         [1] = {
@@ -133,13 +133,13 @@ TEST_CASE(test_cborattr_decode_object)
             .attribute = NULL
         }
     };
-    int64_t a_val = 0;
-    int64_t i_val = 0;
+    long long int a_val = 0;
+    long long int i_val = 0;
     struct cbor_attr_t test_sub_sub_attr[] = {
         [0] = {
             .attribute = "i",
             .type = CborAttrIntegerType,
-            .addr.integer = (long long int *) &i_val,
+            .addr.integer = &i_val,
             .nodefault = true
         },
         [1] = {
@@ -167,7 +167,7 @@ TEST_CASE(test_cborattr_decode_object)
         [1] = {
             .attribute = "a",
             .type = CborAttrIntegerType,
-            .addr.integer = (long long int *) &a_val,
+            .addr.integer = &a_val,
             .nodefault = true
         },
         [2] = {
