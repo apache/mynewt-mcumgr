@@ -22,8 +22,6 @@
 
 /* Number of updatable images */
 #define IMG_MGMT_UPDATABLE_IMAGE_NUMBER 1
-/* Image status list will only contain image attributes that are true/non-zero */
-#define IMG_MGMT_FRUGAL_LIST    0
 
 #if defined MYNEWT
 
@@ -33,6 +31,10 @@
 #define IMG_MGMT_VERBOSE_ERR    MYNEWT_VAL(IMG_MGMT_VERBOSE_ERR)
 #define IMG_MGMT_LAZY_ERASE     MYNEWT_VAL(IMG_MGMT_LAZY_ERASE)
 #define IMG_MGMT_DUMMY_HDR      MYNEWT_VAL(IMG_MGMT_DUMMY_HDR)
+#ifdef MYNEWT_VAL_IMG_MGMT_FRUGAL_LIST
+#undef IMG_MGMT_FRUGAL_LIST
+#define IMG_MGMT_FRUGAL_LIST    MYNEWT_VAL(IMG_MGMT_FRUGAL_LIST)
+#endif
 #define IMG_MGMT_BOOT_CURR_SLOT 0
 
 #elif defined __ZEPHYR__
