@@ -21,16 +21,18 @@
 
 # Apache mcumgr Security Threat Model (draft)
 
-> **Status: v0 draft for PMC review.** This document was drafted by the
+> **Status: v0, reviewed by the PMC.** This document was drafted by the
 > ASF Security team from public artefacts (the in-repo `README.md`,
 > `protocol.md`, `transport/*.md`, and the `cmd/*/syscfg.yml` defaults)
-> against the Scovetta threat-model rubric. **No maintainer has reviewed
-> or ratified it yet.** Every non-trivial claim carries a provenance tag —
-> *(documented)* (stated in the repo's own files), *(maintainer)* (none
-> yet), or *(inferred)* (reasoned from code structure / domain knowledge,
-> and routed to a numbered question in §14). A draft that is mostly
-> *(inferred)* is, by design, a starting point to react to — please
-> correct, confirm, or reject each item.
+> against the Scovetta threat-model rubric. **Szymon Janc (Mynewt PMC)
+> reviewed it on 2026-07-27** and answered the core-protocol, build-time,
+> scope and meta questions in §14; his answers are folded into the body.
+> Every non-trivial claim carries a provenance tag — *(documented)*
+> (stated in the repo's own files), *(maintainer)* (ratified or corrected
+> by a PMC member), or *(inferred)* (reasoned from code structure /
+> domain knowledge, and routed to a numbered question in §14). The
+> remaining *(inferred)* claims are the per-handler robustness questions;
+> corrections are still welcome on any of them.
 
 ## §1 Header
 
@@ -39,10 +41,14 @@
 - **Drafted:** 2026-06-13, by the ASF Security team (v0 draft from public artefacts).
 - **Companion repos in the same review round:** `apache/mynewt-core`
   (the RTOS mcumgr ports onto) and `apache/mynewt-nimble` (the BLE stack
-  that provides one of mcumgr's transports). This model is written to
-  stand alone, because mcumgr is **OS-independent and also runs on
-  Zephyr** *(documented: README)* — but where a property is delegated to
-  the host OS or the bootloader, that is called out explicitly.
+  that provides one of mcumgr's transports). **This model covers the
+  Mynewt porting layer only.** The codebase is OS-independent by
+  construction and the README still describes a Zephyr port, but Zephyr
+  **forked mcumgr into its own tree and no longer consumes this
+  repository**, so its divergences are out of model here. The PMC's
+  long-term plan is to move mcumgr back into `apache/mynewt-core`.
+  *(maintainer — §14 Q4, Q19)* Where a property is delegated to the host
+  OS or the bootloader, that is called out explicitly.
 - **What should trigger a revision of this model:** a new SMP command
   group; a new transport; the addition of any authentication /
   authorization layer to SMP; a change to which command groups are
@@ -77,21 +83,23 @@ canonical use is **device firmware update (DFU)** and field diagnostics.
 | **Command handlers** | `cmd/img_mgmt`, `cmd/fs_mgmt`, `cmd/os_mgmt`, `cmd/log_mgmt`, `cmd/stat_mgmt`, `cmd/shell_mgmt` | Implement individual commands within their group. Each has a **very different** privilege footprint (firmware write vs. read a stat). | Per-command; see §6 / §11. |
 | **Transports** | `transport/` (BLE — `smp-bluetooth.md`; console/serial — `smp-console.md`), plus UDP in some ports | Carry SMP frames between client and server. | The reachability boundary — *who* can deliver a frame at all. |
 | **CBOR / attr decode** | `cborattr/`, bundled tinycbor | Decodes attacker-controlled CBOR payloads into C structs. | Classic untrusted-deserialization surface. |
-| **Ships-but-context-dependent** | `samples/`, `zephyr/` glue, `cmd/*/port/` | Example apps and OS-porting shims. | Demo / integration code; modelled as the integrator's, not the library's, per §3. |
+| **Ships-but-context-dependent** | `samples/`, `zephyr/` glue, `cmd/*/port/` | Example apps and OS-porting shims. | Demo / integration code; modelled as the integrator's, not the library's, per §3. The `zephyr/` glue is doubly out of model — Zephyr forked mcumgr and no longer uses this repo (§3.5) *(maintainer)* |
 
 ### What mcumgr is *not*
 
 - It is **not** a secure channel. It provides **no** authentication,
   authorization, confidentiality, integrity, or replay protection at the
-  SMP layer (see §9). *(inferred from the protocol — §14 Q1)*
+  SMP layer (see §9). *(maintainer — §14 Q1, confirmed)*
 - It is **not** the thing that decides whether an uploaded image is
   allowed to *run*. mcumgr **stages** an image into a secondary slot; a
   separate bootloader (**MCUboot**, in `apache/mynewt-core`'s `boot/`)
   verifies the signature and decides whether to boot it. *(documented:
   README "Dependencies"; §14 Q2)*
-- It is **not** OS-specific — it runs on both Apache Mynewt and Zephyr
-  and relies on a porting layer for flash, semaphores, and the like.
-  *(documented: README)*
+- It is **not** OS-specific *by construction* — it relies on a porting
+  layer for flash, semaphores, and the like. But for the purposes of this
+  model the relevant porting layer is **Mynewt's**: Zephyr forked mcumgr
+  into its own tree and no longer uses this repository.
+  *(maintainer — §14 Q4)*
 
 ## §3 Out of scope (explicit non-goals)
 
@@ -110,15 +118,21 @@ canonical use is **device firmware update (DFU)** and field diagnostics.
    job (`apache/mynewt-core` `boot/`). mcumgr's role ends at writing
    bytes to the staging slot. *(documented: README; §14 Q2)*
 4. **The host RTOS and its porting layer.** Flash drivers, the scheduler,
-   the HAL, `os_` primitives — modelled in `apache/mynewt-core` (or by
-   Zephyr). mcumgr assumes they are correct (§5).
-5. **The integrating firmware author** — trusted by construction. mcumgr
+   the HAL, `os_` primitives — modelled in `apache/mynewt-core`. mcumgr
+   assumes they are correct (§5). A bug in the Mynewt porting layer is an
+   `apache/mynewt-core` finding, not an mcumgr one.
+   *(maintainer — §14 Q4)*
+5. **Zephyr and its fork.** Zephyr maintains its own fork of mcumgr in
+   the Zephyr tree and does not consume this repository. Zephyr-only
+   features and divergences are out of model here.
+   *(maintainer — §14 Q4, Q19)*
+6. **The integrating firmware author** — trusted by construction. mcumgr
    has no concept of a "user"; it has a remote *peer* on a transport, and
    that peer's trust level is entirely a property of the transport the
    integrator chose to expose (§7).
-6. **Physical / invasive attacks** — chip decap, fault injection, bus
+7. **Physical / invasive attacks** — chip decap, fault injection, bus
    probing, glitching the boot. Out of model.
-7. **Supply-chain / build hygiene** — action pinning, release signing,
+8. **Supply-chain / build hygiene** — action pinning, release signing,
    dependency currency. Not a threat-model concern.
 
 ## §4 Trust boundaries and data flow
@@ -187,7 +201,16 @@ choices.
   `os_mgmt`, `log_mgmt`, `stat_mgmt`, `shell_mgmt` are separate packages.
   `shell_mgmt` (remote shell command execution) and `fs_mgmt` (arbitrary
   file read/write) are the highest-power groups and should be off in
-  most production builds. *(inferred — which are default-on per OS? §14 Q5)*
+  most production builds.
+  **On Mynewt there is no meaningful "default" set.** What is compiled in
+  follows from which packages the application — or a system component —
+  pulls in, which is a per-sample configuration choice. The rule of thumb
+  is that a group must be **explicitly enabled by the user**, either
+  directly in the app or transitively by pulling a package that depends
+  on it (enabling USB, for instance, may pull `img_mgmt`). So "is it on by
+  default?" is the wrong question to ask of this repo; "which packages
+  does this product's build pull in?" is the right one.
+  *(maintainer — §14 Q5)*
 - **Upload chunk buffers are stack-allocated.**
   `IMG_MGMT_UL_CHUNK_SIZE` and `FS_MGMT_UL_CHUNK_SIZE` default to **512**
   and the syscfg descriptions state "a buffer of this size gets
@@ -416,33 +439,46 @@ decode path before treating it as valid (§13).
 ## §14 Open questions for the maintainers
 
 Grouped; each promotes an *(inferred)* claim above to *(maintainer)* once
-answered.
+answered. **Szymon Janc (Mynewt PMC) answered the following on
+2026-07-27**; his answers are folded into the body above and retained
+here.
 
-**Core protocol / trust (highest priority)**
-- **Q1.** Confirm SMP provides *no* authentication, authorization,
-  confidentiality, integrity, or replay protection of its own, and that
-  all of these are intentionally delegated to the transport/integrator.
-- **Q2.** Confirm the division of responsibility with MCUboot: mcumgr
-  stages an image; MCUboot's signature verification is the sole gate on
-  execution. Is image authenticity *ever* checked inside mcumgr?
-- **Q3.** Confirm the single-address-space / no-privilege-separation
-  assumption (a memory bug in any handler is whole-device).
+**Core protocol / trust — ANSWERED**
+- **Q1.** SMP provides no authentication, authorization, confidentiality,
+  integrity or replay protection of its own; all delegated to the
+  transport/integrator. → **Confirmed.**
+- **Q2.** mcumgr stages an image; MCUboot's signature verification is the
+  sole gate on execution. → **Correct.**
+- **Q3.** Single-address-space / no privilege separation — a memory bug in
+  any handler is whole-device. → **Confirmed.**
 
-**Porting / environment**
-- **Q4.** Which porting-layer guarantees does mcumgr rely on (flash
-  atomicity, semaphore correctness) such that a porting bug is *not*
-  an mcumgr finding?
+**Porting / environment — ANSWERED**
+- **Q4.** Which porting-layer guarantees does mcumgr rely on?
+  → **Scope this model to the Mynewt porting layer.** Zephyr forked
+  mcumgr into its own tree and no longer uses this repository. The PMC's
+  long-term plan is to move mcumgr back into `apache/mynewt-core`.
+  (§1, §2, §3.4, §3.5)
 
 **Build-time surface**
-- **Q5.** Which command groups are default-on per supported OS (Mynewt /
-  Zephyr)? Specifically, are `fs_mgmt` and `shell_mgmt` off by default?
-- **Q6.** For `img_mgmt`/`fs_mgmt` uploads: where exactly is the
-  attacker-supplied chunk length validated against `*_UL_CHUNK_SIZE`
-  relative to the stack copy? Is there a guaranteed reject-before-copy?
+- **Q5.** Which command groups are default-on? → **On Mynewt there is no
+  clear "default".** What is compiled in depends on which packages the
+  application or a system component pulls in, and that is a per-sample
+  configuration choice. The rule of thumb is that a group must be
+  **explicitly enabled by the user** — either directly in the app, or
+  transitively by pulling a package that depends on it (e.g. enabling USB
+  may pull `img_mgmt`). Zephyr's defaults are out of model (see Q4).
+  *(maintainer)*
+- **Q6.** Where is the attacker-supplied chunk length validated relative
+  to the stack copy? → **Handed to `cbor_read_object()` via `cbor_attr_t`**
+  — i.e. the bound is enforced by the cborattr layer rather than by an
+  explicit pre-copy check in the handler. *(maintainer)* The robustness of
+  that path is still worth a scan's attention (§6).
 - **Q7.** Does `fs_mgmt` constrain paths to an intended directory, or is
   full-filesystem read/write the intended (integrator-gated) behaviour?
+  *(still open)*
 - **Q8.** What do the `img_mgmt` "dummy header" / direct-upload syscfg
-  toggles do, and are any security-relevant?
+  toggles do? → **They are used in unit tests.** Not a production
+  security surface. *(maintainer)*
 
 **Parse hardening**
 - **Q9.** How are reserved `nh_flags` bits and server-side receipt of
@@ -451,24 +487,31 @@ answered.
   against the actually-received byte count?
 - **Q11.** Behaviour on unknown `(group,id)` — guaranteed clean error?
 - **Q12.** Confirm `nh_seq` carries no security/ordering guarantee.
-- **Q13.** Are `os_mgmt` diagnostics (taskstat/mpstat) considered
-  intentional information disclosure to any transport peer?
-- **Q14.** Is `shell_mgmt` intended strictly for development, and should
-  the model state it must never ship enabled?
+- **Q13.** Are `os_mgmt` diagnostics (taskstat/mpstat) intentional
+  information disclosure to any transport peer? → **Yes.** *(maintainer)*
+- **Q14.** Is `shell_mgmt` intended strictly for development? → **Believed
+  so — but it is a Zephyr-only feature**, so for this model (Mynewt
+  porting layer, Q4) it is largely moot. *(maintainer)*
 - **Q15.** Does mcumgr bound CBOR nesting/size before handing the payload
-  to tinycbor, or is robustness entirely the decoder's?
-- **Q16.** Any intended DoS/rate-limit posture, or is availability wholly
-  the transport's concern?
+  to tinycbor? → **No — that is up to the decoder.** Robustness against
+  hostile CBOR is tinycbor's/cborattr's, which makes that path a
+  first-order target for review (§6). *(maintainer)*
+- **Q16.** Any intended DoS/rate-limit posture? → **It is on the
+  transport.** mcumgr claims none of its own. *(maintainer)*
 - **Q17.** Confirm no constant-time / side-channel guarantees are claimed.
+  → **Confirmed.** *(maintainer)*
 
-**Meta**
-- **Q18.** This repo has **no `SECURITY.md` and no `AGENTS.md`** today.
-  Are you content for this `THREAT_MODEL.md` to become the canonical
-  model, reached via a new `AGENTS.md → SECURITY.md → THREAT_MODEL.md`
-  chain (the discoverability PR we will open alongside)?
-- **Q19.** mcumgr also ships in Zephyr (with its own fork/divergence).
-  Should this model scope itself to the Apache repo only, or note
-  Zephyr-relevant divergences?
+**Meta — ANSWERED**
+- **Q18.** OK for this `THREAT_MODEL.md` to become the canonical model,
+  reached via `AGENTS.md → SECURITY.md → THREAT_MODEL.md`? → **Yes** —
+  that chain lands in this same PR.
+- **Q19.** Should the model scope itself to the Apache repo only, or note
+  Zephyr divergences? → **Apache repo only.** Zephyr forked mcumgr and no
+  longer consumes this repository (§3.5). *(maintainer)*
+
+**Still open** — Q7 (`fs_mgmt` path constraint) and the parse-hardening
+questions Q9–Q12 above. Szymon noted some of these touch very low-level
+detail; they are not blocking and the affected claims stay *(inferred)*.
 
 ## Appendix: existing security-policy artefacts → §x back-map
 
