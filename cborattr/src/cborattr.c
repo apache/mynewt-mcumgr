@@ -443,7 +443,17 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
 #endif
         case CborAttrTextStringType:
             len = arr->arr.strings.storelen - (tp - arr->arr.strings.store);
+            if (len < 1) {
+                err |= CborErrorOutOfMemory;
+                break;
+            }
+            /* Reserve space for terminating NUL */
+            len--;
             err |= cbor_value_copy_text_string(&elem, tp, &len, NULL);
+            if (err) {
+                break;
+            }
+            tp[len] = '\0';
             arr->arr.strings.ptrs[off] = tp;
             tp += len + 1;
             break;
@@ -453,6 +463,9 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
             break;
         default:
             err |= CborErrorIllegalType;
+            break;
+        }
+        if (err) {
             break;
         }
         arrcount++;
