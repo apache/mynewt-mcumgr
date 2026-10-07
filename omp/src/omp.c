@@ -78,7 +78,7 @@ omp_send_err_rsp(struct CborEncoder *enc,
 int
 omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr)
 {
-    size_t hlen;
+    size_t hlen = 0;
     int rc;
 
     struct cbor_attr_t attrs[] = {
@@ -92,6 +92,8 @@ omp_read_hdr(struct CborValue *cv, struct mgmt_hdr *out_hdr)
         },
         [1] = { 0 }
     };
+
+    memset(out_hdr, 0, sizeof(*out_hdr));
 
     rc = cbor_read_object(cv, attrs);
     if (rc != 0 || hlen != sizeof *out_hdr) {
