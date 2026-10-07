@@ -98,6 +98,9 @@ img_mgmt_find_tlvs(int slot, size_t *start_off, size_t *end_off,
 
     *start_off += sizeof tlv_info;
     *end_off = *start_off + tlv_info.it_tlv_tot;
+    if (*end_off < *start_off) {
+        return MGMT_ERR_EUNKNOWN;
+    }
 
     return 0;
 }
@@ -178,6 +181,9 @@ img_mgmt_read_info(int image_slot, struct image_version *ver, uint8_t *hash,
      * is considered invalid.
      */
     data_off = hdr.ih_hdr_size + hdr.ih_img_size;
+    if (data_off < hdr.ih_img_size) {
+        return MGMT_ERR_EUNKNOWN;
+    }
 
     rc = img_mgmt_find_tlvs(image_slot, &data_off, &data_end, IMAGE_TLV_PROT_INFO_MAGIC);
     if (!rc) {
