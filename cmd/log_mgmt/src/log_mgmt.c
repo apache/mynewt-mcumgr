@@ -252,7 +252,7 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
 {
     struct CborCntWriter cnt_writer;
     struct log_mgmt_filter filter;
-    struct log_walk_ctxt ctxt;
+    struct log_walk_ctxt ctxt = { 0 };
     CborEncoder cnt_encoder;
     CborEncoder entries;
     CborError err;
@@ -272,8 +272,8 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
     rsp_len = cbor_encode_bytes_written(enc) +
               cbor_encode_bytes_written(&cnt_encoder);
     if (rsp_len > LOG_MGMT_MAX_RSP_LEN) {
-        rc = LOG_MGMT_ERR_EUNKNOWN;
-        goto err;
+        /* No entries were processed, don't update watermark */
+        return LOG_MGMT_ERR_EUNKNOWN;
     }
 
     err |= cbor_encode_text_stringz(enc, "entries");
@@ -304,7 +304,6 @@ log_encode_entries(const struct log_mgmt_log *log, CborEncoder *enc,
         return LOG_MGMT_ERR_ENOMEM;
     }
 
-err:
 #if LOG_MGMT_READ_WATERMARK_UPDATE
     if (!rc || rc == LOG_MGMT_ERR_EUNKNOWN) {
         log_mgmt_impl_set_watermark(log, ctxt.last_enc_index);
