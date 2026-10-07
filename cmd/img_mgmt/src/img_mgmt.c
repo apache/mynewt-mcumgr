@@ -393,7 +393,9 @@ img_mgmt_upload_log(bool is_first, bool is_last, int status)
 static int
 img_mgmt_upload(struct mgmt_ctxt *ctxt)
 {
-    struct mgmt_evt_op_cmd_status_arg cmd_status_arg;
+    struct mgmt_evt_op_cmd_status_arg cmd_status_arg = {
+        .status = IMG_MGMT_ID_UPLOAD_STATUS_NONE,
+    };
     struct img_mgmt_upload_req req = {
         .off = -1,
         .size = -1,
