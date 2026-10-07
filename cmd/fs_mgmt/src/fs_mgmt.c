@@ -219,6 +219,10 @@ fs_mgmt_file_upload(struct mgmt_ctxt *ctxt)
         }
     }
 
+    if (data_len > sizeof(file_data)) {
+        return MGMT_ERR_EINVAL;
+    }
+
     new_off = fs_mgmt_ctxt.off + data_len;
     if (new_off > fs_mgmt_ctxt.len) {
         /* Data exceeds image length. */
