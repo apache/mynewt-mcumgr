@@ -68,6 +68,8 @@ extern "C" {
 #define IMG_MGMT_ID_UPLOAD_STATUS_START         0
 #define IMG_MGMT_ID_UPLOAD_STATUS_ONGOING       1
 #define IMG_MGMT_ID_UPLOAD_STATUS_COMPLETE      2
+/** No status determined (e.g., request rejected before processing). */
+#define IMG_MGMT_ID_UPLOAD_STATUS_NONE          (-1)
 
 extern struct img_mgmt_state g_img_mgmt_state;
 
