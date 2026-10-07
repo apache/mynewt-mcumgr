@@ -22,3 +22,8 @@ syscfg.defs:
     CBORATTR_MAX_SIZE:
         description: 'The maximum size of a CBOR attribute during decoding'
         value: 512
+    CBORATTR_MAX_NESTING:
+        description: >
+            Maximum nesting depth of CBOR containers that can be skipped
+            while decoding. Values nested deeper are rejected.
+        value: 16
