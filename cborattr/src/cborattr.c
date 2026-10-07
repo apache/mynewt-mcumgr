@@ -245,6 +245,16 @@ cbor_internal_read_object(CborValue *root_value,
                 case CborAttrBooleanType:
                     memcpy(lptr, &cursor->dflt.boolean, sizeof(bool));
                     break;
+                case CborAttrTextStringType:
+                    if (cursor->len > 0) {
+                        *(char *)lptr = '\0';
+                    }
+                    break;
+                case CborAttrByteStringType:
+                    if (cursor->addr.bytestring.len) {
+                        *cursor->addr.bytestring.len = 0;
+                    }
+                    break;
 #if FLOAT_SUPPORT
                 case CborAttrHalfFloatType:
                     memcpy(lptr, &cursor->dflt.halffloat, sizeof(uint16_t));
@@ -274,14 +284,16 @@ cbor_internal_read_object(CborValue *root_value,
     while (cbor_value_is_valid(&cur_value) && !err) {
         /* get the attribute */
         if (cbor_value_is_text_string(&cur_value)) {
-            if (cbor_value_calculate_string_length(&cur_value, &len) == 0) {
-                if (len > CBORATTR_MAX_SIZE) {
-                    err |= CborErrorDataTooLarge;
-                    break;
-                }
-                err |= cbor_value_copy_text_string(&cur_value, attrbuf, &len,
-                                                     NULL);
+            err |= cbor_value_calculate_string_length(&cur_value, &len);
+            if (err) {
+                break;
             }
+            if (len > CBORATTR_MAX_SIZE) {
+                err |= CborErrorDataTooLarge;
+                break;
+            }
+            err |= cbor_value_copy_text_string(&cur_value, attrbuf, &len,
+                                               NULL);
 
             /* at least get the type of the next value so we can match the
              * attribute name and type for a perfect match */
@@ -342,15 +354,29 @@ cbor_internal_read_object(CborValue *root_value,
 #endif
             case CborAttrByteStringType: {
                 size_t len = cursor->len;
-                err |= cbor_value_copy_byte_string(&cur_value, lptr,
-                                                   &len, NULL);
-                *cursor->addr.bytestring.len = len;
+                CborError copy_err;
+
+                copy_err = cbor_value_copy_byte_string(&cur_value, lptr,
+                                                       &len, NULL);
+                err |= copy_err;
+                /* On error len is set to string length, not copied length */
+                *cursor->addr.bytestring.len = copy_err ? 0 : len;
                 break;
             }
             case CborAttrTextStringType: {
-                size_t len = cursor->len;
-                err |= cbor_value_copy_text_string(&cur_value, lptr,
-                                                   &len, NULL);
+                size_t len;
+                CborError copy_err;
+
+                if (cursor->len < 1) {
+                    err |= CborErrorOutOfMemory;
+                    break;
+                }
+                /* Reserve space for terminating NUL */
+                len = cursor->len - 1;
+                copy_err = cbor_value_copy_text_string(&cur_value, lptr,
+                                                       &len, NULL);
+                err |= copy_err;
+                ((char *)lptr)[copy_err ? 0 : len] = '\0';
                 break;
             }
             case CborAttrArrayType:
@@ -364,7 +390,7 @@ cbor_internal_read_object(CborValue *root_value,
                 err |= CborErrorIllegalType;
             }
         }
-        err = cborattr_advance(&cur_value);
+        err |= cborattr_advance(&cur_value);
     }
     if (!err) {
         /* that should be it for this container */
