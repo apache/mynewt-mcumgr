@@ -50,6 +50,7 @@ TEST_CASE_DECL(test_cborattr_decode_string_array);
 TEST_CASE_DECL(test_cborattr_decode_object_array);
 TEST_CASE_DECL(test_cborattr_decode_unnamed_array);
 TEST_CASE_DECL(test_cborattr_decode_substring_key);
+TEST_CASE_DECL(test_cborattr_decode_nesting);
 
 #ifdef __cplusplus
 }
