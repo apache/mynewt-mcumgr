@@ -36,6 +36,11 @@
 #include "tinycbor/cbor_mbuf_writer.h"
 #include "os/os_mbuf.h"
 #define CBORATTR_MAX_SIZE MYNEWT_VAL(CBORATTR_MAX_SIZE)
+#define CBORATTR_MAX_NESTING MYNEWT_VAL(CBORATTR_MAX_NESTING)
+#endif
+
+#ifndef CBORATTR_MAX_NESTING
+#define CBORATTR_MAX_NESTING 16
 #endif
 
 /* this maps a CborType to a matching CborAtter Type. The mapping is not
@@ -102,6 +107,59 @@ valid_attr_type(CborType ct, CborAttrType at)
         break;
     }
     return 0;
+}
+
+/*
+ * Advances past the value at *it. Unlike cbor_value_advance(), containers are
+ * walked iteratively with a fixed size stack, and values nested deeper than
+ * CBORATTR_MAX_NESTING are rejected with CborErrorNestingTooDeep.
+ */
+static CborError
+cborattr_advance(CborValue *it)
+{
+    CborValue stack[CBORATTR_MAX_NESTING];
+    CborValue *cur;
+    CborValue *parent;
+    CborError err;
+    int depth;
+
+    if (!cbor_value_is_container(it)) {
+        return cbor_value_advance(it);
+    }
+
+    err = cbor_value_enter_container(it, &stack[0]);
+    if (err) {
+        return err;
+    }
+    depth = 1;
+
+    while (depth > 0) {
+        cur = &stack[depth - 1];
+        if (cbor_value_at_end(cur)) {
+            parent = (depth == 1) ? it : &stack[depth - 2];
+            err = cbor_value_leave_container(parent, cur);
+            if (err) {
+                return err;
+            }
+            depth--;
+        } else if (cbor_value_is_container(cur)) {
+            if (depth >= CBORATTR_MAX_NESTING) {
+                return CborErrorNestingTooDeep;
+            }
+            err = cbor_value_enter_container(cur, &stack[depth]);
+            if (err) {
+                return err;
+            }
+            depth++;
+        } else {
+            err = cbor_value_advance(cur);
+            if (err) {
+                return err;
+            }
+        }
+    }
+
+    return CborNoError;
 }
 
 /* this function find the pointer to the memory location to
@@ -227,7 +285,7 @@ cbor_internal_read_object(CborValue *root_value,
 
             /* at least get the type of the next value so we can match the
              * attribute name and type for a perfect match */
-            err |= cbor_value_advance(&cur_value);
+            err |= cborattr_advance(&cur_value);
             if (cbor_value_is_valid(&cur_value)) {
                 type = cbor_value_get_type(&cur_value);
             } else {
@@ -306,7 +364,7 @@ cbor_internal_read_object(CborValue *root_value,
                 err |= CborErrorIllegalType;
             }
         }
-        err = cbor_value_advance(&cur_value);
+        err = cborattr_advance(&cur_value);
     }
     if (!err) {
         /* that should be it for this container */
@@ -319,6 +377,7 @@ int
 cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
 {
     CborError err = 0;
+    CborError adv_err = CborNoError;
     struct CborValue elem;
     int off, arrcount;
     size_t len;
@@ -372,7 +431,12 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
         }
         arrcount++;
         if (arr->element_type != CborAttrStructObjectType) {
-            err |= cbor_value_advance(&elem);
+            adv_err = cborattr_advance(&elem);
+            err |= adv_err;
+            if (adv_err) {
+                /* elem was not advanced, no further progress is possible */
+                break;
+            }
         }
         if (!cbor_value_is_valid(&elem)) {
             break;
@@ -381,9 +445,14 @@ cbor_read_array(struct CborValue *value, const struct cbor_array_t *arr)
     if (arr->count) {
         *arr->count = arrcount;
     }
-    while (!cbor_value_at_end(&elem)) {
+    while (!adv_err && !cbor_value_at_end(&elem)) {
         err |= CborErrorDataTooLarge;
-        cbor_value_advance(&elem);
+        adv_err = cborattr_advance(&elem);
+        err |= adv_err;
+    }
+    if (adv_err) {
+        /* elem is not at the end of container so it cannot be left */
+        return err;
     }
     err |= cbor_value_leave_container(value, &elem);
     return err;
