@@ -250,8 +250,10 @@ os_mgmt_datetime_write(struct mgmt_ctxt *ctxt)
         [1] = { .attribute = NULL }
     };
 
+    datetime_buf[0] = '\0';
+
     err = cbor_read_object(&ctxt->it, attrs);
-    if (err != 0) {
+    if (err != 0 || datetime_buf[0] == '\0') {
         return MGMT_ERR_EINVAL;
     }
 
