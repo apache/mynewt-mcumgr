@@ -133,6 +133,10 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
         return MGMT_ERR_EINVAL;
     }
 
+    if (req->data_len > sizeof(req->img_data)) {
+        return MGMT_ERR_EINVAL;
+    }
+
     if (req->off == 0) {
         /* First upload chunk. */
         if (req->data_len < sizeof(struct image_header)) {
