@@ -185,6 +185,19 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
             return MGMT_ERR_ENOMEM;
         }
 
+        /* Image must fit in slot */
+        rc = flash_area_open(action->area_id, &fa);
+        if (rc) {
+            *errstr = img_mgmt_err_str_flash_open_failed;
+            return MGMT_ERR_EUNKNOWN;
+        }
+        if (action->size > fa->fa_size) {
+            flash_area_close(fa);
+            *errstr = img_mgmt_err_str_no_slot;
+            return MGMT_ERR_EINVAL;
+        }
+        flash_area_close(fa);
+
         if (req->upgrade) {
             /* User specified upgrade-only.  Make sure new image version is
              * greater than that of the currently running image.
@@ -229,6 +242,11 @@ img_mgmt_impl_upload_inspect(const struct img_mgmt_upload_req *req,
              */
             return 0;
         }
+    }
+
+    /* Chunk must not extend past image size */
+    if (req->off + req->data_len > action->size) {
+        return MGMT_ERR_EINVAL;
     }
 
     /* Calculate size of flash write. */
