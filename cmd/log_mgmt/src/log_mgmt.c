@@ -224,7 +224,7 @@ log_mgmt_cb_encode(struct log_mgmt_entry *entry, void *arg)
              */
             if (ctxt->counter == 0) {
                 entry->type = LOG_ETYPE_STRING;
-                snprintf((char *)entry->data, LOG_MGMT_MAX_RSP_LEN,
+                snprintf((char *)entry->data, LOG_MGMT_CHUNK_LEN,
                          "error: entry too large (%zu bytes)", entry_len);
             }
 
