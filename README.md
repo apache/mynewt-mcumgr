@@ -1,6 +1,12 @@
 # mcumgr
 
-This is mcumgr, version 0.7.0
+> **Note:** This is the last release of mcumgr as a standalone project.
+> Zephyr now maintains its own fork of mcumgr as part of the Zephyr tree,
+> while Apache Mynewt has imported the mcumgr code back into
+> [mynewt-core](https://github.com/apache/mynewt-core). No further
+> development will happen in this repository.
+
+This is mcumgr, version 0.8.0
 
 mcumgr is a management library for 32-bit MCUs.   The goal of mcumgr is to
 define a common management infrastructure with pluggable transport and encoding
